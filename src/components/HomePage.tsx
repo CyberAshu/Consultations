@@ -301,7 +301,7 @@ export function HomePage() {
             muted
             loop
             playsInline
-            poster="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?q=80&w=1926&auto=format&fit=crop"
+            poster="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4"
           >
             {/* Working professional video sources */}
             <source 
@@ -309,7 +309,7 @@ export function HomePage() {
               type="video/mp4" 
             />
             <source 
-              src="https://sample-videos.com/zip/10/mp4/mp4/SampleVideo_1280x720_1mb.mp4" 
+              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
               type="video/mp4" 
             />
             <source 
