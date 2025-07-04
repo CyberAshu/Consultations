@@ -305,7 +305,7 @@ export function HomePage() {
           >
             {/* Working professional video sources */}
             <source 
-              src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
               type="video/mp4" 
             />
             <source 
@@ -313,12 +313,12 @@ export function HomePage() {
               type="video/mp4" 
             />
             <source 
-              src="https://media.w3.org/2010/05/sintel/trailer_hd.mp4" 
+              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
               type="video/mp4" 
             />
             {/* Fallback video from Internet Archive */}
             <source 
-              src="https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4" 
+              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
               type="video/mp4" 
             />
             {/* Fallback - this will show if video fails */}
