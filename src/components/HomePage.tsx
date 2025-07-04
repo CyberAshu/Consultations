@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { Button } from "./Button"
 import { Card, CardContent } from "./ui/Card"
 import { Badge } from "./ui/Badge"
@@ -66,6 +67,7 @@ const DisclaimerModal = ({ onAccept }: { onAccept: () => void }) => {
 }
 
 export function HomePage() {
+  const navigate = useNavigate()
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState("")
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
@@ -683,6 +685,7 @@ export function HomePage() {
               size="lg"
               variant="outline"
               className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl"
+              onClick={() => navigate('/consultants')}
             >
               <span className="flex items-center gap-3">
                 See All Consultants
