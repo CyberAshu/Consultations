@@ -46,3 +46,52 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Hide scrollbars for better mobile UX */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 768px) {
+  button, .button {
+    min-height: 44px;
+  }
+  
+  input, textarea, select {
+    min-height: 44px;
+  }
+}
+
+/* Smooth scrolling for navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better table responsiveness */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Responsive text truncation */
+.truncate-responsive {
+  @apply truncate;
+}
+
+@media (max-width: 640px) {
+  .truncate-responsive {
+    max-width: 120px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .truncate-responsive {
+    max-width: 200px;
+  }
+}

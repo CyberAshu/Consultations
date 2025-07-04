@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../ui/Card'
 import { Button } from '../Button'
 import { Badge } from '../ui/Badge'
@@ -10,8 +11,6 @@ import {
   Filter,
   X,
   Clock,
-  Award,
-  TrendingUp,
 } from 'lucide-react'
 
 interface Consultant {
@@ -47,6 +46,7 @@ interface Consultant {
 }
 
 export function ConsultantsPage() {
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLanguage, setSelectedLanguage] = useState("")
   const [selectedProvince, setSelectedProvince] = useState("")
@@ -602,7 +602,13 @@ export function ConsultantsPage() {
                         </div>
                         <div className="text-center sm:text-right sm:ml-4">
                           <div className="text-xl font-bold text-green-600 mb-2">{service.price}</div>
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+                          <Button 
+                            size="sm" 
+                            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                            onClick={() => {
+                              navigate(`/book?rcic=${selectedConsultant.id}&service=${index + 1}`)
+                            }}
+                          >
                             Select
                           </Button>
                         </div>
@@ -673,8 +679,13 @@ export function ConsultantsPage() {
               {/* Book Now CTA */}
               <div className="border-t border-gray-200 pt-6">
                 <div className="flex space-x-4">
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-lg py-3">
-                    Book Now → Leads to Booking Flow
+                  <Button 
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-lg py-3"
+                    onClick={() => {
+                      navigate(`/book?rcic=${selectedConsultant.id}`)
+                    }}
+                  >
+                    Book Consultation
                   </Button>
                   <Button variant="outline" className="flex-1 py-3">
                     Send Message

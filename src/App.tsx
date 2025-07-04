@@ -8,23 +8,72 @@ import { ServicesPage } from './components/pages/ServicesPage';
 import { ConsultantsPage } from './components/pages/ConsultantsPage';
 import { FAQPage } from './components/pages/FAQPage';
 import { WaitingListPage } from './components/pages/WaitingListPage';
+import { LoginPage } from './components/pages/LoginPage';
+import { AdminDashboard } from './components/pages/AdminDashboard';
+import { ClientDashboard } from './components/pages/ClientDashboard';
+import { RCICDashboard } from './components/pages/RCICDashboard';
+import { BookingFlow } from './components/pages/BookingFlow';
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen">
-        <Header />
-        <main>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/services" element={<ServicesPage />} />
-<Route path='/consultants' element={<ConsultantsPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/waiting-list" element={<WaitingListPage />} />
-          </Routes>
-        </main>
-        <Footer />
+        <Routes>
+          {/* Public routes with header/footer */}
+          <Route path="/" element={
+            <div>
+              <Header />
+              <main><HomePage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/about" element={
+            <div>
+              <Header />
+              <main><AboutPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/services" element={
+            <div>
+              <Header />
+              <main><ServicesPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/consultants" element={
+            <div>
+              <Header />
+              <main><ConsultantsPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/faq" element={
+            <div>
+              <Header />
+              <main><FAQPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/waiting-list" element={
+            <div>
+              <Header />
+              <main><WaitingListPage /></main>
+              <Footer />
+            </div>
+          } />
+          
+          {/* Login route without header/footer */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Dashboard routes without header/footer */}
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/client-dashboard" element={<ClientDashboard />} />
+          <Route path="/rcic-dashboard" element={<RCICDashboard />} />
+          
+          {/* Booking flow without header/footer */}
+          <Route path="/book" element={<BookingFlow />} />
+        </Routes>
       </div>
     </Router>
   );
