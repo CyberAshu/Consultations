@@ -77,10 +77,10 @@ export function Footer() {
           <div className="space-y-6">
             <h3 className="font-bold text-lg text-white">Legal</h3>
             <div className="space-y-3">
-              <a href="/privacy" className="block text-gray-400 hover:text-blue-400 transition-colors duration-300">
+              <a href="/privacy-policy" className="block text-gray-400 hover:text-blue-400 transition-colors duration-300">
                 Privacy Policy
               </a>
-              <a href="/terms" className="block text-gray-400 hover:text-blue-400 transition-colors duration-300">
+              <a href="/terms-of-use" className="block text-gray-400 hover:text-blue-400 transition-colors duration-300">
                 Terms of Use
               </a>
             </div>

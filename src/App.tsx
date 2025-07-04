@@ -8,6 +8,8 @@ import { ServicesPage } from './components/pages/ServicesPage';
 import { ConsultantsPage } from './components/pages/ConsultantsPage';
 import { FAQPage } from './components/pages/FAQPage';
 import { WaitingListPage } from './components/pages/WaitingListPage';
+import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
+import { TermsOfUsePage } from './components/pages/TermsOfUsePage';
 import { LoginPage } from './components/pages/LoginPage';
 import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
@@ -59,6 +61,20 @@ function App() {
             <div>
               <Header />
               <main><WaitingListPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/privacy-policy" element={
+            <div>
+              <Header />
+              <main><PrivacyPolicyPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/terms-of-use" element={
+            <div>
+              <Header />
+              <main><TermsOfUsePage /></main>
               <Footer />
             </div>
           } />
