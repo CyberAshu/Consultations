@@ -367,7 +367,7 @@ export function HomePage() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm"
+                className="bg-gray-700 hover:bg-gray-700 text-white px-8 py-4 text-lg font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm"
               >
                 <Calendar className="h-5 w-5 mr-2" />
                 Book Consultation
@@ -384,23 +384,22 @@ export function HomePage() {
           </div>
         </div>
         
-        {/* Subtle Bottom Accent */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 z-10"></div>
+       
       </section>
 
       {/* Professional Services Overview Section */}
-      <section className="py-24 bg-gray-50 relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <div className="inline-block mb-8 relative">
               <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-                <span className="text-blue-600 text-4xl lg:text-5xl xl:text-6xl">
+                <span className="text-gray-200 text-4xl lg:text-5xl xl:text-6xl">
                   What we offer
                 </span>
               </h2>
               <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
             </div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
               Comprehensive immigration solutions from licensed experts
             </p>
           </div>
@@ -437,7 +436,7 @@ export function HomePage() {
                     ))}
                   </ul>
 
-                  <Button className="w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-2 rounded-md mt-4">
+                  <Button className="w-full bg-gray-700 hover:bg-blue-800 text-white font-medium py-2 rounded-md mt-4">
                     Book Service
                   </Button>
                 </CardContent>
@@ -448,7 +447,7 @@ export function HomePage() {
       </section>
 
       {/* Trust Indicators Section */}
-      <section className="py-16 bg-white border-t border-gray-100">
+      <section className="py-16 bg-gray-700 border-t border-gray-100">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Trusted by Thousands of Clients</h2>
@@ -457,7 +456,7 @@ export function HomePage() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-5xl mx-auto">
-            <div className="p-4 hover:bg-gray-50 rounded-lg transition-colors">
+            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
               <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Shield className="h-7 w-7 text-blue-600" />
               </div>
@@ -465,7 +464,7 @@ export function HomePage() {
               <p className="text-sm text-gray-600 mt-1">Verified & Regulated</p>
             </div>
             
-            <div className="p-4 hover:bg-gray-50 rounded-lg transition-colors">
+            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
               <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="h-7 w-7 text-green-600" />
               </div>
@@ -473,7 +472,7 @@ export function HomePage() {
               <p className="text-sm text-gray-600 mt-1">Proven Track Record</p>
             </div>
             
-            <div className="p-4 hover:bg-gray-50 rounded-lg transition-colors">
+            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
               <div className="bg-purple-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Clock className="h-7 w-7 text-purple-600" />
               </div>
@@ -481,7 +480,7 @@ export function HomePage() {
               <p className="text-sm text-gray-600 mt-1">Always Here to Help</p>
             </div>
             
-            <div className="p-4 hover:bg-gray-50 rounded-lg transition-colors">
+            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
               <div className="bg-amber-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Award className="h-7 w-7 text-amber-600" />
               </div>
@@ -493,7 +492,7 @@ export function HomePage() {
       </section>
 
       {/* Professional How It Works Section */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      <section className="py-24 bg-gray-700 relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <div className="inline-block mb-8 relative">
@@ -501,29 +500,29 @@ export function HomePage() {
                 <span className="text-blue-600">
                   How It
                 </span>{" "}
-                <span className="text-gray-900 italic font-light relative">
+                <span className="text-gray-200 italic font-light relative">
                   Works
                   <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
                 </span>
               </h2>
             </div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
               Three simple steps to connect with licensed immigration experts
             </p>
           </div>
 
-          <div className="relative pt-16 pb-24">
+          <div className="relative pt-16 pb-24 ">
             <div className="hidden md:flex absolute top-1/2 left-0 right-0 -translate-y-1/2 items-center justify-center px-4 pointer-events-none z-10">
               {/* First arrow - between card 1 and 2 */}
               <div className="absolute left-1/3 transform -translate-x-1/2">
                 <div className="bg-white p-2 rounded-full shadow-lg">
-                  <ArrowRight className="h-8 w-8 text-blue-600" />
+                  <ArrowRight className="h-8 w-8 text-gray-700" />
                 </div>
               </div>
               {/* Second arrow - between card 2 and 3 */}
               <div className="absolute left-2/3 transform -translate-x-1/2">
                 <div className="bg-white p-2 rounded-full shadow-lg">
-                  <ArrowRight className="h-8 w-8 text-blue-600" />
+                  <ArrowRight className="h-8 w-8 text-gray-700" />
                 </div>
               </div>
             </div>
@@ -534,7 +533,7 @@ export function HomePage() {
                   step: "1",
                   title: "Browse & Choose",
                   description: "Browse licensed consultants by your immigration need, expertise, and language preference",
-                  color: "bg-blue-600",
+                  color: "bg-gray-700",
                   bgColor: "bg-blue-50",
                   shadowColor: "shadow-blue-500/20",
                   delay: "0ms",
@@ -544,7 +543,7 @@ export function HomePage() {
                   step: "2",
                   title: "Book & Pay",
                   description: "Select your preferred time slot, pay securely, and upload documents if needed",
-                  color: "bg-blue-600",
+                  color: "bg-gray-700",
                   bgColor: "bg-blue-50",
                   shadowColor: "shadow-indigo-500/20",
                   delay: "200ms",
@@ -554,7 +553,7 @@ export function HomePage() {
                   step: "3",
                   title: "Meet & Get Expert Help",
                   description: "Connect via secure video call and receive personalized immigration guidance",
-                  color: "bg-blue-600",
+                  color: "bg-gray-700",
                   bgColor: "bg-blue-50",
                   shadowColor: "shadow-purple-500/20",
                   delay: "400ms",
@@ -603,26 +602,26 @@ export function HomePage() {
       {/* Professional RCIC Preview Section */}
       <section
         id="consultants"
-        className="py-24 bg-gray-50 relative overflow-hidden"
+        className="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden"
       >
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <div className="inline-block mb-8 relative">
               <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-                <span className="text-blue-600">
+                <span className="text-gray-200">
                   Meet Our
                 </span>
                 <br />
-                <span className="text-gray-900">
+                <span className="text-gray-200">
                   Licensed{" "}
-                  <span className="text-blue-600 italic font-light">
+                  <span className="text-gray-200 italic font-light">
                     RCICs
                   </span>
                 </span>
               </h2>
               <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
             </div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
               Licensed professionals ready to help with your immigration journey
             </p>
           </div>
@@ -684,7 +683,7 @@ export function HomePage() {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl"
+              className=" relative bottom-4 border-2 border-gray-200 text-gray-200 hover:bg-blue-50 px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl"
               onClick={() => navigate('/consultants')}
             >
               <span className="flex items-center gap-3">
@@ -697,10 +696,10 @@ export function HomePage() {
       </section>
 
       {/* Success Stories Section */}
-      <section className="py-16 md:py-20 bg-white">
+      <section className="py-16 md:py-20 bg-gray-700">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2">
               Success Stories
             </h2>
             <p className="text-blue-600 text-lg">
@@ -709,8 +708,8 @@ export function HomePage() {
             <div className="w-16 h-1 bg-blue-600 mx-auto mt-4"></div>
           </div>
 
-          <div className="max-w-3xl mx-auto">
-            <Card className="border border-gray-100 shadow-sm">
+          <div className="max-w-3xl mx-auto ">
+            <Card className="border border-gray-100 shadow-sm text-gray-200 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155]" >
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-2xl">{testimonials[currentTestimonial].flag}</span>
@@ -728,7 +727,7 @@ export function HomePage() {
                   ))}
                 </div>
 
-                <blockquote className="text-gray-700 italic mb-6 leading-relaxed">
+                <blockquote className="text-gray-200 italic mb-6 leading-relaxed">
                   "{testimonials[currentTestimonial].quote}"
                 </blockquote>
 
@@ -741,8 +740,8 @@ export function HomePage() {
                     </div>
                   </div>
                   <div>
-                    <div className="font-medium text-gray-900">{testimonials[currentTestimonial].author}</div>
-                    <div className="text-sm text-gray-500">{testimonials[currentTestimonial].role}</div>
+                    <div className="font-medium text-gray-200">{testimonials[currentTestimonial].author}</div>
+                    <div className="text-sm text-gray-200">{testimonials[currentTestimonial].role}</div>
                   </div>
                 </div>
               </CardContent>
@@ -763,7 +762,7 @@ export function HomePage() {
       </section>
 
       {/* Professional FAQ Section */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-24 right-24 w-[300px] h-[300px] bg-blue-50/15 rounded-full blur-3xl"></div>
           <div className="absolute bottom-24 left-24 w-[350px] h-[350px] bg-indigo-50/10 rounded-full blur-3xl"></div>
@@ -777,7 +776,7 @@ export function HomePage() {
                   Frequently
                 </span>
                 <br />
-                <span className="text-gray-900">
+                <span className="text-gray-200">
                   Asked{" "}
                   <span className="text-blue-600 italic font-light">
                     Questions
@@ -786,7 +785,7 @@ export function HomePage() {
               </h2>
               <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
             </div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
               Quick answers to common questions about our platform and services
             </p>
           </div>
@@ -917,9 +916,9 @@ export function HomePage() {
                   </div>
                   <Button
                     size="lg"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 text-xl font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden group"
+                    className="w-full bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white py-4 text-xl font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden group"
                   >
-                    <span className="relative z-10 flex items-center gap-3">
+                    <span className="relative z-10 flex items-center gap-3 ">
                       <Rocket className="h-5 w-5" />
                       Join Waitlist - Get 10% Off
                       <Sparkles className="h-5 w-5" />

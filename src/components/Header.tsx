@@ -83,7 +83,7 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-5 left-0 right-0 z-50 mx-4 rounded-xl transition-all duration-500 ${
         isScrolled
           ? "bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200/20"
           : "bg-white/90 backdrop-blur-sm"
@@ -94,12 +94,12 @@ export function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group cursor-pointer">
             <div className="relative w-10 h-10">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg group-hover:shadow-xl transition-all duration-300"></div>
+              <div className="absolute inset-0 rounded-lg bg-gray-600 shadow-lg group-hover:shadow-xl transition-all duration-300"></div>
               <div className="absolute inset-1 rounded-lg bg-white flex items-center justify-center">
-                <span className="text-blue-600 font-black text-lg">IC</span>
+                <span className="text-gray-600 font-black text-lg">IC</span>
               </div>
             </div>
-            <span className="font-black text-2xl text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+            <span className="font-black text-2xl text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
               ImmigrationConnect
             </span>
           </Link>
@@ -108,7 +108,7 @@ export function Header() {
           <div className="hidden lg:flex items-center space-x-8">
             <Link
               to="/about"
-              className={`transition-all duration-300 hover:text-blue-600 font-medium ${
+              className={`transition-all duration-300 hover:text-gray-600 font-medium ${
                 isActive("/about") ? "text-blue-600" : "text-gray-700"
               }`}
             >
@@ -116,7 +116,7 @@ export function Header() {
             </Link>
             <Link
               to="/services"
-              className={`transition-all duration-300 hover:text-blue-600 font-medium ${
+              className={`transition-all duration-300 hover:text-gray-600 font-medium ${
                 isActive("/services") ? "text-blue-600" : "text-gray-700"
               }`}
             >
@@ -124,7 +124,7 @@ export function Header() {
             </Link>
             <Link
               to="/consultants"
-              className={`transition-all duration-300 hover:text-blue-600 font-medium ${
+              className={`transition-all duration-300 hover:text-gray-600 font-medium ${
                 isActive("/consultants") ? "text-blue-600" : "text-gray-700"
               }`}
             >
@@ -132,7 +132,7 @@ export function Header() {
             </Link>
             <Link
               to="/faq"
-              className={`transition-all duration-300 hover:text-blue-600 font-medium ${
+              className={`transition-all duration-300 hover:text-gray-600 font-medium ${
                 isActive("/faq") ? "text-blue-600" : "text-gray-700"
               }`}
             >
@@ -141,7 +141,7 @@ export function Header() {
             <Link to="/waiting-list">
               <Button
                 variant="outline"
-                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold rounded-full px-6"
+                className="border-2 border-gray-600 text-gray-700 hover:bg-gray-600 font-semibold rounded-full px-6"
               >
                 Join Waitlist
               </Button>
@@ -191,7 +191,7 @@ export function Header() {
               </div>
             ) : (
               <Link to="/login">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-6">Login</Button>
+                <Button className="bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-full px-6">Login</Button>
               </Link>
             )}
           </div>
