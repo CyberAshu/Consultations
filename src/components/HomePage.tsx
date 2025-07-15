@@ -368,6 +368,7 @@ export function HomePage() {
               <Button
                 size="lg"
                 className="bg-gray-700 hover:bg-gray-700 text-white px-8 py-4 text-lg font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm"
+                onClick={() => setIsWaitlistOpen(true)}
               >
                 <Calendar className="h-5 w-5 mr-2" />
                 Book Consultation
@@ -376,7 +377,7 @@ export function HomePage() {
                 size="lg"
                 variant="outline"
                 className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-medium rounded-lg transition-all duration-200 hover:border-white/50"
-                onClick={() => setIsWaitlistOpen(true)}
+                
               >
                 Learn More
               </Button>
