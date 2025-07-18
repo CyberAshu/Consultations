@@ -48,6 +48,15 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Blur theme specific colors
+        blur: {
+          card: "hsl(var(--blur-card))",
+          'card-foreground': "hsl(var(--blur-card-foreground))",
+          overlay: "hsl(var(--blur-overlay))",
+          'text-primary': "hsl(var(--blur-text-primary))",
+          'text-secondary': "hsl(var(--blur-text-secondary))",
+          'text-muted': "hsl(var(--blur-text-muted))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

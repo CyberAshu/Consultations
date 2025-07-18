@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, CardContent } from '../ui/Card'
+import { Card, CardContent, GlassCard } from '../ui/Card'
 import { Button } from '../Button'
 import { Badge } from '../ui/Badge'
 import {
@@ -328,12 +328,18 @@ export function ConsultantsPage() {
   const uniqueSpecialties = Array.from(new Set(consultants.flatMap(c => c.specialties))).sort()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 pt-24">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Browse Licensed Immigration Consultants</h1>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">Find the right RCIC for your immigration needs</p>
+      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h1 className="text-5xl lg:text-6xl font-black text-white mb-6 leading-tight [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">Browse Licensed Immigration Consultants</h1>
+          <p className="text-2xl text-gray-200 mb-8 max-w-4xl mx-auto [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Find the right RCIC for your immigration needs</p>
         </div>
 
         {/* Search and Filters */}
@@ -346,7 +352,7 @@ export function ConsultantsPage() {
                 placeholder="Search by name, specialty, or language..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 bg-white/95 backdrop-blur-sm border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400 relative z-10"
               />
             </div>
 
@@ -354,11 +360,11 @@ export function ConsultantsPage() {
             <div className="grid md:grid-cols-3 gap-4">
               {/* Language Filter */}
               <div>
-                <label className="block text-sm font-medium mb-2">Language</label>
+                <label className="block text-sm font-medium mb-2 text-white [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Language</label>
                 <select 
                   value={selectedLanguage}
                   onChange={(e) => setSelectedLanguage(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full px-3 py-2 rounded-md text-gray-900 bg-white/95 backdrop-blur-sm border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
                 >
                   <option value="">All Languages</option>
                   {uniqueLanguages.map((lang) => (
@@ -369,11 +375,11 @@ export function ConsultantsPage() {
 
               {/* Province Filter */}
               <div>
-                <label className="block text-sm font-medium mb-2">Province</label>
+                <label className="block text-sm font-medium mb-2 text-white [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Province</label>
                 <select
                   value={selectedProvince}
                   onChange={(e) => setSelectedProvince(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full px-3 py-2 rounded-md text-gray-900 bg-white/95 backdrop-blur-sm border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
                 >
                   <option value="">All Provinces</option>
                   {uniqueProvinces.map((province) => (
@@ -384,11 +390,11 @@ export function ConsultantsPage() {
 
               {/* Specialty Filter */}
               <div>
-                <label className="block text-sm font-medium mb-2">Specialty</label>
+                <label className="block text-sm font-medium mb-2 text-white [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Specialty</label>
                 <select
                   value={selectedSpecialty}
                   onChange={(e) => setSelectedSpecialty(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full px-3 py-2 rounded-md text-gray-900 bg-white/95 backdrop-blur-sm border border-white/30 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400"
                 >
                   <option value="">All Specialties</option>
                   {uniqueSpecialties.map((specialty) => (
@@ -402,10 +408,15 @@ export function ConsultantsPage() {
       </section>
 
       {/* Consultants Grid */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="py-24 bg-gradient-to-br from-[#1e293b] via-[#334155] to-[#475569] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-white [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
               {filteredConsultants.length > 0 
                 ? `Found ${filteredConsultants.length} consultant${filteredConsultants.length !== 1 ? 's' : ''}` 
                 : 'No consultants found'}
@@ -419,6 +430,7 @@ export function ConsultantsPage() {
                   setSelectedProvince("")
                   setSelectedSpecialty("")
                 }}
+                className="bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]"
               >
                 Clear Filters
               </Button>
@@ -427,11 +439,11 @@ export function ConsultantsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredConsultants.map((consultant) => (
-              <Card 
+              <GlassCard 
                 key={consultant.id} 
-                className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
+                className="shadow-2xl hover:shadow-3xl transition-all duration-300"
               >
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-4 sm:p-6 relative overflow-hidden">
                   {/* Consultant Header */}
                   <div className="text-center mb-4">
                     {/* Photo */}
@@ -447,25 +459,25 @@ export function ConsultantsPage() {
                     </div>
                     
                     {/* Name & RCIC # */}
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{consultant.name}</h3>
-                    <p className="text-sm text-blue-600 font-medium mb-3">RCIC #{consultant.rcicNumber}</p>
+                    <h3 className="text-lg font-semibold text-white mb-1 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">{consultant.name}</h3>
+                    <p className="text-sm text-blue-300 font-medium mb-3 relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">RCIC #{consultant.rcicNumber}</p>
                   </div>
 
                   {/* Specialty Tags */}
                   <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Specialties</h4>
-                    <div className="flex flex-wrap gap-1 justify-center">
+                    <h4 className="text-xs font-semibold text-gray-200 uppercase tracking-wide mb-2 relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Specialties</h4>
+                    <div className="flex flex-wrap gap-1 justify-center relative z-10">
                       {consultant.specialties.slice(0, 3).map((specialty) => (
                         <Badge 
                           key={specialty} 
                           variant="secondary" 
-                          className="text-xs bg-blue-50 text-blue-700 border border-blue-200"
+                          className="text-xs bg-blue-500/20 text-blue-100 border border-blue-400/30 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]"
                         >
                           {specialty}
                         </Badge>
                       ))}
                       {consultant.specialties.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs text-gray-200 border-gray-400/30">
                           +{consultant.specialties.length - 3}
                         </Badge>
                       )}
@@ -474,35 +486,35 @@ export function ConsultantsPage() {
 
                   {/* Languages */}
                   <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Languages</h4>
-                    <div className="flex items-center justify-center text-sm text-gray-600">
-                      <Languages className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="text-center">{consultant.languages.join(', ')}</span>
+                    <h4 className="text-xs font-semibold text-gray-200 uppercase tracking-wide mb-2 relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Languages</h4>
+                    <div className="flex items-center justify-center text-sm text-gray-200 relative z-10">
+                      <Languages className="h-4 w-4 mr-2 text-gray-300" />
+                      <span className="text-center [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{consultant.languages.join(', ')}</span>
                     </div>
                   </div>
 
                   {/* Rating */}
                   <div className="mb-3">
-                    <div className="flex items-center justify-center">
-                      <div className="flex items-center bg-yellow-50 text-yellow-700 px-3 py-1 rounded-lg">
-                        <Star className="h-4 w-4 mr-1 fill-current text-yellow-500" />
-                        <span className="font-semibold">{consultant.rating}</span>
-                        <span className="text-yellow-600 ml-1 text-sm">({consultant.reviewCount} reviews)</span>
+                    <div className="flex items-center justify-center relative z-10">
+                      <div className="flex items-center bg-yellow-500/20 text-yellow-100 px-3 py-1 rounded-lg border border-yellow-400/30">
+                        <Star className="h-4 w-4 mr-1 fill-current text-yellow-400" />
+                        <span className="font-semibold [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{consultant.rating}</span>
+                        <span className="text-yellow-200 ml-1 text-sm [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">({consultant.reviewCount} reviews)</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Price Range */}
                   <div className="mb-4">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-green-600">{consultant.priceRange}</div>
-                      <div className="text-xs text-gray-500">Price Range</div>
+                    <div className="text-center relative z-10">
+                      <div className="text-lg font-bold text-green-300 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">{consultant.priceRange}</div>
+                      <div className="text-xs text-gray-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Price Range</div>
                     </div>
                   </div>
 
                   {/* CTA Button */}
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]"
                     onClick={() => {
                       setSelectedConsultant(consultant)
                       setIsModalOpen(true)
@@ -511,17 +523,17 @@ export function ConsultantsPage() {
                     View Profile
                   </Button>
                 </CardContent>
-              </Card>
+              </GlassCard>
             ))}
           </div>
 
           {filteredConsultants.length === 0 && (
             <div className="text-center py-16">
-              <div className="text-gray-400 mb-4">
+              <div className="text-gray-300 mb-4">
                 <Filter className="h-16 w-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No consultants found</h3>
-              <p className="text-gray-600">Try adjusting your search criteria</p>
+              <h3 className="text-xl font-bold text-white mb-2 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">No consultants found</h3>
+              <p className="text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Try adjusting your search criteria</p>
             </div>
           )}
         </div>

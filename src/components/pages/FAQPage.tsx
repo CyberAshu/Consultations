@@ -94,24 +94,46 @@ export function FAQPage() {
   ]
 
   return (
-    <div className="pt-20">
+    <div className="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] min-h-screen">
       {/* Header */}
-      <section className="py-16 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl lg:text-5xl font-black text-gray-900 mb-6">Frequently Asked Questions</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+      <section className="pt-28 pb-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-16 right-16 w-[300px] h-[300px] bg-blue-50/15 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-16 left-16 w-[350px] h-[350px] bg-indigo-50/10 rounded-full blur-3xl"></div>
+        </div>
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <div className="inline-block mb-8 relative">
+            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
+              <span className="text-blue-600">
+                Frequently
+              </span>
+              <br />
+              <span className="text-gray-200">
+                Asked{" "}
+                <span className="text-blue-600 italic font-light">
+                  Questions
+                </span>
+              </span>
+            </h1>
+            <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
+          </div>
+          <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
             Everything you need to know about our platform and services
           </p>
         </div>
       </section>
 
       {/* FAQ Content */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-24 left-24 w-[400px] h-[400px] bg-blue-500/8 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-24 right-24 w-[350px] h-[350px] bg-cyan-400/10 rounded-full blur-2xl"></div>
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto">
             {faqs.map((category, categoryIndex) => (
               <div key={categoryIndex} className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-gray-200 mb-6 flex items-center gap-3">
                   <HelpCircle className="h-6 w-6 text-blue-600" />
                   {category.category}
                 </h2>
@@ -122,23 +144,47 @@ export function FAQPage() {
                     return (
                       <Card
                         key={faqIndex}
-                        className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                        className={`border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg overflow-hidden ${
+                          openFaq === globalIndex 
+                            ? 'border-blue-500 bg-white shadow-2xl ring-2 ring-blue-200 ring-opacity-50' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
                       >
                         <CardContent className="p-0">
                           <button
-                            className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200"
+                            className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
+                              openFaq === globalIndex 
+                                ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
+                                : 'hover:bg-gray-50'
+                            }`}
                             onClick={() => setOpenFaq(openFaq === globalIndex ? null : globalIndex)}
                           >
-                            <span className="font-semibold text-gray-900 pr-4">{faq.question}</span>
-                            <ChevronDown
-                              className={`h-5 w-5 text-gray-500 transition-transform duration-200 flex-shrink-0 ${
-                                openFaq === globalIndex ? "rotate-180" : ""
-                              }`}
-                            />
+                            <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
+                              openFaq === globalIndex 
+                                ? 'text-blue-700' 
+                                : 'text-gray-900 group-hover:text-blue-600'
+                            }`}>
+                              {faq.question}
+                            </span>
+                            <div className={`p-2 rounded-full transition-all duration-300 ${
+                              openFaq === globalIndex 
+                                ? 'bg-blue-200 text-blue-700' 
+                                : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                            }`}>
+                              <ChevronDown
+                                className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
+                                  openFaq === globalIndex ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
                           </button>
                           {openFaq === globalIndex && (
-                            <div className="px-6 pb-6">
-                              <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                            <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
+                              <div className="pt-4">
+                                <p className="text-gray-700 leading-relaxed text-base">
+                                  {faq.answer}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </CardContent>
@@ -153,18 +199,51 @@ export function FAQPage() {
       </section>
 
       {/* Contact Support */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Still have questions?</h2>
-          <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
-            Our support team is here to help. Contact us and we'll get back to you within 24 hours.
-          </p>
-          <a
-            href="mailto:support@immigrationconnect.ca"
-            className="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-full hover:bg-blue-50 transition-colors duration-300"
-          >
-            Contact Support
-          </a>
+      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-16 left-16 w-[350px] h-[350px] bg-blue-500/8 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-16 right-16 w-[300px] h-[300px] bg-cyan-400/10 rounded-full blur-2xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-500/5 rounded-full blur-3xl"></div>
+        </div>
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-16">
+              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-8 leading-tight">
+                Still have{" "}
+                <span className="text-blue-600">
+                  Questions?
+                </span>
+              </h2>
+              <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto leading-relaxed">
+                Our support team is here to help. Contact us and we'll get back to you within 24 hours.
+              </p>
+            </div>
+            
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Email Support</h3>
+                  <p className="text-gray-600 mb-4">Get detailed answers to your questions</p>
+                  <a
+                    href="mailto:support@immigrationconnect.ca"
+                    className="inline-block bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white font-bold py-3 px-8 rounded-xl hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    Email Us
+                  </a>
+                </div>
+                <div className="hidden sm:block w-px h-20 bg-gray-200"></div>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Live Chat</h3>
+                  <p className="text-gray-600 mb-4">Quick answers during business hours</p>
+                  <button
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    Start Chat
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>

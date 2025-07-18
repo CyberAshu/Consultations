@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./Button"
-import { Card, CardContent } from "./ui/Card"
+import { Card, CardContent, GlassCard } from "./ui/Card"
 import { Badge } from "./ui/Badge"
 import { Input } from "./ui/Input"
 import { WaitingListModal } from "./WaitingListModal"
@@ -208,7 +208,7 @@ export function HomePage() {
 
   const services = [
     {
-      icon: <Clock className="h-6 w-6 text-blue-600" />,
+      icon: <Clock className="h-6 w-6 text-white" />,
       title: "General Consultations",
       description: "Time-based immigration consultations",
       features: [
@@ -220,7 +220,7 @@ export function HomePage() {
       color: "from-blue-600 to-blue-700"
     },
     {
-      icon: <FileText className="h-6 w-6 text-blue-600" />,
+      icon: <FileText className="h-6 w-6 text-white" />,
       title: "Document Review",
       description: "Professional review of your immigration documents",
       features: [
@@ -232,7 +232,7 @@ export function HomePage() {
       color: "from-blue-600 to-blue-700"
     },
     {
-      icon: <FileEdit className="h-6 w-6 text-blue-600" />,
+      icon: <FileEdit className="h-6 w-6 text-white" />,
       title: "Form Filling Assistance",
       description: "Step-by-step form guidance",
       features: [
@@ -244,7 +244,7 @@ export function HomePage() {
       color: "from-blue-600 to-blue-700"
     },
     {
-      icon: <RefreshCw className="h-6 w-6 text-blue-600" />,
+      icon: <RefreshCw className="h-6 w-6 text-white" />,
       title: "Follow-up Services",
       description: "Ongoing support and extensions",
       features: [
@@ -256,7 +256,7 @@ export function HomePage() {
       color: "from-blue-600 to-blue-700"
     },
     {
-      icon: <Target className="h-6 w-6 text-blue-600" />,
+      icon: <Target className="h-6 w-6 text-white" />,
       title: "Program-Specific Help",
       description: "Specialized immigration programs",
       features: [
@@ -268,7 +268,7 @@ export function HomePage() {
       color: "from-blue-600 to-blue-700"
     },
     {
-      icon: <Users className="h-6 w-6 text-blue-600" />,
+      icon: <Users className="h-6 w-6 text-white" />,
       title: "Multi-Session Packages",
       description: "Comprehensive support plans",
       features: [
@@ -407,86 +407,83 @@ export function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {services.map((service, index) => (
-              <Card
+              <GlassCard
                 key={index}
-                className="border-0 shadow-xl hover:shadow-2xl bg-white hover:bg-white relative overflow-hidden"
+                className="shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden"
               >
                 <CardContent className="p-8 relative overflow-hidden">
-                  {/* Background Animation */}
-                  <div className="absolute inset-0 bg-blue-50/50 opacity-0 group-hover:opacity-100 rounded-2xl"></div>
-
                   {/* Professional Icon */}
                   <div
-                    className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-6 shadow-lg relative z-10"
+                    className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-lg relative z-10"
                   >
                     {service.icon}
                   </div>
 
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 relative z-10">
+                  <h3 className="text-xl font-bold text-white mb-3 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
                     {service.title}
                   </h3>
 
-                  <p className="text-gray-600 mb-4 relative z-10 leading-relaxed">{service.description}</p>
+                  <p className="text-gray-200 mb-4 relative z-10 leading-relaxed [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{service.description}</p>
 
                   <ul className="space-y-2 mb-6 relative z-10">
                     {service.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2 text-gray-600 text-sm">
-                        <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                      <li key={featureIndex} className="flex items-center gap-2 text-gray-200 text-sm [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
+                        <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
                         {feature}
                       </li>
                     ))}
                   </ul>
 
-                  <Button className="w-full bg-gray-700 hover:bg-blue-800 text-white font-medium py-2 rounded-md mt-4">
-                    Book Service
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-full mt-4 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
+                    Learn More
                   </Button>
                 </CardContent>
-              </Card>
+              </GlassCard>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Trust Indicators Section */}
-      <section className="py-16 bg-gray-700 border-t border-gray-100">
+{/* Trust Indicators Section */}
+      <section className="py-16 bg-gray-800 border-t border-gray-600">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Trusted by Thousands of Clients</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">Join thousands of successful applicants who trusted our licensed consultants</p>
-            <div className="w-16 h-1 bg-blue-600 mx-auto mt-4"></div>
+            <h2 className="text-2xl font-bold text-white mb-2">Trusted by Thousands of Clients</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Join thousands of successful applicants who trusted our licensed consultants</p>
+            <div className="w-16 h-1 bg-blue-300 mx-auto mt-4"></div>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-5xl mx-auto">
-            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
-              <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Shield className="h-7 w-7 text-blue-600" />
+            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
+              <div className="bg-blue-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Shield className="h-7 w-7 text-blue-300" />
               </div>
-              <h3 className="font-semibold text-gray-900 text-lg">Licensed RCICs</h3>
-              <p className="text-sm text-gray-600 mt-1">Verified & Regulated</p>
+              <h3 className="font-semibold text-white text-lg">Licensed RCICs</h3>
+              <p className="text-sm text-gray-300 mt-1">Verified & Regulated</p>
             </div>
             
-            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
-              <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="h-7 w-7 text-green-600" />
+            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
+              <div className="bg-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="h-7 w-7 text-green-300" />
               </div>
-              <h3 className="font-semibold text-gray-900 text-lg">98% Success Rate</h3>
-              <p className="text-sm text-gray-600 mt-1">Proven Track Record</p>
+              <h3 className="font-semibold text-white text-lg">98% Success Rate</h3>
+              <p className="text-sm text-gray-300 mt-1">Proven Track Record</p>
             </div>
             
-            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
-              <div className="bg-purple-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Clock className="h-7 w-7 text-purple-600" />
+            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
+              <div className="bg-purple-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Clock className="h-7 w-7 text-purple-300" />
               </div>
-              <h3 className="font-semibold text-gray-900 text-lg">24/7 Support</h3>
-              <p className="text-sm text-gray-600 mt-1">Always Here to Help</p>
+              <h3 className="font-semibold text-white text-lg">24/7 Support</h3>
+              <p className="text-sm text-gray-300 mt-1">Always Here to Help</p>
             </div>
             
-            <div className="p-4 hover:bg-gray-600 rounded-lg transition-colors">
-              <div className="bg-amber-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Award className="h-7 w-7 text-amber-600" />
+            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
+              <div className="bg-amber-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Award className="h-7 w-7 text-amber-300" />
               </div>
-              <h3 className="font-semibold text-gray-900 text-lg">10+ Years</h3>
-              <p className="text-sm text-gray-600 mt-1">Industry Experience</p>
+              <h3 className="font-semibold text-white text-lg">10+ Years</h3>
+              <p className="text-sm text-gray-300 mt-1">Industry Experience</p>
             </div>
           </div>
         </div>
@@ -561,15 +558,10 @@ export function HomePage() {
                 },
               ].map((step, index) => (
                 <div key={index} className="relative">
-                  <Card
-                    className="border-0 shadow-xl hover:shadow-2xl bg-white/95 hover:bg-white relative overflow-hidden h-full"
+                  <GlassCard
+                    className="shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden h-full"
                   >
                     <CardContent className="p-6 md:p-8 text-center relative overflow-hidden h-full flex flex-col">
-                      {/* Background Animation */}
-                      <div
-                        className={`absolute inset-0 ${step.bgColor} opacity-0 group-hover:opacity-100 rounded-2xl`}
-                      ></div>
-
                       {/* Professional Icon with Step Number */}
                       <div className="relative w-20 h-20 mx-auto mb-6">
                         <div 
@@ -584,15 +576,15 @@ export function HomePage() {
                         </div>
                       </div>
 
-                      <h3 className="text-xl font-bold text-gray-900 mb-4 relative z-10 group-hover:text-gray-800">
+                      <h3 className="text-xl font-bold text-white mb-4 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
                         {step.title}
                       </h3>
 
-                      <p className="text-gray-600 leading-relaxed relative z-10 group-hover:text-gray-700 flex-grow">
+                      <p className="text-gray-200 leading-relaxed relative z-10 flex-grow [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
                         {step.description}
                       </p>
                     </CardContent>
-                  </Card>
+                  </GlassCard>
                 </div>
               ))}
             </div>
@@ -629,9 +621,9 @@ export function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {consultants.map((consultant, index) => (
-              <Card
+              <GlassCard
                 key={index}
-                className="border border-gray-100 shadow-sm hover:shadow"
+                className="shadow-2xl hover:shadow-3xl transition-all duration-300"
               >
                 <CardContent className="p-6 text-center">
                   {/* Professional Profile Image */}
@@ -643,10 +635,10 @@ export function HomePage() {
                     </div>
                   </div>
 
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">
+                  <h3 className="text-base font-semibold text-white mb-1 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
                     {consultant.name}
                   </h3>
-                  <p className="text-blue-600 text-xs mb-2">RCIC #{consultant.rcicNumber}</p>
+                  <p className="text-blue-300 text-xs mb-2 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">RCIC #{consultant.rcicNumber}</p>
                   
                   <div className="flex items-center justify-center gap-1 mb-3">
                     {[...Array(5)].map((_, i) => (
@@ -654,12 +646,12 @@ export function HomePage() {
                         key={i}
                         className={`h-3 w-3 ${
                           i < Math.floor(consultant.rating)
-                            ? "text-blue-600 fill-current"
-                            : "text-gray-200"
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-400"
                         }`}
                       />
                     ))}
-                    <span className="ml-1 text-gray-500 text-xs">
+                    <span className="ml-1 text-gray-300 text-xs [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
                       ({consultant.reviews})
                     </span>
                   </div>
@@ -669,14 +661,14 @@ export function HomePage() {
                       <Badge
                         key={idx}
                         variant="outline"
-                        className="text-[10px] py-0.5 px-2 h-5 border-gray-200 text-gray-600"
+                        className="text-[10px] py-0.5 px-2 h-5 border-gray-400 text-gray-200 bg-white/10 backdrop-blur-sm"
                       >
                         {item}
                       </Badge>
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+              </GlassCard>
             ))}
           </div>
 
@@ -791,29 +783,51 @@ export function HomePage() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto space-y-6 mb-16">
+          <div className="max-w-4xl mx-auto space-y-4 mb-16">
             {faqs.map((faq, index) => (
               <Card
                 key={index}
-                className="border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                className={`border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg overflow-hidden ${
+                  openFaq === index 
+                    ? 'border-blue-500 bg-white shadow-2xl ring-2 ring-blue-200 ring-opacity-50' 
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
               >
                 <CardContent className="p-0">
                   <button
-                    className="w-full p-6 text-left flex items-center justify-between hover:bg-blue-50 transition-colors duration-300 group"
+                    className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
+                      openFaq === index 
+                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
+                        : 'hover:bg-gray-50'
+                    }`}
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
                   >
-                    <span className="font-semibold text-gray-900 text-lg pr-4 group-hover:text-blue-600 transition-colors duration-300">
+                    <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
+                      openFaq === index 
+                        ? 'text-blue-700' 
+                        : 'text-gray-900 group-hover:text-blue-600'
+                    }`}>
                       {faq.question}
                     </span>
-                    <ChevronDown
-                      className={`h-5 w-5 text-gray-500 transition-all duration-300 flex-shrink-0 group-hover:text-blue-600 ${
-                        openFaq === index ? "rotate-180" : ""
-                      }`}
-                    />
+                    <div className={`p-2 rounded-full transition-all duration-300 ${
+                      openFaq === index 
+                        ? 'bg-blue-200 text-blue-700' 
+                        : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                    }`}>
+                      <ChevronDown
+                        className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
+                          openFaq === index ? "rotate-180" : ""
+                        }`}
+                      />
+                    </div>
                   </button>
                   {openFaq === index && (
-                    <div className="px-6 pb-6">
-                      <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                    <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
+                      <div className="pt-4">
+                        <p className="text-gray-700 leading-relaxed text-base">
+                          {faq.answer}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </CardContent>
