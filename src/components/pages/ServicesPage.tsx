@@ -1,228 +1,285 @@
 import React from 'react';
-import { Card, CardContent, BlurCard, GlassCard } from '../ui/Card';
+import { Card, CardContent } from '../ui/Card';
 import { Button } from '../Button';
-import { CheckCircle, Clock, FileText, Shield, Users, Zap, Award, Target, Star, FileEdit, RefreshCw } from 'lucide-react';
+import { CheckCircle, Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export function ServicesPage() {
-  return (
-    <div className="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] min-h-screen">
-      {/* Hero Section */}
-      <section className="pt-28 pb-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        </div>
+  const navigate = useNavigate();
 
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="text-5xl lg:text-6xl font-black text-white mb-6 leading-tight [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-            Flexible Immigration Consulting Services. <span className="text-blue-400">Built Around Your Needs.</span>
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight tracking-tight">
+            Professional Immigration 
+            <span className="text-blue-600 block">Consulting Services</span>
           </h1>
-          <p className="text-2xl text-gray-200 mb-8 max-w-4xl mx-auto [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-            Only pay for what you need. No retainers, no delays.
+          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
+            Transparent pricing. Expert guidance. No retainers required.
           </p>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-            From quick questions to full file reviews, our licensed consultants are here to help — on your terms.
+          <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-10">
+            Choose from flexible service options designed around your specific immigration needs, 
+            backed by licensed RCICs you can trust.
           </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button 
+              size="lg" 
+              className="bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-200"
+              onClick={() => navigate('/consultants')}
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              Book Consultation
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold transition-all duration-200"
+            >
+              Compare Services
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Service Cards Grid */}
-      <section className="py-24 bg-gradient-to-br from-[#1e293b] via-[#334155] to-[#475569] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-black text-white mb-6 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-              Comprehensive Immigration Services
-            </h2>
-            <p className="text-xl text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)] max-w-3xl mx-auto">
-              Professional immigration solutions tailored to your specific needs
+            <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Our Services</h2>
+            <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+              Immigration Solutions Tailored to You
+            </h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Choose from our comprehensive range of professional immigration services, 
+              all backed by licensed RCICs.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                icon: <Clock className="h-6 w-6 text-white" />,
+                icon: <Clock className="h-8 w-8" />,
                 title: "General Consultations",
-                description: "Time-based immigration consultations",
+                description: "Time-based immigration consultations with personalized guidance",
                 features: [
                   "30/45/60 min pay-per-session model",
-                  "IRCC programs & eligibility",
-                  "Portal navigation & documentation",
-                  "Options assessment"
+                  "IRCC programs & eligibility assessment",
+                  "Portal navigation & documentation help",
+                  "Comprehensive options assessment"
                 ],
-                color: "from-blue-600 to-blue-700"
+                price: "From $60 CAD",
+                color: "blue"
               },
               {
-                icon: <FileText className="h-6 w-6 text-white" />,
+                icon: <FileText className="h-8 w-8" />,
                 title: "Document Review",
                 description: "Professional review of your immigration documents",
                 features: [
-                  "IRCC forms review",
+                  "IRCC forms review & validation",
                   "SOP & LOE evaluation",
-                  "Refusal analysis",
+                  "Refusal analysis & recommendations",
                   "Live feedback discussion"
                 ],
-                color: "from-blue-600 to-blue-700"
+                price: "From $80 CAD",
+                color: "green"
               },
               {
-                icon: <FileEdit className="h-6 w-6 text-white" />,
+                icon: <FileEdit className="h-8 w-8" />,
                 title: "Form Filling Assistance",
-                description: "Step-by-step form guidance",
+                description: "Step-by-step guidance for complex immigration forms",
                 features: [
                   "IMM forms & GCKey help",
                   "PR & Sponsorship forms",
                   "TRV & LMIA guidance",
                   "Non-submission support"
                 ],
-                color: "from-blue-600 to-blue-700"
+                price: "From $70 CAD",
+                color: "purple"
               },
               {
-                icon: <RefreshCw className="h-6 w-6 text-white" />,
+                icon: <RefreshCw className="h-8 w-8" />,
                 title: "Follow-up Services",
-                description: "Ongoing support and extensions",
+                description: "Ongoing support and session extensions",
                 features: [
                   "+15 min session extensions",
                   "Follow-up bookings",
                   "IRCC response planning",
                   "Procedural fairness help"
                 ],
-                color: "from-blue-600 to-blue-700"
+                price: "From $20 CAD",
+                color: "orange"
               },
               {
-                icon: <Target className="h-6 w-6 text-white" />,
+                icon: <Target className="h-8 w-8" />,
                 title: "Program-Specific Help",
-                description: "Specialized immigration programs",
+                description: "Specialized support for specific immigration programs",
                 features: [
-                  "Express Entry & PNP",
+                  "Express Entry & PNP guidance",
                   "Study/Work Permits",
                   "Family Sponsorship",
                   "Visitor & Super Visas"
                 ],
-                color: "from-blue-600 to-blue-700"
+                price: "From $90 CAD",
+                color: "indigo"
               },
               {
-                icon: <Users className="h-6 w-6 text-white" />,
+                icon: <Users className="h-8 w-8" />,
                 title: "Multi-Session Packages",
-                description: "Comprehensive support plans",
+                description: "Comprehensive support plans for complex cases",
                 features: [
                   "3-session bundle available",
                   "PR Planning Kit",
                   "Student-to-PR Track",
-                  "Custom packages"
+                  "Custom packages available"
                 ],
-                color: "from-blue-600 to-blue-700"
+                price: "From $150 CAD",
+                color: "teal"
               }
-            ].map((service, index) => (
-              <GlassCard
-                key={index}
-                className="shadow-2xl hover:shadow-3xl transition-all duration-300"
-              >
-                <CardContent className="p-8 relative overflow-hidden">
-                  <div
-                    className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-lg relative z-10"
-                  >
-                    {service.icon}
-                  </div>
+            ].map((service, index) => {
+              const colorClasses = {
+                blue: "bg-blue-100 text-blue-600",
+                green: "bg-green-100 text-green-600",
+                purple: "bg-purple-100 text-purple-600",
+                orange: "bg-orange-100 text-orange-600",
+                indigo: "bg-indigo-100 text-indigo-600",
+                teal: "bg-teal-100 text-teal-600"
+              };
+              
+              return (
+                <Card key={index} className="h-full hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg">
+                  <CardContent className="p-8 h-full flex flex-col">
+                    <div className={`w-16 h-16 ${colorClasses[service.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mb-6`}>
+                      {service.icon}
+                    </div>
 
-                  <h3 className="text-xl font-bold text-white mb-3 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-                    {service.title}
-                  </h3>
-
-                  <p className="text-gray-200 mb-4 relative z-10 leading-relaxed [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{service.description}</p>
-
-                  <ul className="space-y-2 mb-6 relative z-10">
-                    {service.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2 text-gray-200 text-sm [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-                        <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-full mt-4 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-                    Learn More
-                  </Button>
-                </CardContent>
-              </GlassCard>
-            ))}
+                    <div className="flex-grow">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                        {service.title}
+                      </h3>
+                      <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                      
+                      <ul className="space-y-3 mb-8">
+                        {service.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-start gap-3 text-gray-700 text-sm">
+                            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="mt-auto">
+                      <div className="text-center mb-4">
+                        <span className="text-2xl font-bold text-gray-900">{service.price}</span>
+                      </div>
+                      <Button 
+                        className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition-all duration-200"
+                        onClick={() => navigate('/consultants')}
+                      >
+                        Book Now
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
 
-          {/* Add-ons Section */}
-          <GlassCard className="shadow-2xl mb-16">
-            <CardContent className="p-12">
-              <div className="text-center mb-10">
-                <h3 className="text-3xl font-bold text-white mb-4 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">Follow-Up Options & Add-ons</h3>
-                <p className="text-gray-200 text-lg [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Extend your support with these additional services</p>
-              </div>
+        </div>
+      </section>
+      
+      {/* Additional Services Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Additional Options</h2>
+            <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+              Extend Your Support
+            </h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Enhance your consultation experience with these additional services and packages.
+            </p>
+          </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  {
-                    name: "Follow-Up Session",
-                    price: "$50 CAD",
-                    description: "30 mins within 2 weeks",
-                    icon: <Users className="h-6 w-6 text-white" />,
-                  },
-                  {
-                    name: "+15 Minute Extension",
-                    price: "$20 CAD",
-                    description: "Only if offered live by RCIC",
-                    icon: <Clock className="h-6 w-6 text-white" />,
-                  },
-                  {
-                    name: "Session Summary Email",
-                    price: "$25 CAD",
-                    description: "Written session summary",
-                    icon: <FileText className="h-6 w-6 text-white" />,
-                  },
-                  {
-                    name: "3-Session Bundle",
-                    price: "$150 CAD",
-                    description: "3 × 30-minute sessions",
-                    icon: <Zap className="h-6 w-6 text-white" />,
-                  },
-                ].map((addon, index) => (
-                  <div
-                    key={index}
-                    className="p-6 bg-gray-500/20 backdrop-blur-sm rounded-xl text-center hover:bg-gray-400/30 transition-all duration-300 border border-gray-400/30"
-                  >
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4 text-white">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {[
+              {
+                name: "Follow-Up Session",
+                description: "Schedule additional 30-minute sessions within 2 weeks of your initial consultation for continued support",
+                icon: <Users className="h-8 w-8" />,
+                color: "blue"
+              },
+              {
+                name: "Session Extension",
+                description: "Extend your current session by 15 minutes when offered live by your RCIC consultant",
+                icon: <Clock className="h-8 w-8" />,
+                color: "green"
+              },
+              {
+                name: "Session Summary",
+                description: "Receive a detailed written summary of your consultation session via email",
+                icon: <FileText className="h-8 w-8" />,
+                color: "purple"
+              },
+              {
+                name: "Multi-Session Bundle",
+                description: "Save with bundled packages including 3 sessions and comprehensive planning tools",
+                icon: <Zap className="h-8 w-8" />,
+                color: "orange"
+              },
+            ].map((addon, index) => {
+              const colorClasses = {
+                blue: "bg-blue-100 text-blue-600",
+                green: "bg-green-100 text-green-600",
+                purple: "bg-purple-100 text-purple-600",
+                orange: "bg-orange-100 text-orange-600"
+              };
+              
+              return (
+                <Card key={index} className="text-center p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className={`w-16 h-16 ${colorClasses[addon.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
                       {addon.icon}
                     </div>
-                    <div className="font-bold text-white mb-2 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{addon.name}</div>
-                    <div className="text-2xl font-bold text-blue-300 mb-2 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">{addon.price}</div>
-                    <div className="text-sm text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{addon.description}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </GlassCard>
+                    <h4 className="text-xl font-bold text-gray-900 mb-4">{addon.name}</h4>
+                    <p className="text-gray-600 leading-relaxed">{addon.description}</p>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </section>
 
-          {/* Comparison Table */}
-          <GlassCard className="border-0 shadow-2xl">
-            <CardContent className="p-12">
-              <div className="text-center mb-10">
-                <h3 className="text-3xl font-bold text-white mb-4 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">Compare Services</h3>
-                <p className="text-gray-200 text-lg [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Choose the right service for your needs</p>
-              </div>
+      {/* Service Comparison Table */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Service Comparison</h2>
+            <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+              Choose the Right Service
+            </h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Compare our main service types to find the perfect match for your immigration needs.
+            </p>
+          </div>
 
+          <Card className="overflow-hidden shadow-2xl border-0">
+            <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b-2 border-gray-400/50">
-                      <th className="text-left py-4 px-6 font-bold text-white [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Feature</th>
-                      <th className="text-center py-4 px-6 font-bold text-blue-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Simple Consultation</th>
-                      <th className="text-center py-4 px-6 font-bold text-indigo-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">File Review</th>
-                      <th className="text-center py-4 px-6 font-bold text-purple-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">File Review + Summary</th>
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left py-6 px-6 font-bold text-gray-900 text-lg">Feature</th>
+                      <th className="text-center py-6 px-6 font-bold text-blue-600 text-lg">Simple Consultation</th>
+                      <th className="text-center py-6 px-6 font-bold text-green-600 text-lg">File Review</th>
+                      <th className="text-center py-6 px-6 font-bold text-purple-600 text-lg">File Review + Summary</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="bg-white">
                     {[
                       {
                         feature: "Live Zoom Session",
@@ -255,39 +312,39 @@ export function ServicesPage() {
                         summary: "Detailed files, appeals",
                       },
                     ].map((row, index) => (
-                      <tr key={index} className="border-b border-gray-400/30">
-                        <td className="py-4 px-6 font-medium text-white [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{row.feature}</td>
+                      <tr key={index} className={`border-t border-gray-100 ${index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}`}>
+                        <td className="py-4 px-6 font-medium text-gray-900">{row.feature}</td>
                         <td className="py-4 px-6 text-center">
                           {typeof row.simple === "boolean" ? (
                             row.simple ? (
-                              <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                              <CheckCircle className="h-6 w-6 text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-400">—</span>
                             )
                           ) : (
-                            <span className="text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{row.simple}</span>
+                            <span className="text-gray-700 font-medium">{row.simple}</span>
                           )}
                         </td>
                         <td className="py-4 px-6 text-center">
                           {typeof row.fileReview === "boolean" ? (
                             row.fileReview ? (
-                              <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                              <CheckCircle className="h-6 w-6 text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-400">—</span>
                             )
                           ) : (
-                            <span className="text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{row.fileReview}</span>
+                            <span className="text-gray-700 font-medium">{row.fileReview}</span>
                           )}
                         </td>
                         <td className="py-4 px-6 text-center">
                           {typeof row.summary === "boolean" ? (
                             row.summary ? (
-                              <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                              <CheckCircle className="h-6 w-6 text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-400">—</span>
                             )
                           ) : (
-                            <span className="text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{row.summary}</span>
+                            <span className="text-gray-700 font-medium">{row.summary}</span>
                           )}
                         </td>
                       </tr>
@@ -296,56 +353,70 @@ export function ServicesPage() {
                 </table>
               </div>
             </CardContent>
-          </GlassCard>
+          </Card>
         </div>
       </section>
 
-      {/* Why Pay-Per-Session */}
-      <section className="py-24 bg-gradient-to-br from-gray-800 via-gray-900 to-black relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-indigo-900/20 to-purple-900/20 backdrop-blur-3xl" />
-        <div className="container mx-auto px-4 relative z-10">
+      {/* Why Choose Our Approach */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl lg:text-5xl font-black text-white mb-8 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">One Price. No Retainers. Real Help.</h2>
-            <p className="text-xl text-gray-200 mb-12 leading-relaxed [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-              Most immigration firms want you to commit to full-service retainers. We let you pay for just what you need
-              — whether that's 30 minutes of quick advice, or a thorough document review. It's expert help, with zero
-              pressure.
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-8 tracking-tight">
+              Transparent. Flexible. Professional.
+            </h2>
+            <p className="text-xl text-gray-600 mb-12 leading-relaxed">
+              Most immigration firms require expensive retainers and long commitments. 
+              We believe you should pay only for the specific help you need, when you need it.
             </p>
 
             <div className="grid md:grid-cols-3 gap-8 mb-12">
               {[
                 {
-                  icon: <Shield className="h-8 w-8 text-white" />,
-                  title: "Flat-rate pricing",
-                  description: "No surprises or hidden fees",
+                  icon: <Shield className="h-12 w-12" />,
+                  title: "Transparent Pricing",
+                  description: "Clear, upfront costs with no hidden fees or surprise charges",
+                  color: "blue"
                 },
                 {
-                  icon: <Users className="h-8 w-8 text-white" />,
-                  title: "No obligation",
-                  description: "No packages or retainers required",
+                  icon: <Users className="h-12 w-12" />,
+                  title: "No Commitments",
+                  description: "Pay per session with no long-term contracts or retainer requirements",
+                  color: "green"
                 },
                 {
-                  icon: <CheckCircle className="h-8 w-8 text-white" />,
-                  title: "Choose your expert",
-                  description: "Select by expertise and language",
+                  icon: <CheckCircle className="h-12 w-12" />,
+                  title: "Choose Your Expert",
+                  description: "Select consultants by expertise, language, and availability",
+                  color: "purple"
                 },
-              ].map((benefit, index) => (
-                <div key={index} className="text-center p-6 bg-gray-500/20 backdrop-blur-sm rounded-xl hover:bg-gray-400/30 transition-all duration-300 border border-gray-400/30">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg">
-                    {benefit.icon}
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{benefit.title}</h3>
-                  <p className="text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{benefit.description}</p>
-                </div>
-              ))}
+              ].map((benefit, index) => {
+                const colorClasses = {
+                  blue: "bg-blue-100 text-blue-600",
+                  green: "bg-green-100 text-green-600",
+                  purple: "bg-purple-100 text-purple-600"
+                };
+                
+                return (
+                  <Card key={index} className="text-center p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className={`w-20 h-20 ${colorClasses[benefit.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+                        {benefit.icon}
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-4">{benefit.title}</h3>
+                      <p className="text-gray-600 leading-relaxed">{benefit.description}</p>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
 
             <Button
-              variant="blur-primary"
               size="lg"
-              className="px-12 py-4 text-xl font-bold rounded-full shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-105"
+              className="bg-black hover:bg-gray-800 text-white px-12 py-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105"
+              onClick={() => navigate('/consultants')}
             >
-              Find a Consultant
+              Find Your Consultant
+              <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </div>
         </div>

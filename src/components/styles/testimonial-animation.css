@@ -1,0 +1,23 @@
+@keyframes scroll-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-horizontal {
+  animation: scroll-horizontal 60s linear infinite;
+}
+
+.pause-animation:hover {
+  animation-play-state: paused;
+}
+
+/* Ensure responsive behavior */
+@media (max-width: 768px) {
+  .animate-scroll-horizontal {
+    animation: scroll-horizontal 40s linear infinite;
+  }
+}

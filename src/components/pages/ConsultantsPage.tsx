@@ -328,18 +328,43 @@ export function ConsultantsPage() {
   const uniqueSpecialties = Array.from(new Set(consultants.flatMap(c => c.specialties))).sort()
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+      <section className="relative min-h-[60vh] flex items-center overflow-hidden bg-white">
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4"
+          >
+            <source 
+              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
+              type="video/mp4" 
+            />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Professional Dark Overlay */}
+          <div className="absolute inset-0 bg-black/60"></div>
+          
+          {/* Subtle Gradient Overlay for Better Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="text-5xl lg:text-6xl font-black text-white mb-6 leading-tight [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">Browse Licensed Immigration Consultants</h1>
-          <p className="text-2xl text-gray-200 mb-8 max-w-4xl mx-auto [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Find the right RCIC for your immigration needs</p>
+        <div className="container mx-auto px-6 py-20 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight drop-shadow-lg">
+              Find Your 
+              <span className="block font-semibold text-blue-400">Immigration Expert</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+              Browse licensed RCICs and book consultations with Canada's top immigration consultants.
+            </p>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -408,19 +433,17 @@ export function ConsultantsPage() {
       </section>
 
       {/* Consultants Grid */}
-      <section className="py-24 bg-gradient-to-br from-[#1e293b] via-[#334155] to-[#475569] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-white [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-              {filteredConsultants.length > 0 
-                ? `Found ${filteredConsultants.length} consultant${filteredConsultants.length !== 1 ? 's' : ''}` 
-                : 'No consultants found'}
-            </h2>
+      <section className="py-16 md:py-24 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-sm text-gray-800 font-light mb-2 uppercase tracking-wide">CONSULTANTS</h2>
+              <h3 className="text-3xl md:text-4xl font-light text-gray-900" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                {filteredConsultants.length > 0 
+                  ? `${filteredConsultants.length} Expert${filteredConsultants.length !== 1 ? 's' : ''} Available` 
+                  : 'No consultants found'}
+              </h3>
+            </div>
             {(searchTerm || selectedLanguage || selectedProvince || selectedSpecialty) && (
               <Button
                 variant="outline"
@@ -430,25 +453,25 @@ export function ConsultantsPage() {
                   setSelectedProvince("")
                   setSelectedSpecialty("")
                 }}
-                className="bg-white/10 backdrop-blur-sm border border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]"
+                className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-100 font-medium rounded-full px-6 py-2 transition-all duration-300"
               >
                 Clear Filters
               </Button>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredConsultants.map((consultant) => (
-              <GlassCard 
+              <Card 
                 key={consultant.id} 
-                className="shadow-2xl hover:shadow-3xl transition-all duration-300"
+                className="bg-white border border-gray-200 rounded-2xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
               >
-                <CardContent className="p-4 sm:p-6 relative overflow-hidden">
+                <CardContent className="p-6 text-center">
                   {/* Consultant Header */}
-                  <div className="text-center mb-4">
+                  <div className="mb-4">
                     {/* Photo */}
-                    <div className="relative w-20 h-20 mx-auto mb-3">
-                      <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 group-hover:scale-105 transition-transform duration-300">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-lg font-medium" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
                         {consultant.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       {consultant.availability === "Available today" && (
@@ -459,62 +482,54 @@ export function ConsultantsPage() {
                     </div>
                     
                     {/* Name & RCIC # */}
-                    <h3 className="text-lg font-semibold text-white mb-1 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">{consultant.name}</h3>
-                    <p className="text-sm text-blue-300 font-medium mb-3 relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">RCIC #{consultant.rcicNumber}</p>
-                  </div>
-
-                  {/* Specialty Tags */}
-                  <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-200 uppercase tracking-wide mb-2 relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Specialties</h4>
-                    <div className="flex flex-wrap gap-1 justify-center relative z-10">
-                      {consultant.specialties.slice(0, 3).map((specialty) => (
-                        <Badge 
-                          key={specialty} 
-                          variant="secondary" 
-                          className="text-xs bg-blue-500/20 text-blue-100 border border-blue-400/30 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]"
-                        >
-                          {specialty}
-                        </Badge>
-                      ))}
-                      {consultant.specialties.length > 3 && (
-                        <Badge variant="outline" className="text-xs text-gray-200 border-gray-400/30">
-                          +{consultant.specialties.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Languages */}
-                  <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-200 uppercase tracking-wide mb-2 relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Languages</h4>
-                    <div className="flex items-center justify-center text-sm text-gray-200 relative z-10">
-                      <Languages className="h-4 w-4 mr-2 text-gray-300" />
-                      <span className="text-center [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{consultant.languages.join(', ')}</span>
-                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                      {consultant.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">RCIC #{consultant.rcicNumber}</p>
                   </div>
 
                   {/* Rating */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-center relative z-10">
-                      <div className="flex items-center bg-yellow-500/20 text-yellow-100 px-3 py-1 rounded-lg border border-yellow-400/30">
-                        <Star className="h-4 w-4 mr-1 fill-current text-yellow-400" />
-                        <span className="font-semibold [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{consultant.rating}</span>
-                        <span className="text-yellow-200 ml-1 text-sm [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">({consultant.reviewCount} reviews)</span>
-                      </div>
+                  <div className="flex items-center justify-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(consultant.rating)
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-2 text-sm text-gray-600">
+                      ({consultant.reviewCount})
+                    </span>
+                  </div>
+
+                  {/* Specialty Tags */}
+                  <div className="mb-4">
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {[...consultant.languages.slice(0, 1), ...consultant.specialties.slice(0, 2)].map((item, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border"
+                        >
+                          {item}
+                        </span>
+                      ))}
                     </div>
                   </div>
 
                   {/* Price Range */}
                   <div className="mb-4">
-                    <div className="text-center relative z-10">
-                      <div className="text-lg font-bold text-green-300 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">{consultant.priceRange}</div>
-                      <div className="text-xs text-gray-300 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Price Range</div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-green-600">{consultant.priceRange}</div>
+                      <div className="text-xs text-gray-500">Price Range</div>
                     </div>
                   </div>
 
                   {/* CTA Button */}
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium relative z-10 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]"
+                    className="w-full bg-black hover:bg-gray-800 text-white font-medium transition-colors"
                     onClick={() => {
                       setSelectedConsultant(consultant)
                       setIsModalOpen(true)
@@ -523,17 +538,17 @@ export function ConsultantsPage() {
                     View Profile
                   </Button>
                 </CardContent>
-              </GlassCard>
+              </Card>
             ))}
           </div>
 
           {filteredConsultants.length === 0 && (
             <div className="text-center py-16">
-              <div className="text-gray-300 mb-4">
+              <div className="text-gray-400 mb-4">
                 <Filter className="h-16 w-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">No consultants found</h3>
-              <p className="text-gray-200 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">Try adjusting your search criteria</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No consultants found</h3>
+              <p className="text-gray-600">Try adjusting your search criteria</p>
             </div>
           )}
         </div>

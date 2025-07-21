@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from './Button'
-import { Menu, User, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, User, LogOut, ChevronDown, Lock } from 'lucide-react'
 
 export function Header() {
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up')
+  const [lastScrollY, setLastScrollY] = useState(0)
   const [user, setUser] = useState<{email: string, role: string, isAuthenticated: boolean} | null>(null)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const location = useLocation()
@@ -20,8 +22,27 @@ export function Header() {
   }, [location.pathname])
 
   useEffect(() => {
+    let ticking = false
+    
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY
+          const scrollThreshold = 10 // Minimum scroll distance to trigger changes
+          
+          // Update scroll state
+          setIsScrolled(currentScrollY > scrollThreshold)
+          
+          // Determine scroll direction
+          if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
+            setScrollDirection(currentScrollY > lastScrollY ? 'down' : 'up')
+            setLastScrollY(currentScrollY)
+          }
+          
+          ticking = false
+        })
+        ticking = true
+      }
     }
 
     const handleResize = () => {
@@ -33,13 +54,15 @@ export function Header() {
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element
-      if (!target.closest('.user-menu-container')) {
+      if (!target.closest('.user-menu-container') && !target.closest('.mobile-menu')) {
         setIsUserMenuOpen(false)
+        setIsMenuOpen(false)
       }
     }
 
-    window.addEventListener("scroll", handleScroll)
-    window.addEventListener("resize", handleResize)
+    // Passive event listeners for better performance
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    window.addEventListener("resize", handleResize, { passive: true })
     document.addEventListener("click", handleClickOutside)
 
     return () => {
@@ -47,7 +70,7 @@ export function Header() {
       window.removeEventListener("resize", handleResize)
       document.removeEventListener("click", handleClickOutside)
     }
-  }, [])
+  }, [lastScrollY])
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -81,12 +104,26 @@ export function Header() {
     }
   }
 
+  const handleConsultantLink = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      // Show login prompt and redirect to login
+      const confirmed = window.confirm(
+        "You need to be logged in to access the consultant directory. Would you like to log in now?"
+      )
+      if (confirmed) {
+        navigate('/login')
+      }
+    }
+    // If user is logged in, the Link will work normally
+  }
+
   return (
     <header
-      className={`fixed top-5 left-0 right-0 z-50 mx-4 rounded-xl transition-all duration-500 ${
+      className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
         isScrolled
-          ? "bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200/20"
-          : "bg-white/90 backdrop-blur-sm"
+          ? "bg-white shadow-xl border-b border-gray-100"
+          : "bg-white shadow-lg"
       }`}
     >
       <div className="container mx-auto px-4 py-4">
@@ -124,11 +161,15 @@ export function Header() {
             </Link>
             <Link
               to="/consultants"
+              onClick={handleConsultantLink}
               className={`transition-all duration-300 hover:text-gray-600 font-medium ${
                 isActive("/consultants") ? "text-blue-600" : "text-gray-700"
-              }`}
+              } ${!user ? 'relative' : ''}`}
             >
-              Find a Consultant
+              <span className="flex items-center gap-1">
+                Find a Consultant
+                {!user && <Lock className="h-3 w-3 text-gray-400" />}
+              </span>
             </Link>
             <Link
               to="/faq"
@@ -143,7 +184,7 @@ export function Header() {
                 variant="outline"
                 className="border-2 border-gray-600 text-gray-700 hover:bg-gray-600 font-semibold rounded-full px-6"
               >
-                Join Waitlist
+                Become a Consultant
               </Button>
             </Link>
             
@@ -198,9 +239,16 @@ export function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden transition-all duration-300 p-2 rounded-lg text-gray-700 hover:bg-gray-100"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className={`lg:hidden transition-all duration-300 p-2 rounded-lg text-gray-700 hover:bg-gray-100 ${
+              isMenuOpen ? 'bg-gray-100' : ''
+            }`}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setIsMenuOpen(!isMenuOpen)
+            }}
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            type="button"
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -208,7 +256,7 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-6 bg-white rounded-2xl p-6 shadow-xl border border-gray-200/20">
+          <div className="mobile-menu lg:hidden mt-6 bg-white rounded-2xl p-6 shadow-xl border border-gray-200/20">
             <div className="flex flex-col space-y-4">
               <Link
                 to="/about"
@@ -224,9 +272,13 @@ export function Header() {
               </Link>
               <Link
                 to="/consultants"
+                onClick={handleConsultantLink}
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-300 py-3 px-4 rounded-lg hover:bg-blue-50 font-medium text-left"
               >
-                Find a Consultant
+                <span className="flex items-center gap-2">
+                  Find a Consultant
+                  {!user && <Lock className="h-4 w-4 text-gray-400" />}
+                </span>
               </Link>
               <Link
                 to="/faq"

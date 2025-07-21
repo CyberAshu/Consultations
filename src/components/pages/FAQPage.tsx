@@ -94,46 +94,53 @@ export function FAQPage() {
   ]
 
   return (
-    <div className="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] min-h-screen">
-      {/* Header */}
-      <section className="pt-28 pb-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-16 right-16 w-[300px] h-[300px] bg-blue-50/15 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-16 left-16 w-[350px] h-[350px] bg-indigo-50/10 rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative min-h-[60vh] flex items-center overflow-hidden bg-white">
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0">
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4"
+          >
+            <source 
+              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
+              type="video/mp4" 
+            />
+            Your browser does not support the video tag.
+          </video>
+          
+          {/* Professional Dark Overlay */}
+          <div className="absolute inset-0 bg-black/60"></div>
+          
+          {/* Subtle Gradient Overlay for Better Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
         </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <div className="inline-block mb-8 relative">
-            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-              <span className="text-blue-600">
-                Frequently
-              </span>
-              <br />
-              <span className="text-gray-200">
-                Asked{" "}
-                <span className="text-blue-600 italic font-light">
-                  Questions
-                </span>
-              </span>
+
+        <div className="container mx-auto px-6 py-20 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight drop-shadow-lg">
+              Frequently 
+              <span className="block font-semibold text-blue-400">Asked Questions</span>
             </h1>
-            <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
+            <p className="text-xl md:text-2xl text-gray-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+              Everything you need to know about our platform and services.
+            </p>
           </div>
-          <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
-            Everything you need to know about our platform and services
-          </p>
         </div>
       </section>
 
       {/* FAQ Content */}
-      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-24 left-24 w-[400px] h-[400px] bg-blue-500/8 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-24 right-24 w-[350px] h-[350px] bg-cyan-400/10 rounded-full blur-2xl"></div>
-        </div>
-        <div className="container mx-auto px-4 relative z-10">
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             {faqs.map((category, categoryIndex) => (
               <div key={categoryIndex} className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-200 mb-6 flex items-center gap-3">
+                <h2 className="text-2xl md:text-3xl font-light text-gray-900 mb-8 flex items-center gap-3" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
                   <HelpCircle className="h-6 w-6 text-blue-600" />
                   {category.category}
                 </h2>
@@ -144,9 +151,9 @@ export function FAQPage() {
                     return (
                       <Card
                         key={faqIndex}
-                        className={`border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg overflow-hidden ${
+                        className={`border shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden ${
                           openFaq === globalIndex 
-                            ? 'border-blue-500 bg-white shadow-2xl ring-2 ring-blue-200 ring-opacity-50' 
+                            ? 'border-blue-300 bg-white shadow-xl' 
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
@@ -199,44 +206,37 @@ export function FAQPage() {
       </section>
 
       {/* Contact Support */}
-      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-16 left-16 w-[350px] h-[350px] bg-blue-500/8 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-16 right-16 w-[300px] h-[300px] bg-cyan-400/10 rounded-full blur-2xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-500/5 rounded-full blur-3xl"></div>
-        </div>
-        <div className="container mx-auto px-4 text-center relative z-10">
+      <section className="py-16 md:py-24 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <div className="mb-16">
-              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-8 leading-tight">
-                Still have{" "}
-                <span className="text-blue-600">
-                  Questions?
-                </span>
-              </h2>
-              <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto leading-relaxed">
+            <div className="mb-12">
+              <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">NEED HELP?</h2>
+              <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-8 leading-tight" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                Still have <em className="font-light italic text-blue-600">Questions?</em>
+              </h3>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
                 Our support team is here to help. Contact us and we'll get back to you within 24 hours.
               </p>
             </div>
             
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-500">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Email Support</h3>
-                  <p className="text-gray-600 mb-4">Get detailed answers to your questions</p>
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
+                <div className="text-center flex-1">
+                  <h4 className="text-xl font-medium text-gray-900 mb-2" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Email Support</h4>
+                  <p className="text-gray-600 mb-4 font-light">Get detailed answers to your questions</p>
                   <a
                     href="mailto:support@immigrationconnect.ca"
-                    className="inline-block bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white font-bold py-3 px-8 rounded-xl hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    className="inline-block bg-black text-white font-medium py-3 px-8 rounded-full hover:bg-gray-800 transition-all duration-300"
                   >
                     Email Us
                   </a>
                 </div>
                 <div className="hidden sm:block w-px h-20 bg-gray-200"></div>
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Live Chat</h3>
-                  <p className="text-gray-600 mb-4">Quick answers during business hours</p>
+                <div className="text-center flex-1">
+                  <h4 className="text-xl font-medium text-gray-900 mb-2" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Live Chat</h4>
+                  <p className="text-gray-600 mb-4 font-light">Quick answers during business hours</p>
                   <button
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105"
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-full transition-all duration-300"
                   >
                     Start Chat
                   </button>

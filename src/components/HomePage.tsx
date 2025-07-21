@@ -5,6 +5,7 @@ import { Card, CardContent, GlassCard } from "./ui/Card"
 import { Badge } from "./ui/Badge"
 import { Input } from "./ui/Input"
 import { WaitingListModal } from "./WaitingListModal"
+import "./styles/testimonial-animation.css"
 import {
   ArrowRight,
   Search,
@@ -56,7 +57,7 @@ const DisclaimerModal = ({ onAccept }: { onAccept: () => void }) => {
         <div className="mt-6 flex justify-end">
           <Button 
             onClick={onAccept}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-black hover:bg-gray-800 text-white"
           >
             I Understand and Accept
           </Button>
@@ -75,6 +76,7 @@ export function HomePage() {
   const [showDisclaimer, setShowDisclaimer] = useState<boolean>(false)
   const heroRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const testimonialScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Check if disclaimer was already accepted
@@ -82,6 +84,19 @@ export function HomePage() {
     if (!disclaimerAccepted) {
       setShowDisclaimer(true)
     }
+    // Auto-scroll testimonials
+    const interval = setInterval(() => {
+      if (testimonialScrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = testimonialScrollRef.current
+        const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1
+        testimonialScrollRef.current.scrollTo({
+          left: isAtEnd ? 0 : scrollLeft + clientWidth,
+          behavior: 'smooth'
+        })
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const handleAcceptDisclaimer = () => {
@@ -388,578 +403,449 @@ export function HomePage() {
        
       </section>
 
-      {/* Professional Services Overview Section */}
-      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-block mb-8 relative">
-              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-                <span className="text-gray-200 text-4xl lg:text-5xl xl:text-6xl">
-                  What we offer
-                </span>
-              </h2>
-              <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
-            </div>
-            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
-              Comprehensive immigration solutions from licensed experts
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {services.map((service, index) => (
-              <GlassCard
-                key={index}
-                className="shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden"
-              >
-                <CardContent className="p-8 relative overflow-hidden">
-                  {/* Professional Icon */}
-                  <div
-                    className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-lg relative z-10"
-                  >
-                    {service.icon}
-                  </div>
-
-                  <h3 className="text-xl font-bold text-white mb-3 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-                    {service.title}
-                  </h3>
-
-                  <p className="text-gray-200 mb-4 relative z-10 leading-relaxed [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">{service.description}</p>
-
-                  <ul className="space-y-2 mb-6 relative z-10">
-                    {service.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2 text-gray-200 text-sm [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-                        <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-full mt-4 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-                    Learn More
-                  </Button>
-                </CardContent>
-              </GlassCard>
-            ))}
-          </div>
-        </div>
-      </section>
-
-{/* Trust Indicators Section */}
-      <section className="py-16 bg-gray-800 border-t border-gray-600">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-white mb-2">Trusted by Thousands of Clients</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">Join thousands of successful applicants who trusted our licensed consultants</p>
-            <div className="w-16 h-1 bg-blue-300 mx-auto mt-4"></div>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-5xl mx-auto">
-            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
-              <div className="bg-blue-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Shield className="h-7 w-7 text-blue-300" />
-              </div>
-              <h3 className="font-semibold text-white text-lg">Licensed RCICs</h3>
-              <p className="text-sm text-gray-300 mt-1">Verified & Regulated</p>
-            </div>
-            
-            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
-              <div className="bg-green-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="h-7 w-7 text-green-300" />
-              </div>
-              <h3 className="font-semibold text-white text-lg">98% Success Rate</h3>
-              <p className="text-sm text-gray-300 mt-1">Proven Track Record</p>
-            </div>
-            
-            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
-              <div className="bg-purple-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Clock className="h-7 w-7 text-purple-300" />
-              </div>
-              <h3 className="font-semibold text-white text-lg">24/7 Support</h3>
-              <p className="text-sm text-gray-300 mt-1">Always Here to Help</p>
-            </div>
-            
-            <div className="p-4 hover:bg-gray-700 rounded-lg transition-colors">
-              <div className="bg-amber-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Award className="h-7 w-7 text-amber-300" />
-              </div>
-              <h3 className="font-semibold text-white text-lg">10+ Years</h3>
-              <p className="text-sm text-gray-300 mt-1">Industry Experience</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Professional How It Works Section */}
-      <section className="py-24 bg-gray-700 relative overflow-hidden">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-block mb-8 relative">
-              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-                <span className="text-blue-600">
-                  How It
-                </span>{" "}
-                <span className="text-gray-200 italic font-light relative">
-                  Works
-                  <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
-                </span>
-              </h2>
-            </div>
-            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
-              Three simple steps to connect with licensed immigration experts
-            </p>
-          </div>
-
-          <div className="relative pt-16 pb-24 ">
-            <div className="hidden md:flex absolute top-1/2 left-0 right-0 -translate-y-1/2 items-center justify-center px-4 pointer-events-none z-10">
-              {/* First arrow - between card 1 and 2 */}
-              <div className="absolute left-1/3 transform -translate-x-1/2">
-                <div className="bg-white p-2 rounded-full shadow-lg">
-                  <ArrowRight className="h-8 w-8 text-gray-700" />
-                </div>
-              </div>
-              {/* Second arrow - between card 2 and 3 */}
-              <div className="absolute left-2/3 transform -translate-x-1/2">
-                <div className="bg-white p-2 rounded-full shadow-lg">
-                  <ArrowRight className="h-8 w-8 text-gray-700" />
-                </div>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <Search className="h-8 w-8" />,
-                  step: "1",
-                  title: "Browse & Choose",
-                  description: "Browse licensed consultants by your immigration need, expertise, and language preference",
-                  color: "bg-gray-700",
-                  bgColor: "bg-blue-50",
-                  shadowColor: "shadow-blue-500/20",
-                  delay: "0ms",
-                },
-                {
-                  icon: <Calendar className="h-8 w-8" />,
-                  step: "2",
-                  title: "Book & Pay",
-                  description: "Select your preferred time slot, pay securely, and upload documents if needed",
-                  color: "bg-gray-700",
-                  bgColor: "bg-blue-50",
-                  shadowColor: "shadow-indigo-500/20",
-                  delay: "200ms",
-                },
-                {
-                  icon: <Video className="h-8 w-8" />,
-                  step: "3",
-                  title: "Meet & Get Expert Help",
-                  description: "Connect via secure video call and receive personalized immigration guidance",
-                  color: "bg-gray-700",
-                  bgColor: "bg-blue-50",
-                  shadowColor: "shadow-purple-500/20",
-                  delay: "400ms",
-                },
-              ].map((step, index) => (
-                <div key={index} className="relative">
-                  <GlassCard
-                    className="shadow-2xl hover:shadow-3xl transition-all duration-300 relative overflow-hidden h-full"
-                  >
-                    <CardContent className="p-6 md:p-8 text-center relative overflow-hidden h-full flex flex-col">
-                      {/* Professional Icon with Step Number */}
-                      <div className="relative w-20 h-20 mx-auto mb-6">
-                        <div 
-                          className={`w-full h-full ${step.color} rounded-2xl relative z-10 flex items-center justify-center text-white`}
-                        >
-                          <div className="text-3xl">
-                            {step.icon}
-                          </div>
-                          <div className="absolute -top-2 -right-2 w-8 h-8 bg-white border-2 border-gray-200 text-gray-800 rounded-full flex items-center justify-center text-sm font-bold shadow-md">
-                            {step.step}
-                          </div>
-                        </div>
-                      </div>
-
-                      <h3 className="text-xl font-bold text-white mb-4 relative z-10 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-                        {step.title}
-                      </h3>
-
-                      <p className="text-gray-200 leading-relaxed relative z-10 flex-grow [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-                        {step.description}
-                      </p>
-                    </CardContent>
-                  </GlassCard>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Professional RCIC Preview Section */}
-      <section
-        id="consultants"
-        className="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden"
-      >
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-block mb-8 relative">
-              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-                <span className="text-gray-200">
-                  Meet Our
-                </span>
-                <br />
-                <span className="text-gray-200">
-                  Licensed{" "}
-                  <span className="text-gray-200 italic font-light">
-                    RCICs
-                  </span>
-                </span>
-              </h2>
-              <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
-            </div>
-            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
-              Licensed professionals ready to help with your immigration journey
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {consultants.map((consultant, index) => (
-              <GlassCard
-                key={index}
-                className="shadow-2xl hover:shadow-3xl transition-all duration-300"
-              >
-                <CardContent className="p-6 text-center">
-                  {/* Professional Profile Image */}
-                  <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-2 border-white shadow-md">
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-lg font-bold">
-                        {consultant.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <h3 className="text-base font-semibold text-white mb-1 [text-shadow:_0_2px_4px_rgba(0,0,0,0.3)]">
-                    {consultant.name}
-                  </h3>
-                  <p className="text-blue-300 text-xs mb-2 [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">RCIC #{consultant.rcicNumber}</p>
-                  
-                  <div className="flex items-center justify-center gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-3 w-3 ${
-                          i < Math.floor(consultant.rating)
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-400"
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-1 text-gray-300 text-xs [text-shadow:_0_1px_2px_rgba(0,0,0,0.2)]">
-                      ({consultant.reviews})
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    {[...consultant.languages.slice(0, 2), ...consultant.specialties.slice(0, 2)].map((item, idx) => (
-                      <Badge
-                        key={idx}
-                        variant="outline"
-                        className="text-[10px] py-0.5 px-2 h-5 border-gray-400 text-gray-200 bg-white/10 backdrop-blur-sm"
-                      >
-                        {item}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </GlassCard>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Button
-              size="lg"
-              variant="outline"
-              className=" relative bottom-4 border-2 border-gray-200 text-gray-200 hover:bg-blue-50 px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl"
-              onClick={() => navigate('/consultants')}
-            >
-              <span className="flex items-center gap-3">
-                See All Consultants
-                <ChevronRight className="h-5 w-5" />
-              </span>
+      {/* Modern Immigration Management Features Section - Gale Inspired */}
+      <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
+        <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
+          <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">SERVICES</h2>
+          <h1 className="text-4xl md:text-5xl font-light mb-4" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Modern Immigration Management Features</h1>
+          <p className="text-gray-600 font-light mb-8">ImmigrationConnect is a holistic platform for forward-thinking clients seeking professional immigration guidance.</p>
+          <div className="w-fit">
+            <Button className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors font-light lg:block hidden hover:cursor-pointer">
+              Book a demo
             </Button>
           </div>
         </div>
+        <div className="w-[95%] md:w-[56%] border-[1px] border-gray-300 rounded-lg p-4 shadow-md" style={{opacity: 1, transform: 'translateY(0px)'}}>
+          <ul className="max-w-2xl mx-auto w-full flex flex-col gap-2">
+            {[
+              {
+                title: "General Consultations",
+                description: "Time-based immigration consultations with licensed RCICs",
+                icon: "📋"
+              },
+              {
+                title: "Document Review", 
+                description: "Professional review of your immigration documents",
+                icon: "📄"
+              },
+              {
+                title: "Form Filling Assistance",
+                description: "Step-by-step form guidance and support", 
+                icon: "✍️"
+              },
+              {
+                title: "Follow-up Services",
+                description: "Ongoing support and extensions",
+                icon: "🔄"
+              },
+              {
+                title: "Program-Specific Help",
+                description: "Specialized immigration programs expertise",
+                icon: "🎯"
+              }
+            ].map((service, index) => (
+              <div key={index} className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-200 shadow-sm" style={{opacity: 1, transform: 'translateY(0px)'}}>
+                <div className="flex gap-4 flex-col md:flex-row items-center">
+                  <div className="flex justify-center">
+                    <div className="h-14 w-14 rounded-lg bg-gray-100 flex items-center justify-center text-2xl">
+                      {service.icon}
+                    </div>
+                  </div>
+                  <div className="text-center md:text-left">
+                    <h3 className="font-[550] text-[18px] text-neutral-800 text-center md:text-left">{service.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{service.description}</p>
+                  </div>
+                </div>
+                <button className="px-4 py-2 text-sm rounded-[10px] font-medium bg-black hover:bg-gray-800 text-white mt-4 md:mt-0 hover:cursor-pointer w-[170px]">
+                  View Details
+                </button>
+              </div>
+            ))}
+          </ul>
+        </div>
       </section>
 
-      {/* Success Stories Section */}
-      <section className="py-16 md:py-20 bg-gray-700">
+      {/* Why ImmigrationConnect Section - Modern & Responsive */}
+      <section className="py-16 md:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2">
-              Success Stories
-            </h2>
-            <p className="text-blue-600 text-lg">
-              from Real Clients
+            <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase">Our Advantage</h2>
+            <h3 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+              Why ImmigrationConnect?
+            </h3>
+            <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-500">
+              We provide a streamlined, transparent, and secure platform to connect with licensed immigration experts.
             </p>
-            <div className="w-16 h-1 bg-blue-600 mx-auto mt-4"></div>
           </div>
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-600">
+                <Shield size={24} />
+              </div>
+              <h4 className="mt-6 text-xl font-bold text-gray-900">Verified Experts</h4>
+              <p className="mt-2 text-base text-gray-500">
+                Connect with licensed RCICs whose credentials have been rigorously verified by our team for your peace of mind.
+              </p>
+            </div>
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 text-green-600">
+                <Heart size={24} />
+              </div>
+              <h4 className="mt-6 text-xl font-bold text-gray-900">High-Touch Support</h4>
+              <p className="mt-2 text-base text-gray-500">
+                Receive prompt, dedicated support within 24 hours, ensuring you're always informed and confident.
+              </p>
+            </div>
+            <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300">
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600">
+                <Zap size={24} />
+              </div>
+              <h4 className="mt-6 text-xl font-bold text-gray-900">Seamless Experience</h4>
+              <p className="mt-2 text-base text-gray-500">
+                Enjoy a user-friendly platform with simple booking, clear guidance, and a secure portal for your case.
+              </p>
+            </div>
+          </div>
+          <div className="mt-16 text-center">
+            <p className="text-lg text-gray-600">Have more questions?</p>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white font-semibold rounded-full px-8 py-3 transition-transform transform hover:scale-105"
+                onClick={() => navigate('/consultants')}
+              >
+                Book a Consultation
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto border-2 border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold rounded-full px-8 py-3 transition-transform transform hover:scale-105"
+                onClick={() => navigate('/contact')}
+              >
+                Contact Us
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <div className="max-w-3xl mx-auto ">
-            <Card className="border border-gray-100 shadow-sm text-gray-200 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155]" >
-              <CardContent className="p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">{testimonials[currentTestimonial].flag}</span>
-                  <Badge className="bg-green-50 text-green-700 border border-green-100 text-xs">
-                    {testimonials[currentTestimonial].outcome}
-                  </Badge>
+      {/* How It Works Section - Gale Inspired */}
+      <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
+        <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
+          <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">PROCESS</h2>
+          <h1 className="text-4xl md:text-5xl font-light mb-4" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>How It Works</h1>
+          <p className="text-gray-600 font-light mb-8">Three simple steps to connect with licensed immigration experts and get the professional guidance you need.</p>
+          <div className="w-fit">
+            <Button 
+              className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors font-light lg:block hidden hover:cursor-pointer"
+              onClick={() => setIsWaitlistOpen(true)}
+            >
+              Get Started
+            </Button>
+          </div>
+        </div>
+        <div className="w-[95%] md:w-[56%] border-[1px] border-gray-300 rounded-lg p-4 shadow-md" style={{opacity: 1, transform: 'translateY(0px)'}}>
+          <ul className="max-w-2xl mx-auto w-full flex flex-col gap-2">
+            {[
+              {
+                step: "01",
+                title: "Browse & Choose",
+                description: "Browse licensed consultants by your immigration need, expertise, and language preference",
+                icon: "🔍"
+              },
+              {
+                step: "02", 
+                title: "Book & Pay",
+                description: "Select your preferred time slot, pay securely, and upload documents if needed",
+                icon: "📅"
+              },
+              {
+                step: "03",
+                title: "Meet & Get Expert Help",
+                description: "Connect via secure video call and receive personalized immigration guidance", 
+                icon: "📹"
+              }
+            ].map((processStep, index) => (
+              <div key={index} className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-200 shadow-sm" style={{opacity: 1, transform: 'translateY(0px)'}}>
+                <div className="flex gap-4 flex-col md:flex-row items-center w-full">
+                  <div className="flex justify-center items-center">
+                    <div className="h-14 w-14 rounded-lg bg-gray-100 flex items-center justify-center text-2xl relative">
+                      {processStep.icon}
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        {processStep.step}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center md:text-left flex-1">
+                    <h3 className="font-[550] text-[18px] text-neutral-800 text-center md:text-left">{processStep.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{processStep.description}</p>
+                  </div>
                 </div>
+                {index < 2 && (
+                  <div className="md:flex hidden items-center justify-center ml-4">
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </ul>
+        </div>
+      </section>
 
-                <div className="flex gap-1 mb-4">
+      {/* Professional RCIC Preview Section - Gale Inspired */}
+      <section id="consultants" className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto px-4 py-16 md:py-24">
+        <div className="text-center mb-16">
+          <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">PROFESSIONALS</h2>
+          <h1 className="text-4xl md:text-5xl font-light mb-6" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+            Meet Our Licensed <em className="font-light italic">RCICs</em>
+          </h1>
+          <p className="text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
+            Certified immigration consultants with proven expertise to guide your journey to Canada.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {consultants.map((consultant, index) => (
+            <div
+              key={index}
+              className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
+            >
+              {/* Professional Profile Image */}
+              <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 group-hover:scale-105 transition-transform duration-300">
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-gray-600 text-lg font-medium" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                    {consultant.name.split(' ').map(n => n[0]).join('')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-1" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                  {consultant.name}
+                </h3>
+                <p className="text-sm text-gray-500 mb-3">RCIC #{consultant.rcicNumber}</p>
+                
+                <div className="flex items-center justify-center gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-4 w-4 ${i < testimonials[currentTestimonial].rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      className={`h-4 w-4 ${
+                        i < Math.floor(consultant.rating)
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
+                      }`}
                     />
                   ))}
-                </div>
-
-                <blockquote className="text-gray-200 italic mb-6 leading-relaxed">
-                  "{testimonials[currentTestimonial].quote}"
-                </blockquote>
-
-                <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-sm font-bold">
-                        {testimonials[currentTestimonial].author.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-200">{testimonials[currentTestimonial].author}</div>
-                    <div className="text-sm text-gray-200">{testimonials[currentTestimonial].role}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-center gap-2 mt-6">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentTestimonial(index)}
-                  className={`w-2 h-2 rounded-full ${index === currentTestimonial ? 'bg-blue-600' : 'bg-gray-300'}`}
-                  aria-label={`View testimonial ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Professional FAQ Section */}
-      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-24 right-24 w-[300px] h-[300px] bg-blue-50/15 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-24 left-24 w-[350px] h-[350px] bg-indigo-50/10 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
-            <div className="inline-block mb-8 relative">
-              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black leading-tight tracking-tight">
-                <span className="text-blue-600">
-                  Frequently
-                </span>
-                <br />
-                <span className="text-gray-200">
-                  Asked{" "}
-                  <span className="text-blue-600 italic font-light">
-                    Questions
+                  <span className="ml-2 text-sm text-gray-600">
+                    ({consultant.reviews})
                   </span>
-                </span>
-              </h2>
-              <div className="absolute -bottom-2 left-1/4 right-1/4 h-1 bg-blue-600 rounded-full"></div>
-            </div>
-            <p className="text-lg text-gray-200 max-w-3xl mx-auto leading-relaxed">
-              Quick answers to common questions about our platform and services
-            </p>
-          </div>
+                </div>
 
-          <div className="max-w-4xl mx-auto space-y-4 mb-16">
-            {faqs.map((faq, index) => (
-              <Card
-                key={index}
-                className={`border-2 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 rounded-lg overflow-hidden ${
-                  openFaq === index 
-                    ? 'border-blue-500 bg-white shadow-2xl ring-2 ring-blue-200 ring-opacity-50' 
-                    : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
-              >
-                <CardContent className="p-0">
-                  <button
-                    className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
-                      openFaq === index 
-                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
-                        : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                  >
-                    <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
-                      openFaq === index 
-                        ? 'text-blue-700' 
-                        : 'text-gray-900 group-hover:text-blue-600'
-                    }`}>
-                      {faq.question}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[...consultant.languages.slice(0, 1), ...consultant.specialties.slice(0, 2)].map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border"
+                    >
+                      {item}
                     </span>
-                    <div className={`p-2 rounded-full transition-all duration-300 ${
-                      openFaq === index 
-                        ? 'bg-blue-200 text-blue-700' 
-                        : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
-                    }`}>
-                      <ChevronDown
-                        className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
-                          openFaq === index ? "rotate-180" : ""
-                        }`}
-                      />
-                    </div>
-                  </button>
-                  {openFaq === index && (
-                    <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
-                      <div className="pt-4">
-                        <p className="text-gray-700 leading-relaxed text-base">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl"
-            >
-              <span className="flex items-center gap-3">
-                View All FAQs
-                <ChevronRight className="h-5 w-5" />
-              </span>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Professional Email Capture Section */}
-      <section className="py-24 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-16 left-16 w-[350px] h-[350px] bg-blue-500/8 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-16 right-16 w-[300px] h-[300px] bg-cyan-400/10 rounded-full blur-2xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-500/5 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="mb-16">
-              <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black text-white mb-8 leading-tight">
-                Get Early Access +{" "}
-                <span className="text-blue-600">
-                  10% Off
-                </span>
-              </h2>
-              <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto leading-relaxed">
-                Be first to know when we launch + receive exclusive early-bird offers
-              </p>
-              <div className="flex items-center justify-center gap-6 text-sm text-blue-200/80">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                  <span>Exclusive Access</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-blue-600" />
-                  <span>VIP Treatment</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Gem className="h-4 w-4 text-blue-600" />
-                  <span>Premium Benefits</span>
+                  ))}
                 </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm hover:shadow-3xl transition-all duration-500">
-              <CardContent className="p-10">
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="relative">
-                      <Input
-                        placeholder="First Name"
-                        className="py-4 px-4 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 transition-colors duration-300 bg-white/90"
-                      />
-                      <div className="absolute top-4 right-4">
-                        <UserCheck className="h-5 w-5 text-gray-400" />
+        <div className="text-center">
+          <Button
+            className="bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800 transition-colors font-light text-base"
+            onClick={() => navigate('/consultants')}
+          >
+            <span className="flex items-center gap-2">
+              See All Consultants
+              <ChevronRight className="h-4 w-4" />
+            </span>
+          </Button>
+        </div>
+      </section>
+
+      {/* Customer Reviews Section - Gale Inspired */}
+      <section className="max-w-[90dvw] md:max-w-[78dvw] 3xl:max-w-[1300px] mx-auto px-4 mt-12">
+        <div className="rounded-md flex flex-col antialiased bg-white items-left justify-center relative">
+          <span className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">TESTIMONIALS</span>
+          <h2 className="text-4xl md:text-5xl font-light mb-6 md:mb-8 text-gray-900" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Customer Reviews</h2>
+          <p className="text-gray-600 font-light mb-8 md:mb-10 flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+              ))}
+            </span>
+            <span className="text-gray-600 font-semibold">4.7 out of 5 stars</span>
+          </p>
+          <div className="relative overflow-hidden">
+            <div className="flex animate-scroll-horizontal hover:pause-animation">
+              {/* First set of testimonials */}
+              {[
+                {
+                  quote: "Sweet! Smoothest process ever.",
+                  author: "Deepika K.",
+                  role: "International Student",
+                  company: "from India"
+                },
+                {
+                  quote: "Extremely seamless and expert experience. They handled the process for my co-founder end-to-end.",
+                  author: "Carlos R.", 
+                  role: "Express Entry Applicant",
+                  company: "from Mexico"
+                },
+                {
+                  quote: "Solid UX - super simple to understand",
+                  author: "Sarah M.",
+                  role: "Family Sponsorship", 
+                  company: "from UK"
+                },
+                {
+                  quote: "Seamless process, great support",
+                  author: "Ahmed T.",
+                  role: "Provincial Nominee",
+                  company: "from UAE" 
+                },
+                {
+                  quote: "Professional and efficient service throughout the entire process.",
+                  author: "Maria L.",
+                  role: "Work Permit Holder",
+                  company: "from Spain"
+                },
+                {
+                  quote: "Couldn't have asked for better guidance on my immigration journey.",
+                  author: "James W.",
+                  role: "Permanent Resident",
+                  company: "from Australia"
+                }
+              ].concat([
+                {
+                  quote: "Sweet! Smoothest process ever.",
+                  author: "Deepika K.",
+                  role: "International Student",
+                  company: "from India"
+                },
+                {
+                  quote: "Extremely seamless and expert experience. They handled the process for my co-founder end-to-end.",
+                  author: "Carlos R.", 
+                  role: "Express Entry Applicant",
+                  company: "from Mexico"
+                },
+                {
+                  quote: "Solid UX - super simple to understand",
+                  author: "Sarah M.",
+                  role: "Family Sponsorship", 
+                  company: "from UK"
+                },
+                {
+                  quote: "Seamless process, great support",
+                  author: "Ahmed T.",
+                  role: "Provincial Nominee",
+                  company: "from UAE" 
+                },
+                {
+                  quote: "Professional and efficient service throughout the entire process.",
+                  author: "Maria L.",
+                  role: "Work Permit Holder",
+                  company: "from Spain"
+                },
+                {
+                  quote: "Couldn't have asked for better guidance on my immigration journey.",
+                  author: "James W.",
+                  role: "Permanent Resident",
+                  company: "from Australia"
+                }
+              ]).map((testimonial, index) => (
+                <div key={index} className="relative w-[350px] md:w-[400px] flex-shrink-0 rounded-2xl border border-gray-200 bg-white px-8 py-6 shadow-md hover:shadow-lg transition-shadow duration-300 mx-2">
+                  <blockquote>
+                    <p className="text-gray-900 text-base leading-relaxed font-normal mb-6">
+                      "{testimonial.quote}"
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-gray-600 text-sm font-semibold">
+                          {testimonial.author.split(' ').map(n => n[0]).join('')}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-900 text-sm font-semibold">{testimonial.author}</span>
+                        <span className="text-gray-500 text-xs">{testimonial.role} {testimonial.company}</span>
                       </div>
                     </div>
-                    <div className="relative">
-                      <Input
-                        type="email"
-                        placeholder="Email Address"
-                        className="py-4 px-4 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 transition-colors duration-300 bg-white/90"
-                      />
-                      <div className="absolute top-4 right-4">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <select
-                      className="w-full py-4 px-4 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none transition-colors duration-300 bg-white/90"
-                      value={selectedTopic}
-                      onChange={(e) => setSelectedTopic(e.target.value)}
-                    >
-                      <option value="">Select Your Immigration Goal</option>
-                      <option value="express-entry">🚀 Express Entry</option>
-                      <option value="study-permit">🎓 Study Permit</option>
-                      <option value="work-permit">💼 Work Permit</option>
-                      <option value="family-sponsorship">❤️ Family Sponsorship</option>
-                      <option value="provincial-nominee">🏛️ Provincial Nominee Program</option>
-                      <option value="citizenship">🍁 Canadian Citizenship</option>
-                      <option value="other">🤔 Other / Not Sure</option>
-                    </select>
-                    <div className="absolute top-4 right-4">
-                      <Target className="h-5 w-5 text-gray-400" />
-                    </div>
-                  </div>
-                  <Button
-                    size="lg"
-                    className="w-full bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] text-white py-4 text-xl font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden group"
-                  >
-                    <span className="relative z-10 flex items-center gap-3 ">
-                      <Rocket className="h-5 w-5" />
-                      Join Waitlist - Get 10% Off
-                      <Sparkles className="h-5 w-5" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12"></div>
-                  </Button>
-                </form>
-
-                <div className="mt-8 text-center">
-                  <p className="text-gray-500">
-                    Join <span className="font-bold text-blue-600">2,500+</span> people already on the waitlist
-                  </p>
-                  <div className="flex items-center justify-center gap-2 mt-3">
-                    <div className="flex -space-x-1">
-                      {[...Array(5)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 border border-white"
-                        ></div>
-                      ))}
-                    </div>
-                    <span className="text-gray-600 ml-3 text-sm">and counting...</span>
-                  </div>
+                  </blockquote>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          </div>
+          <div className="pb-[80px]" style={{opacity: 1, transform: 'translateY(30px)'}}>
+            <p className="text-sm">Let's do another successful case.</p>
+            <div className="mt-4 flex flex-col md:flex-row gap-3 md:gap-4">
+              <Button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-black text-white hover:bg-gray-800 h-11 rounded-full px-8 hover:cursor-pointer">
+                Book a call to learn more
+              </Button>
+              <Button variant="outline" className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 rounded-full px-8 hover:cursor-pointer">
+                Email us instead
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section - Gale Inspired */}
+      <section className="py-20 bg-white relative">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-black mb-4 text-black" style={{fontFamily: 'Bricolage Grotesque, sans-serif'}}>
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto" style={{fontFamily: 'Source Sans Pro, sans-serif'}}>
+              Everything you need to know about our immigration consulting services
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-all duration-200"
+              >
+                <button
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                >
+                  <span className="font-semibold text-lg text-black pr-4" style={{fontFamily: 'Inter, sans-serif'}}>
+                    {faq.question}
+                  </span>
+                  <div className="flex-shrink-0 ml-4">
+                    <ChevronDown
+                      className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
+                        openFaq === index ? "rotate-180" : ""
+                      }`}
+                    />
+                  </div>
+                </button>
+                {openFaq === index && (
+                  <div className="px-6 pb-6 border-t border-gray-100 bg-gray-50">
+                    <div className="pt-4">
+                      <p className="text-neutral-700 leading-relaxed" style={{fontFamily: 'Source Sans Pro, sans-serif'}}>
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button
+              className="bg-black text-white hover:bg-gray-800 px-8 py-3 rounded-lg font-medium transition-colors duration-200"
+              style={{fontFamily: 'Inter, sans-serif'}}
+            >
+              Contact us for more questions
+            </Button>
           </div>
         </div>
       </section>
