@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./Button"
-import { Card, CardContent, GlassCard } from "./ui/Card"
-import { Badge } from "./ui/Badge"
-import { Input } from "./ui/Input"
 import { WaitingListModal } from "./WaitingListModal"
 import "./styles/testimonial-animation.css"
 import {
@@ -589,84 +586,6 @@ export function HomePage() {
           </ul>
         </div>
       </section>
-
-      {/* Professional RCIC Preview Section - Gale Inspired */}
-      <section id="consultants" className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto px-4 py-16 md:py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">PROFESSIONALS</h2>
-          <h1 className="text-4xl md:text-5xl font-light mb-6" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
-            Meet Our Licensed <em className="font-light italic">RCICs</em>
-          </h1>
-          <p className="text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
-            Certified immigration consultants with proven expertise to guide your journey to Canada.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {consultants.map((consultant, index) => (
-            <div
-              key={index}
-              className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group cursor-pointer"
-            >
-              {/* Professional Profile Image */}
-              <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 group-hover:scale-105 transition-transform duration-300">
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-gray-600 text-lg font-medium" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
-                    {consultant.name.split(' ').map(n => n[0]).join('')}
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-900 mb-1" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
-                  {consultant.name}
-                </h3>
-                <p className="text-sm text-gray-500 mb-3">RCIC #{consultant.rcicNumber}</p>
-                
-                <div className="flex items-center justify-center gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < Math.floor(consultant.rating)
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">
-                    ({consultant.reviews})
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap justify-center gap-2">
-                  {[...consultant.languages.slice(0, 1), ...consultant.specialties.slice(0, 2)].map((item, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <Button
-            className="bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800 transition-colors font-light text-base"
-            onClick={() => navigate('/consultants')}
-          >
-            <span className="flex items-center gap-2">
-              See All Consultants
-              <ChevronRight className="h-4 w-4" />
-            </span>
-          </Button>
-        </div>
-      </section>
-
       {/* Customer Reviews Section - Gale Inspired */}
       <section className="max-w-[90dvw] md:max-w-[78dvw] 3xl:max-w-[1300px] mx-auto px-4 mt-12">
         <div className="rounded-md flex flex-col antialiased bg-white items-left justify-center relative">
