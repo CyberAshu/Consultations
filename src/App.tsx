@@ -15,6 +15,7 @@ import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
 import { BookingFlow } from './components/pages/BookingFlow';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -44,11 +45,13 @@ function App() {
             </div>
           } />
           <Route path="/consultants" element={
-            <div>
-              <Header />
-              <main><ConsultantsPage /></main>
-              <Footer />
-            </div>
+            <ProtectedRoute>
+              <div>
+                <Header />
+                <main><ConsultantsPage /></main>
+                <Footer />
+              </div>
+            </ProtectedRoute>
           } />
           <Route path="/faq" element={
             <div>
@@ -83,12 +86,28 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           
           {/* Dashboard routes without header/footer */}
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/client-dashboard" element={<ClientDashboard />} />
-          <Route path="/rcic-dashboard" element={<RCICDashboard />} />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/client-dashboard" element={
+            <ProtectedRoute allowedRoles={['client']}>
+              <ClientDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/rcic-dashboard" element={
+            <ProtectedRoute allowedRoles={['rcic']}>
+              <RCICDashboard />
+            </ProtectedRoute>
+          } />
           
           {/* Booking flow without header/footer */}
-          <Route path="/book" element={<BookingFlow />} />
+          <Route path="/book" element={
+            <ProtectedRoute>
+              <BookingFlow />
+            </ProtectedRoute>
+          } />
         </Routes>
       </div>
     </Router>

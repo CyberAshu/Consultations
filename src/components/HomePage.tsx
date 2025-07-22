@@ -385,14 +385,6 @@ export function HomePage() {
                 <Calendar className="h-5 w-5 mr-2" />
                 Book Consultation
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-medium rounded-lg transition-all duration-200 hover:border-white/50"
-                
-              >
-                Learn More
-              </Button>
             </div>
           </div>
         </div>

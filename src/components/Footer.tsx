@@ -13,7 +13,7 @@ export function Footer() {
           {/* Links */}
           <div className="flex justify-center space-x-6 text-sm">
             <a 
-              href="/terms-conditions" 
+              href="/terms-of-use" 
               className="text-gray-600 hover:text-blue-600 transition-colors duration-300"
             >
               Terms and Conditions
