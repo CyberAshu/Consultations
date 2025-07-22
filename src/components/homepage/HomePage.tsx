@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { Button } from "./Button"
-import { WaitingListModal } from "./WaitingListModal"
-import "./styles/testimonial-animation.css"
+import { Button } from "../shared/Button"
+import { WaitingListModal } from "../shared/WaitingListModal"
+import "../shared/styles/testimonial-animation.css"
 import {
   ArrowRight,
   Search,

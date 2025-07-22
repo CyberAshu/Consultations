@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { GlassCard, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Input } from '../ui/Input'
 import { Mail, Lock, AlertCircle, LogIn, Eye, EyeOff, Shield, Users, FileText } from 'lucide-react'

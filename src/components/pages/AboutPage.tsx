@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card, CardContent, BlurCard } from '../ui/Card'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { Globe, Heart, Shield, Lightbulb, CheckCircle, Users, Award, Target, Star } from 'lucide-react'
 
 export function AboutPage() {

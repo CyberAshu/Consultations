@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { 
   Clock, 
   User, 

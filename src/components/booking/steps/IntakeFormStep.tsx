@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
-import { Button } from '../../Button'
+import { Button } from '../../shared/Button'
 import { 
   FileText,
   Upload,

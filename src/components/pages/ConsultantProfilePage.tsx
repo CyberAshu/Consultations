@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Card, CardContent } from '../ui/Card'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { Badge } from '../ui/Badge'
 import {
   Star,

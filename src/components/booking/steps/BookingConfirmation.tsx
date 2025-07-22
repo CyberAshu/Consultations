@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../../ui/Card'
-import { Button } from '../../Button'
+import { Button } from '../../shared/Button'
 import { 
   CheckCircle,
   Calendar,

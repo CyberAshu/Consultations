@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { ArrowUp } from 'lucide-react'
 
 interface ScrollToTopProps {

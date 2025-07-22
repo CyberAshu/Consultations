@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Calendar, Clock, User, FileText, Settings, DollarSign, AlertCircle, LogOut, ArrowLeft, Bell, Award, TrendingUp, CheckCircle } from 'lucide-react'

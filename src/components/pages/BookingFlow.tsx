@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { 
@@ -15,11 +15,11 @@ import {
   Shield,
   MapPin
 } from 'lucide-react'
-import { SelectRCICStep } from './booking/SelectRCICStep'
-import { ChooseTimeSlotStep } from './booking/ChooseTimeSlotStep'
-import { PaymentStep } from './booking/PaymentStep'
-import { IntakeFormStep } from './booking/IntakeFormStep'
-import { BookingConfirmation } from './booking/BookingConfirmation'
+import { SelectRCICStep } from '../booking/steps/SelectRCICStep'
+import { ChooseTimeSlotStep } from '../booking/steps/ChooseTimeSlotStep'
+import { PaymentStep } from '../booking/steps/PaymentStep'
+import { IntakeFormStep } from '../booking/steps/IntakeFormStep'
+import { BookingConfirmation } from '../booking/steps/BookingConfirmation'
 import { FloatingBookingSummary } from '../booking/FloatingBookingSummary'
 import { ScrollToTop } from '../ui/ScrollToTop'
 

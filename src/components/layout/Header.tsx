@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Button } from './Button'
+import { Button } from '../shared/Button'
 import { Menu, User, LogOut, ChevronDown, Lock } from 'lucide-react'
 
 export function Header() {

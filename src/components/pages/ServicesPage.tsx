@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '../ui/Card';
-import { Button } from '../Button';
+import { Button } from '../shared/Button';
 import { CheckCircle, Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

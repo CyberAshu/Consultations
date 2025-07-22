@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Header } from './components/Header';
-import { Footer } from './components/Footer';
-import { HomePage } from './components/HomePage';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+import { HomePage } from './components/homepage/HomePage';
 import { AboutPage } from './components/pages/AboutPage';
 import { ServicesPage } from './components/pages/ServicesPage';
 import { ConsultantsPage } from './components/pages/ConsultantsPage';
@@ -16,7 +16,7 @@ import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
 import { BookingFlow } from './components/pages/BookingFlow';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute } from './components/layout/ProtectedRoute';
 
 function App() {
   return (

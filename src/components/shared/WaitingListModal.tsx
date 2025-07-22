@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Button } from './Button'
-import { Input } from './ui/Input'
+import { Input } from '../ui/Input'
 import { X } from 'lucide-react'
 
 interface WaitingListModalProps {

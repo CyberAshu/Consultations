@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, GlassCard } from '../ui/Card'
-import { Button } from '../Button'
+import { Button } from '../shared/Button'
 import { Badge } from '../ui/Badge'
 import {
   Star,

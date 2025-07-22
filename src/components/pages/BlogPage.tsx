@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../Button';
+import { Button } from '../shared/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent } from '../ui/Card';
 import { Heart, MessageCircle, User, Calendar, Tag, Search } from 'lucide-react';
