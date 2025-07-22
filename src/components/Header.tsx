@@ -179,7 +179,15 @@ export function Header() {
             >
               FAQs
             </Link>
-            <Link to="/waiting-list">
+            <Link
+              to="/blog"
+              className={`transition-all duration-300 hover:text-gray-600 font-medium ${
+                isActive("/blog") ? "text-blue-600" : "text-gray-700"
+              }`}
+            >
+              Blog
+            </Link>
+            <Link to="/become-consultant">
               <Button
                 variant="outline"
                 className="border-2 border-gray-600 text-gray-700 hover:bg-gray-600 font-semibold rounded-full px-6"
@@ -286,13 +294,19 @@ export function Header() {
               >
                 FAQs
               </Link>
-              <Link to="/waiting-list">
+              <Link
+                to="/blog"
+                className="text-gray-700 hover:text-blue-600 transition-colors duration-300 py-3 px-4 rounded-lg hover:bg-blue-50 font-medium text-left"
+              >
+                Blog
+              </Link>
+              <Link to="/become-consultant">
                 <Button
                   variant="outline"
                   className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full mt-4 font-semibold w-full"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Join Waitlist
+                  Become a Consultant
                 </Button>
               </Link>
               

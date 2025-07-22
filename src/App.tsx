@@ -7,7 +7,8 @@ import { AboutPage } from './components/pages/AboutPage';
 import { ServicesPage } from './components/pages/ServicesPage';
 import { ConsultantsPage } from './components/pages/ConsultantsPage';
 import { FAQPage } from './components/pages/FAQPage';
-import { WaitingListPage } from './components/pages/WaitingListPage';
+import { BecomeConsultantPage } from './components/pages/BecomeConsultantPage';
+import { BlogPage } from './components/pages/BlogPage';
 import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
 import { TermsOfUsePage } from './components/pages/TermsOfUsePage';
 import { LoginPage } from './components/pages/LoginPage';
@@ -60,10 +61,17 @@ function App() {
               <Footer />
             </div>
           } />
-          <Route path="/waiting-list" element={
+          <Route path="/become-consultant" element={
             <div>
               <Header />
-              <main><WaitingListPage /></main>
+              <main><BecomeConsultantPage /></main>
+              <Footer />
+            </div>
+          } />
+          <Route path="/blog" element={
+            <div>
+              <Header />
+              <main><BlogPage /></main>
               <Footer />
             </div>
           } />
