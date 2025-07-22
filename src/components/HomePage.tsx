@@ -404,7 +404,7 @@ export function HomePage() {
       <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">SERVICES</h2>
-          <h1 className="text-4xl md:text-5xl font-light mb-4" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Modern Immigration Management Features</h1>
+          <h1 className="text-4xl md:text-5xl font-semibold mb-4">Modern Immigration Management Features</h1>
           <p className="text-gray-600 font-light mb-8">ImmigrationConnect is a holistic platform for forward-thinking clients seeking professional immigration guidance.</p>
           <div className="w-fit">
             <Button className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors font-light lg:block hidden hover:cursor-pointer">
@@ -449,7 +449,7 @@ export function HomePage() {
                     </div>
                   </div>
                   <div className="text-center md:text-left">
-                    <h3 className="font-[550] text-[18px] text-neutral-800 text-center md:text-left">{service.title}</h3>
+                    <h3 className="font-medium text-[18px] text-neutral-800 text-center md:text-left">{service.title}</h3>
                     <p className="text-sm text-gray-600 mt-1">{service.description}</p>
                   </div>
                 </div>
@@ -528,7 +528,7 @@ export function HomePage() {
       <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">PROCESS</h2>
-          <h1 className="text-4xl md:text-5xl font-light mb-4" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>How It Works</h1>
+          <h1 className="text-4xl md:text-5xl font-semibold mb-4">How It Works</h1>
           <p className="text-gray-600 font-light mb-8">Three simple steps to connect with licensed immigration experts and get the professional guidance you need.</p>
           <div className="w-fit">
             <Button 
@@ -572,7 +572,7 @@ export function HomePage() {
                     </div>
                   </div>
                   <div className="text-center md:text-left flex-1">
-                    <h3 className="font-[550] text-[18px] text-neutral-800 text-center md:text-left">{processStep.title}</h3>
+                    <h3 className="font-medium text-[18px] text-neutral-800 text-center md:text-left">{processStep.title}</h3>
                     <p className="text-sm text-gray-600 mt-1">{processStep.description}</p>
                   </div>
                 </div>
@@ -590,7 +590,7 @@ export function HomePage() {
       <section className="max-w-[90dvw] md:max-w-[78dvw] 3xl:max-w-[1300px] mx-auto px-4 mt-12">
         <div className="rounded-md flex flex-col antialiased bg-white items-left justify-center relative">
           <span className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">TESTIMONIALS</span>
-          <h2 className="text-4xl md:text-5xl font-light mb-6 md:mb-8 text-gray-900" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Customer Reviews</h2>
+          <h2 className="text-4xl md:text-5xl font-semibold mb-6 md:mb-8 text-gray-900">Customer Reviews</h2>
           <p className="text-gray-600 font-light mb-8 md:mb-10 flex items-center gap-3">
             <span className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (
@@ -716,10 +716,10 @@ export function HomePage() {
       <section className="py-20 bg-white relative">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-black mb-4 text-black" style={{fontFamily: 'Bricolage Grotesque, sans-serif'}}>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-black">
               Frequently Asked Questions
             </h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto" style={{fontFamily: 'Source Sans Pro, sans-serif'}}>
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
               Everything you need to know about our immigration consulting services
             </p>
           </div>
@@ -734,7 +734,7 @@ export function HomePage() {
                   className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
                   onClick={() => setOpenFaq(openFaq === index ? null : index)}
                 >
-                  <span className="font-semibold text-lg text-black pr-4" style={{fontFamily: 'Inter, sans-serif'}}>
+                  <span className="font-semibold text-lg text-black pr-4">
                     {faq.question}
                   </span>
                   <div className="flex-shrink-0 ml-4">
@@ -748,7 +748,7 @@ export function HomePage() {
                 {openFaq === index && (
                   <div className="px-6 pb-6 border-t border-gray-100 bg-gray-50">
                     <div className="pt-4">
-                      <p className="text-neutral-700 leading-relaxed" style={{fontFamily: 'Source Sans Pro, sans-serif'}}>
+                      <p className="text-neutral-700 leading-relaxed">
                         {faq.answer}
                       </p>
                     </div>
@@ -761,7 +761,6 @@ export function HomePage() {
           <div className="text-center mt-12">
             <Button
               className="bg-black text-white hover:bg-gray-800 px-8 py-3 rounded-lg font-medium transition-colors duration-200"
-              style={{fontFamily: 'Inter, sans-serif'}}
             >
               Contact us for more questions
             </Button>

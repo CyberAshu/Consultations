@@ -14,6 +14,24 @@ module.exports = {
       '2xl': '1536px',
     },
     extend: {
+      fontFamily: {
+        'system': [
+          'ui-sans-serif',
+          'system-ui',
+          'sans-serif',
+          '"Apple Color Emoji"',
+          '"Segoe UI Emoji"',
+          '"Segoe UI Symbol"',
+          '"Noto Color Emoji"'
+        ],
+      },
+      fontWeight: {
+        'light': '300',
+        'normal': '400',
+        'medium': '500',
+        'semibold': '600',
+        'bold': '700',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

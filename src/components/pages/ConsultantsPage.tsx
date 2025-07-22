@@ -438,7 +438,7 @@ export function ConsultantsPage() {
           <div className="flex justify-between items-center mb-12">
             <div>
               <h2 className="text-sm text-gray-800 font-light mb-2 uppercase tracking-wide">CONSULTANTS</h2>
-              <h3 className="text-3xl md:text-4xl font-light text-gray-900" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+              <h3 className="text-3xl md:text-4xl font-semibold text-gray-900">
                 {filteredConsultants.length > 0 
                   ? `${filteredConsultants.length} Expert${filteredConsultants.length !== 1 ? 's' : ''} Available` 
                   : 'No consultants found'}
@@ -471,7 +471,7 @@ export function ConsultantsPage() {
                   <div className="mb-4">
                     {/* Photo */}
                     <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden bg-gray-100 group-hover:scale-105 transition-transform duration-300">
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-lg font-medium" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-lg font-semibold">
                         {consultant.name.split(' ').map(n => n[0]).join('')}
                       </div>
                       {consultant.availability === "Available today" && (
@@ -482,7 +482,7 @@ export function ConsultantsPage() {
                     </div>
                     
                     {/* Name & RCIC # */}
-                    <h3 className="text-lg font-medium text-gray-900 mb-1" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
                       {consultant.name}
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">RCIC #{consultant.rcicNumber}</p>

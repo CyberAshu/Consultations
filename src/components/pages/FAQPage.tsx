@@ -140,7 +140,7 @@ export function FAQPage() {
           <div className="max-w-4xl mx-auto">
             {faqs.map((category, categoryIndex) => (
               <div key={categoryIndex} className="mb-12">
-                <h2 className="text-2xl md:text-3xl font-light text-gray-900 mb-8 flex items-center gap-3" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+                <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
                   <HelpCircle className="h-6 w-6 text-blue-600" />
                   {category.category}
                 </h2>
@@ -211,7 +211,7 @@ export function FAQPage() {
           <div className="max-w-4xl mx-auto">
             <div className="mb-12">
               <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">NEED HELP?</h2>
-              <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-8 leading-tight" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>
+              <h3 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-8 leading-tight">
                 Still have <em className="font-light italic text-blue-600">Questions?</em>
               </h3>
               <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
@@ -222,7 +222,7 @@ export function FAQPage() {
             <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
                 <div className="text-center flex-1">
-                  <h4 className="text-xl font-medium text-gray-900 mb-2" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Email Support</h4>
+                  <h4 className="text-xl font-semibold text-gray-900 mb-2">Email Support</h4>
                   <p className="text-gray-600 mb-4 font-light">Get detailed answers to your questions</p>
                   <a
                     href="mailto:support@immigrationconnect.ca"
@@ -233,7 +233,7 @@ export function FAQPage() {
                 </div>
                 <div className="hidden sm:block w-px h-20 bg-gray-200"></div>
                 <div className="text-center flex-1">
-                  <h4 className="text-xl font-medium text-gray-900 mb-2" style={{fontFamily: "'Bricolage Grotesque', sans-serif"}}>Live Chat</h4>
+                  <h4 className="text-xl font-semibold text-gray-900 mb-2">Live Chat</h4>
                   <p className="text-gray-600 mb-4 font-light">Quick answers during business hours</p>
                   <button
                     className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-full transition-all duration-300"
