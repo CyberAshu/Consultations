@@ -69,7 +69,6 @@ export function ServicesPage() {
                   "Portal navigation & documentation help",
                   "Comprehensive options assessment"
                 ],
-                price: "From $60 CAD",
                 color: "blue"
               },
               {
@@ -82,7 +81,6 @@ export function ServicesPage() {
                   "Refusal analysis & recommendations",
                   "Live feedback discussion"
                 ],
-                price: "From $80 CAD",
                 color: "green"
               },
               {
@@ -95,7 +93,6 @@ export function ServicesPage() {
                   "TRV & LMIA guidance",
                   "Non-submission support"
                 ],
-                price: "From $70 CAD",
                 color: "purple"
               },
               {
@@ -108,7 +105,6 @@ export function ServicesPage() {
                   "IRCC response planning",
                   "Procedural fairness help"
                 ],
-                price: "From $20 CAD",
                 color: "orange"
               },
               {
@@ -121,7 +117,6 @@ export function ServicesPage() {
                   "Family Sponsorship",
                   "Visitor & Super Visas"
                 ],
-                price: "From $90 CAD",
                 color: "indigo"
               },
               {
@@ -134,7 +129,6 @@ export function ServicesPage() {
                   "Student-to-PR Track",
                   "Custom packages available"
                 ],
-                price: "From $150 CAD",
                 color: "teal"
               }
             ].map((service, index) => {
@@ -172,7 +166,6 @@ export function ServicesPage() {
                     
                     <div className="mt-auto">
                       <div className="text-center mb-4">
-                        <span className="text-2xl font-bold text-gray-900">{service.price}</span>
                       </div>
                       <Button 
                         className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition-all duration-200"
