@@ -348,15 +348,15 @@ export function HomePage() {
         <div className="container mx-auto px-6 py-20 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Clean Typography with Better Contrast */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 leading-tight drop-shadow-lg">
-              Navigate to
-              <span className="block font-semibold text-blue-400">Canada</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight drop-shadow-lg">
+              Simplifying Professional
+              <span className="block font-semibold text-blue-400">Immigration Consultation</span>
             </h1>
             
             {/* Minimal Subtitle */}
             <p className="text-xl md:text-2xl text-gray-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
-              Connect with licensed immigration consultants. 
-              <span className="text-white font-medium">Professional guidance, simplified.</span>
+              Simple, affordable, on demand sessions with verified RCICs.
+              <span className="block text-white font-medium mt-2">No retainers. Transparent Pricing. Instant Booking</span>
             </p>
             
             {/* Trust Indicators */}
@@ -396,11 +396,14 @@ export function HomePage() {
       <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">SERVICES</h2>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-4">Modern Immigration Management Features</h1>
-          <p className="text-gray-600 font-light mb-8">ImmigrationConnect is a holistic platform for forward-thinking clients seeking professional immigration guidance.</p>
+          <h1 className="text-4xl md:text-5xl font-semibold mb-4">Book with Confidence. Pay Only for What You Need</h1>
+          <p className="text-gray-600 font-light mb-8">Immigration Connect empowers you to book trusted Canadian immigration experts on demand from anywhere in the world.</p>
           <div className="w-fit">
-            <Button className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors font-light lg:block hidden hover:cursor-pointer">
-              Book a demo
+            <Button 
+              className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors font-light lg:block hidden hover:cursor-pointer"
+              onClick={() => navigate('/about')}
+            >
+              Learn More
             </Button>
           </div>
         </div>
