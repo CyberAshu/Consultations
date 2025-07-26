@@ -123,44 +123,44 @@ export function BecomeConsultantPage() {
 
   if (isSubmitted) {
     return (
-      <main className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <main className="min-h-screen pt-16 sm:pt-20 lg:pt-24 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <Card className="bg-white rounded-lg shadow-lg">
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-6 sm:p-8 lg:p-12 text-center">
               <div className="mb-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Application Submitted Successfully!</h1>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 px-4">Application Submitted Successfully!</h1>
               </div>
               
-              <div className="prose prose-lg mx-auto text-left bg-gray-50 rounded-lg p-6">
-                <p className="text-gray-700 mb-4">
+              <div className="prose prose-sm sm:prose-base lg:prose-lg mx-auto text-left bg-gray-50 rounded-lg p-4 sm:p-6">
+                <p className="text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base">
                   <strong>Thank you!</strong> Your application has been successfully submitted.
                 </p>
-                <p className="text-gray-700 mb-4">
+                <p className="text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base">
                   We've received your details and documents. Our admin team will carefully review your 
                   application within <strong>2–3 business days</strong> to ensure all licensing and compliance 
                   requirements are met.
                 </p>
-                <p className="text-gray-700 mb-4">
+                <p className="text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base">
                   If your application is approved, you'll receive an email with login access to your consultant 
                   dashboard, along with instructions to complete your onboarding and begin accepting client bookings.
                 </p>
-                <p className="text-gray-700 mb-4">
+                <p className="text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base">
                   If additional information or clarification is needed, we'll reach out to you directly via the 
                   email you provided.
                 </p>
-                <p className="text-gray-700">
+                <p className="text-gray-700 text-sm sm:text-base">
                   In the meantime, if you have any questions or need to make updates to your submission, please 
                   contact us at <strong>support@[yourdomain].ca</strong>.
                 </p>
               </div>
               
-              <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                <p className="text-blue-800 font-medium">
+              <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-blue-50 rounded-lg">
+                <p className="text-blue-800 font-medium text-sm sm:text-base">
                   We're excited to have you join our growing network of trusted Canadian immigration consultants!
                 </p>
               </div>
@@ -172,27 +172,27 @@ export function BecomeConsultantPage() {
   }
 
   return (
-    <main className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <main className="min-h-screen pt-16 sm:pt-20 lg:pt-24 pb-8 sm:pb-12 px-3 sm:px-4 lg:px-8 bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-gray-900 leading-tight">
             Become a Consultant
           </h1>
-          <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+          <p className="mt-3 sm:mt-5 max-w-xl mx-auto text-base sm:text-lg lg:text-xl text-gray-500 px-4">
             Submit your application to join our team of experts.
           </p>
         </div>
         
-        <div className="mt-10 space-y-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="mt-6 sm:mt-10 space-y-6 sm:space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Section 1: Personal & Contact Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 1: Personal & Contact Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="fullLegalName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -311,13 +311,13 @@ export function BecomeConsultantPage() {
             </Card>
 
             {/* Section 2: Licensing & Credentials */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 2: Licensing & Credentials
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="rcicLicenseNumber" className="block text-sm font-medium text-gray-700 mb-2">
@@ -437,41 +437,41 @@ export function BecomeConsultantPage() {
             </Card>
 
             {/* Section 3: Practice Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 3: Practice Details
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     Are you affiliated with an immigration firm or operating independently? *
                   </label>
-                  <div className="space-x-4">
-                    <label className="inline-flex items-center">
+                  <div className="flex flex-col sm:flex-row sm:space-x-6 space-y-3 sm:space-y-0">
+                    <label className="flex items-center cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors">
                       <input
                         type="radio"
                         name="practiceType"
                         value="independent"
                         checked={formData.practiceType === 'independent'}
                         onChange={handleInputChange}
-                        className="form-radio"
+                        className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded-full focus:ring-blue-500 focus:ring-2 focus:ring-offset-0 checked:bg-blue-600 checked:border-blue-600"
                         required
                       />
-                      <span className="ml-2 text-sm text-gray-700">Independent</span>
+                      <span className="ml-3 text-sm font-medium text-gray-900 select-none">Independent</span>
                     </label>
-                    <label className="inline-flex items-center">
+                    <label className="flex items-center cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors">
                       <input
                         type="radio"
                         name="practiceType"
                         value="affiliated"
                         checked={formData.practiceType === 'affiliated'}
                         onChange={handleInputChange}
-                        className="form-radio"
+                        className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded-full focus:ring-blue-500 focus:ring-2 focus:ring-offset-0 checked:bg-blue-600 checked:border-blue-600"
                         required
                       />
-                      <span className="ml-2 text-sm text-gray-700">Affiliated</span>
+                      <span className="ml-3 text-sm font-medium text-gray-900 select-none">Affiliated</span>
                     </label>
                   </div>
                 </div>
@@ -506,59 +506,59 @@ export function BecomeConsultantPage() {
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center">
+                <div className="space-y-4">
+                  <div className="flex items-start">
                     <input
                       id="hasBusinessRegistration"
                       name="hasBusinessRegistration"
                       type="checkbox"
                       checked={formData.hasBusinessRegistration}
                       onChange={handleInputChange}
-                      className="form-checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
                     />
-                    <label htmlFor="hasBusinessRegistration" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="hasBusinessRegistration" className="ml-3 text-sm text-gray-700 cursor-pointer">
                       Do you hold a valid Canadian business registration number?
                     </label>
                   </div>
 
-                  <div className="flex items-center">
+                  <div className="flex items-start">
                     <input
                       id="isIRBAuthorized"
                       name="isIRBAuthorized"
                       type="checkbox"
                       checked={formData.isIRBAuthorized}
                       onChange={handleInputChange}
-                      className="form-checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
                     />
-                    <label htmlFor="isIRBAuthorized" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="isIRBAuthorized" className="ml-3 text-sm text-gray-700 cursor-pointer">
                       Are you authorized under IRB (L3-RCIC)?
                     </label>
                   </div>
 
-                  <div className="flex items-center">
+                  <div className="flex items-start">
                     <input
                       id="takingPrivateClients"
                       name="takingPrivateClients"
                       type="checkbox"
                       checked={formData.takingPrivateClients}
                       onChange={handleInputChange}
-                      className="form-checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
                     />
-                    <label htmlFor="takingPrivateClients" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="takingPrivateClients" className="ml-3 text-sm text-gray-700 cursor-pointer">
                       Are you currently taking clients in private practice?
                     </label>
                   </div>
 
-                  <div className="flex items-center">
+                  <div className="flex items-start">
                     <input
                       id="representsClientsIRCC"
                       name="representsClientsIRCC"
                       type="checkbox"
                       checked={formData.representsClientsIRCC}
                       onChange={handleInputChange}
-                      className="form-checkbox"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mt-1"
                     />
-                    <label htmlFor="representsClientsIRCC" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="representsClientsIRCC" className="ml-3 text-sm text-gray-700 cursor-pointer">
                       Do you currently represent clients before IRCC or IRB?
                     </label>
                   </div>
@@ -567,13 +567,13 @@ export function BecomeConsultantPage() {
             </Card>
 
             {/* Section 4: Areas of Expertise */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 4: Areas of Expertise
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Check all that apply: *
@@ -613,13 +613,13 @@ export function BecomeConsultantPage() {
             </Card>
 
             {/* Section 5: Languages Spoken */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 5: Languages Spoken
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div>
                   <label htmlFor="primaryLanguage" className="block text-sm font-medium text-gray-700 mb-2">
                     Primary Language *
@@ -676,13 +676,13 @@ export function BecomeConsultantPage() {
             </Card>
 
             {/* Section 6: Declarations & Agreements */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 6: Declarations & Agreements
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div className="space-y-3">
                   <label className="flex items-start">
                     <input
@@ -758,13 +758,13 @@ export function BecomeConsultantPage() {
             </Card>
 
             {/* Section 7: Signature & Submission */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="pb-4 sm:pb-6">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 px-2 sm:px-0">
                   Section 7: Signature & Submission
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                 <div>
                   <label htmlFor="digitalSignature" className="block text-sm font-medium text-gray-700 mb-2">
                     Typed Full Name (acts as digital signature) *
