@@ -309,31 +309,16 @@ export function HomePage() {
           <div className="max-w-4xl mx-auto text-center">
             {/* Clean Typography with Better Contrast */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight drop-shadow-lg">
-              Simplifying Professional
+              Simplifying
               <span className="block font-semibold text-blue-400">Immigration Consultation</span>
             </h1>
             
             {/* Minimal Subtitle */}
             <p className="text-xl md:text-2xl text-gray-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
               Simple, affordable, on demand sessions with verified RCICs.
-              <span className="block text-white font-medium mt-2">No retainers. Transparent Pricing. Instant Booking</span>
             </p>
             
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8 mb-12 text-sm">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <CheckCircle className="h-4 w-4 text-blue-400" />
-                <span className="text-white">Licensed RCICs</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <Shield className="h-4 w-4 text-blue-400" />
-                <span className="text-white">Transparent Pricing</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <Zap className="h-4 w-4 text-blue-400" />
-                <span className="text-white">Instant Booking</span>
-              </div>
-            </div>
+          
             
             {/* Clean CTA */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
