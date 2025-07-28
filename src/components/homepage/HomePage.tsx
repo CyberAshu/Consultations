@@ -294,7 +294,7 @@ export function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-full overflow-x-hidden ">
       {showDisclaimer && <DisclaimerModal onAccept={handleAcceptDisclaimer} />}
       {/* Waitlist Modal */}
       <WaitingListModal 
@@ -303,47 +303,7 @@ export function HomePage() {
       />
       
       {/* Professional Hero Section with Background Video */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Video */}
-        <div className="absolute inset-0 z-0">
-          <video
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4"
-          >
-            {/* Working professional video sources */}
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            {/* Fallback video from Internet Archive */}
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            {/* Fallback - this will show if video fails */}
-            Your browser does not support the video tag.
-          </video>
-          
-          {/* Professional Dark Overlay */}
-          <div className="absolute inset-0 bg-black/60"></div>
-          
-          {/* Subtle Gradient Overlay for Better Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
-        </div>
-
+      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden top-0 left-0 right-0 z-10">
         {/* Content Layer */}
         <div className="container mx-auto px-6 py-20 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -389,7 +349,42 @@ export function HomePage() {
           </div>
         </div>
         
-       
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0">
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/videos/consultations.mp4"
+          >
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <p>Your browser does not support the video tag.</p>
+          </video>
+          
+          {/* Professional Dark Overlay */}
+          <div className="absolute inset-0 bg-black/60"></div>
+          
+          {/* Subtle Gradient Overlay for Better Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
+        </div>
       </section>
 
       {/* Modern Immigration Management Features Section - Gale Inspired */}
