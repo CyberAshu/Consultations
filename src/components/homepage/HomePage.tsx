@@ -318,7 +318,7 @@ export function HomePage() {
               Simple, affordable, on demand sessions with verified RCICs.
             </p>
             
-          
+            
             
             {/* Clean CTA */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
