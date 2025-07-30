@@ -120,14 +120,14 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+      className={`fixed top-4 left-4 right-4 rounded-2xl mx-3 z-50 transition-all duration-300 ease-in-out ${
         isScrolled
           ? "bg-white shadow-xl border-b border-gray-100"
-          : "bg-white shadow-lg"
+          : "bg-white"
       }`}
     >
-      <div className="container mx-auto px-4 py-4">
-        <nav className="flex items-center justify-between">
+      <div className="container mx-auto py-3">
+        <nav className="flex items-center justify-between bg-white">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group cursor-pointer">
             <div className="relative w-10 h-10">

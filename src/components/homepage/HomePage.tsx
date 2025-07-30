@@ -294,7 +294,7 @@ export function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-full overflow-x-hidden ">
       {showDisclaimer && <DisclaimerModal onAccept={handleAcceptDisclaimer} />}
       {/* Waitlist Modal */}
       <WaitingListModal 
@@ -303,77 +303,22 @@ export function HomePage() {
       />
       
       {/* Professional Hero Section with Background Video */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
-        {/* Background Video */}
-        <div className="absolute inset-0 z-0">
-          <video
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4"
-          >
-            {/* Working professional video sources */}
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            {/* Fallback video from Internet Archive */}
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            {/* Fallback - this will show if video fails */}
-            Your browser does not support the video tag.
-          </video>
-          
-          {/* Professional Dark Overlay */}
-          <div className="absolute inset-0 bg-black/60"></div>
-          
-          {/* Subtle Gradient Overlay for Better Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
-        </div>
-
+      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden top-0 left-0 right-0 z-10">
         {/* Content Layer */}
         <div className="container mx-auto px-6 py-20 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Clean Typography with Better Contrast */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight drop-shadow-lg">
-              Simplifying Professional
+              Simplifying
               <span className="block font-semibold text-blue-400">Immigration Consultation</span>
             </h1>
             
             {/* Minimal Subtitle */}
             <p className="text-xl md:text-2xl text-gray-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
               Simple, affordable, on demand sessions with verified RCICs.
-              <span className="block text-white font-medium mt-2">No retainers. Transparent Pricing. Instant Booking</span>
             </p>
             
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8 mb-12 text-sm">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <CheckCircle className="h-4 w-4 text-blue-400" />
-                <span className="text-white">Licensed RCICs</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <Shield className="h-4 w-4 text-blue-400" />
-                <span className="text-white">Transparent Pricing</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-                <Zap className="h-4 w-4 text-blue-400" />
-                <span className="text-white">Instant Booking</span>
-              </div>
-            </div>
+            
             
             {/* Clean CTA */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -389,7 +334,42 @@ export function HomePage() {
           </div>
         </div>
         
-       
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0">
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/videos/consultations.mp4"
+          >
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <source 
+              src="/videos/consultations.mp4" 
+              type="video/mp4" 
+            />
+            <p>Your browser does not support the video tag.</p>
+          </video>
+          
+          {/* Professional Dark Overlay */}
+          <div className="absolute inset-0 bg-black/60"></div>
+          
+          {/* Subtle Gradient Overlay for Better Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
+        </div>
       </section>
 
       {/* Modern Immigration Management Features Section - Gale Inspired */}
