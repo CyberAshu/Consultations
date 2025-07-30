@@ -376,7 +376,7 @@ export function HomePage() {
       <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">SERVICES</h2>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-4">Book with Confidence. Pay Only for What You Need</h1>
+          <h1 className="text-4xl md:text-5xl font-light mb-4">Book with Confidence. Pay Only for What You Need</h1>
           <p className="text-gray-600 font-light mb-8">Immigration Connect empowers you to book trusted Canadian immigration experts on demand from anywhere in the world.</p>
           <div className="w-fit">
             <Button 
@@ -442,7 +442,7 @@ export function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase">Our Advantage</h2>
-            <h3 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+            <h3 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 tracking-tight">
               Why ImmigrationConnect?
             </h3>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-500">
@@ -454,7 +454,7 @@ export function HomePage() {
               <div className="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-600">
                 <Shield size={24} />
               </div>
-              <h4 className="mt-6 text-xl font-bold text-gray-900">Verified Experts</h4>
+              <h4 className="mt-6 text-xl font-light text-gray-900">Verified Experts</h4>
               <p className="mt-2 text-base text-gray-500">
                 Connect with licensed RCICs whose credentials have been rigorously verified by our team for your peace of mind.
               </p>
@@ -463,7 +463,7 @@ export function HomePage() {
               <div className="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 text-green-600">
                 <Heart size={24} />
               </div>
-              <h4 className="mt-6 text-xl font-bold text-gray-900">High-Touch Support</h4>
+              <h4 className="mt-6 text-xl font-light text-gray-900">High-Touch Support</h4>
               <p className="mt-2 text-base text-gray-500">
                 Receive prompt, dedicated support within 24 hours, ensuring you're always informed and confident.
               </p>
@@ -472,7 +472,7 @@ export function HomePage() {
               <div className="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-600">
                 <Zap size={24} />
               </div>
-              <h4 className="mt-6 text-xl font-bold text-gray-900">Seamless Experience</h4>
+              <h4 className="mt-6 text-xl font-light text-gray-900">Seamless Experience</h4>
               <p className="mt-2 text-base text-gray-500">
                 Enjoy a user-friendly platform with simple booking, clear guidance, and a secure portal for your case.
               </p>
@@ -487,13 +487,6 @@ export function HomePage() {
               >
                 Book a Consultation
               </Button>
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto border-2 border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold rounded-full px-8 py-3 transition-transform transform hover:scale-105"
-                onClick={() => navigate('/contact')}
-              >
-                Contact Us
-              </Button>
             </div>
           </div>
         </div>
@@ -503,7 +496,7 @@ export function HomePage() {
       <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-12 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">PROCESS</h2>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-4">How It Works</h1>
+          <h1 className="text-4xl md:text-5xl font-light mb-4">How It Works</h1>
           <p className="text-gray-600 font-light mb-8">Three simple steps to connect with licensed immigration experts and get the professional guidance you need.</p>
           <div className="w-fit">
             <Button 
@@ -565,7 +558,7 @@ export function HomePage() {
       <section className="max-w-[90dvw] md:max-w-[78dvw] 3xl:max-w-[1300px] mx-auto px-4 mt-12">
         <div className="rounded-md flex flex-col antialiased bg-white items-left justify-center relative">
           <span className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">TESTIMONIALS</span>
-          <h2 className="text-4xl md:text-5xl font-semibold mb-6 md:mb-8 text-gray-900">Customer Reviews</h2>
+          <h2 className="text-4xl md:text-5xl font-light mb-6 md:mb-8 text-gray-900">Customer Reviews</h2>
           <p className="text-gray-600 font-light mb-8 md:mb-10 flex items-center gap-3">
             <span className="flex items-center gap-1">
               {[...Array(5)].map((_, i) => (
@@ -679,9 +672,6 @@ export function HomePage() {
               <Button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-black text-white hover:bg-gray-800 h-11 rounded-full px-8 hover:cursor-pointer">
                 Book a call to learn more
               </Button>
-              <Button variant="outline" className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 rounded-full px-8 hover:cursor-pointer">
-                Email us instead
-              </Button>
             </div>
           </div>
         </div>
@@ -691,7 +681,7 @@ export function HomePage() {
       <section className="py-20 bg-white relative">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-black">
+            <h2 className="text-4xl lg:text-5xl font-light mb-4 text-black">
               Frequently Asked Questions
             </h2>
             <p className="text-lg text-neutral-600 max-w-2xl mx-auto">

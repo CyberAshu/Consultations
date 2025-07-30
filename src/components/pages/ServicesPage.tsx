@@ -12,7 +12,7 @@ export function ServicesPage() {
       {/* Hero Section */}
       <section className="pt-32 pb-20 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 leading-tight tracking-tight">
             Professional Immigration 
             <span className="text-blue-600 block">Consulting Services</span>
           </h1>
@@ -32,13 +32,6 @@ export function ServicesPage() {
               <Calendar className="h-5 w-5 mr-2" />
               Book Consultation
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-2 border-gray-300 text-gray-700 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold transition-all duration-200"
-            >
-              Compare Services
-            </Button>
           </div>
         </div>
       </section>
@@ -48,7 +41,7 @@ export function ServicesPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Our Services</h2>
-            <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
               Immigration Solutions Tailored to You
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -149,7 +142,7 @@ export function ServicesPage() {
                     </div>
 
                     <div className="flex-grow">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                      <h3 className="text-2xl font-light text-gray-900 mb-3">
                         {service.title}
                       </h3>
                       <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
@@ -189,7 +182,7 @@ export function ServicesPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Additional Options</h2>
-            <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
               Extend Your Support
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -237,7 +230,7 @@ export function ServicesPage() {
                     <div className={`w-16 h-16 ${colorClasses[addon.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
                       {addon.icon}
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900 mb-4">{addon.name}</h4>
+                    <h4 className="text-xl font-light text-gray-900 mb-4">{addon.name}</h4>
                     <p className="text-gray-600 leading-relaxed">{addon.description}</p>
                   </CardContent>
                 </Card>
@@ -252,7 +245,7 @@ export function ServicesPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Service Comparison</h2>
-            <h3 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
               Choose the Right Service
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -266,10 +259,10 @@ export function ServicesPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left py-6 px-6 font-bold text-gray-900 text-lg">Feature</th>
-                      <th className="text-center py-6 px-6 font-bold text-blue-600 text-lg">Simple Consultation</th>
-                      <th className="text-center py-6 px-6 font-bold text-green-600 text-lg">File Review</th>
-                      <th className="text-center py-6 px-6 font-bold text-purple-600 text-lg">File Review + Summary</th>
+                      <th className="text-left py-6 px-6 font-light text-gray-900 text-lg">Feature</th>
+                      <th className="text-center py-6 px-6 font-light text-blue-600 text-lg">Simple Consultation</th>
+                      <th className="text-center py-6 px-6 font-light text-green-600 text-lg">File Review</th>
+                      <th className="text-center py-6 px-6 font-light text-purple-600 text-lg">File Review + Summary</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
@@ -354,7 +347,7 @@ export function ServicesPage() {
       <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-8 tracking-tight">
+            <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-8 tracking-tight">
               Transparent. Flexible. Professional.
             </h2>
             <p className="text-xl text-gray-600 mb-12 leading-relaxed">
@@ -395,7 +388,7 @@ export function ServicesPage() {
                       <div className={`w-20 h-20 ${colorClasses[benefit.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
                         {benefit.icon}
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-4">{benefit.title}</h3>
+                      <h3 className="text-2xl font-light text-gray-900 mb-4">{benefit.title}</h3>
                       <p className="text-gray-600 leading-relaxed">{benefit.description}</p>
                     </CardContent>
                   </Card>

@@ -52,7 +52,7 @@ export function AboutPage() {
       <section className="max-w-[95dvw] md:max-w-[78dvw] 2.5xl:max-w-[1300px] mx-auto md:px-4 py-16 md:py-24 flex flex-col justify-center items-center md:items-start md:flex-row md:gap-10">
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">OUR STORY</h2>
-          <h1 className="text-4xl md:text-5xl font-semibold mb-4">
+          <h1 className="text-4xl md:text-5xl font-light mb-4">
             This Started With a <em className="font-light italic text-blue-600">Frustrated Search</em> for Help
           </h1>
           <div className="space-y-6 text-gray-600 font-light mb-8 leading-relaxed">
@@ -88,7 +88,7 @@ export function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">OUR VALUES</h2>
-            <h3 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-6">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6">
               What We Stand For
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">Four pillars that guide everything we do</p>
@@ -131,7 +131,7 @@ export function AboutPage() {
                   >
                     {pillar.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">{pillar.title}</h3>
+                  <h3 className="text-xl font-light text-gray-900 mb-4">{pillar.title}</h3>
                   <p className="text-gray-600 leading-relaxed font-light">{pillar.description}</p>
                 </CardContent>
               </Card>
@@ -145,7 +145,7 @@ export function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">WHO WE SERVE</h2>
-            <h3 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-6">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6">
               Built for <em className="font-light italic text-blue-600">People Like You</em>
             </h3>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
@@ -188,7 +188,7 @@ export function AboutPage() {
                   <div className={`w-16 h-16 bg-gradient-to-br ${persona.bgColor} rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm group-hover:scale-105 transition-transform duration-300`}>
                     {persona.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">{persona.title}</h3>
+                  <h3 className="text-xl font-light text-gray-900 mb-4">{persona.title}</h3>
                   <p className="text-gray-600 italic font-light">"{persona.question}"</p>
                 </CardContent>
               </Card>
@@ -202,7 +202,7 @@ export function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">OUR EXPERTS</h2>
-            <h3 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-8">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-8">
               <em className="font-light italic text-blue-600">RCICs</em> You Can Trust
             </h3>
             <p className="text-xl text-gray-600 mb-12 leading-relaxed font-light">
@@ -224,7 +224,7 @@ export function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">OUR PROMISE</h2>
-            <h3 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-8">
+            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-8">
               Safe. Private. <em className="font-light italic text-blue-600">On Your Terms.</em>
             </h3>
             <p className="text-xl text-gray-600 mb-12 leading-relaxed font-light">
@@ -257,7 +257,7 @@ export function AboutPage() {
                   <div className={`w-16 h-16 bg-gradient-to-br ${promise.color} rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg`}>
                     {promise.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{promise.title}</h3>
+                  <h3 className="text-xl font-light text-gray-900 mb-2">{promise.title}</h3>
                   <p className="text-gray-600 font-light">{promise.description}</p>
                 </div>
               ))}

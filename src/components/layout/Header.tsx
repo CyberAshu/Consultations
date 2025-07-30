@@ -107,13 +107,8 @@ export function Header() {
   const handleConsultantLink = (e: React.MouseEvent) => {
     if (!user) {
       e.preventDefault()
-      // Show login prompt and redirect to login
-      const confirmed = window.confirm(
-        "You need to be logged in to access the consultant directory. Would you like to log in now?"
-      )
-      if (confirmed) {
-        navigate('/login')
-      }
+      // Directly redirect to login page without popup
+      navigate('/login')
     }
     // If user is logged in, the Link will work normally
   }
