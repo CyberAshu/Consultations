@@ -17,22 +17,38 @@ import {
   ArrowLeft,
   Bell,
   Crown,
-  Activity
+  FileText,
+  Eye,
+  Check,
+  X
 } from 'lucide-react'
 
 export function AdminDashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
+  const [selectedApplication, setSelectedApplication] = useState<any>(null)
+  const [showApplicationModal, setShowApplicationModal] = useState(false)
 
   const handleLogout = () => {
     localStorage.removeItem('user')
     navigate('/login')
   }
 
+  const handleViewDetails = (application: any) => {
+    setSelectedApplication(application)
+    setShowApplicationModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowApplicationModal(false)
+    setSelectedApplication(null)
+  }
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <BarChart3 className="h-4 w-4" /> },
     { id: 'users', label: 'User Management', icon: <Users className="h-4 w-4" /> },
     { id: 'consultants', label: 'RCIC Management', icon: <UserCheck className="h-4 w-4" /> },
+    { id: 'applications', label: 'Applications', icon: <FileText className="h-4 w-4" /> },
     { id: 'bookings', label: 'Bookings', icon: <Calendar className="h-4 w-4" /> },
     { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-4 w-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> }
@@ -64,6 +80,53 @@ export function AdminDashboard() {
     { id: 2, client: 'Sarah Johnson', rcic: 'Ahmed Hassan', service: 'Document Review', date: 'Dec 16, 2024', status: 'Pending' },
     { id: 3, client: 'Mike Chen', rcic: 'Maria Rodriguez', service: 'PNP Consultation', date: 'Dec 15, 2024', status: 'Completed' },
     { id: 4, client: 'Lisa Wang', rcic: 'Jean-Pierre Dubois', service: 'Study Permit', date: 'Dec 15, 2024', status: 'Cancelled' }
+  ]
+
+  const consultantApplications = [
+    { 
+      id: 1, 
+      fullLegalName: 'Dr. Emily Thompson', 
+      email: 'emily.thompson@email.com',
+      rcicLicenseNumber: 'R123789',
+      ciccMembershipStatus: 'Active',
+      cityProvince: 'Toronto, ON',
+      timeZone: 'Eastern Time (ET)',
+      status: 'pending',
+      submittedAt: 'Jan 15, 2025'
+    },
+    { 
+      id: 2, 
+      fullLegalName: 'Michael Chen', 
+      email: 'michael.chen@email.com',
+      rcicLicenseNumber: 'R456123',
+      ciccMembershipStatus: 'Active',
+      cityProvince: 'Vancouver, BC',
+      timeZone: 'Pacific Time (PT)',
+      status: 'pending',
+      submittedAt: 'Jan 14, 2025'
+    },
+    { 
+      id: 3, 
+      fullLegalName: 'Priya Sharma', 
+      email: 'priya.sharma@email.com',
+      rcicLicenseNumber: 'R789456',
+      ciccMembershipStatus: 'Active',
+      cityProvince: 'Calgary, AB',
+      timeZone: 'Mountain Time (MT)',
+      status: 'approved',
+      submittedAt: 'Jan 12, 2025'
+    },
+    { 
+      id: 4, 
+      fullLegalName: 'James Wilson', 
+      email: 'james.wilson@email.com',
+      rcicLicenseNumber: 'R321654',
+      ciccMembershipStatus: 'Under Review',
+      cityProvince: 'Montreal, QC',
+      timeZone: 'Eastern Time (ET)',
+      status: 'rejected',
+      submittedAt: 'Jan 10, 2025'
+    }
   ]
 
   return (
@@ -332,7 +395,159 @@ export function AdminDashboard() {
           </Card>
         )}
 
-        {/* Bookings Tab */}
+        {/* Applications Tab */}
+        {activeTab === 'applications' && (
+          <div className="space-y-6">
+            {/* Header with Stats and Actions */}
+            <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Consultant Applications</h2>
+                    <p className="text-gray-500 mt-1">Review and manage RCIC consultant applications.</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="relative w-full sm:w-auto">
+                      <input 
+                        type="text" 
+                        placeholder="Search by name or license..."
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent w-full sm:w-64 transition-shadow shadow-sm"
+                      />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FileText className="h-5 w-5 text-gray-400" />
+                      </div>
+                    </div>
+                    <Button variant="outline" className="whitespace-nowrap w-full sm:w-auto">Export CSV</Button>
+                  </div>
+                </div>
+                
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-yellow-50/70 p-4 rounded-lg border border-yellow-200/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-yellow-700 text-sm font-medium">Pending</p>
+                        <p className="text-2xl font-bold text-yellow-900">
+                          {consultantApplications.filter(app => app.status === 'pending').length}
+                        </p>
+                      </div>
+                      <Clock className="h-7 w-7 text-yellow-500 opacity-80" />
+                    </div>
+                  </div>
+                  <div className="bg-green-50/70 p-4 rounded-lg border border-green-200/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-700 text-sm font-medium">Approved</p>
+                        <p className="text-2xl font-bold text-green-900">
+                          {consultantApplications.filter(app => app.status === 'approved').length}
+                        </p>
+                      </div>
+                      <Check className="h-7 w-7 text-green-600 opacity-80" />
+                    </div>
+                  </div>
+                  <div className="bg-red-50/70 p-4 rounded-lg border border-red-200/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-red-700 text-sm font-medium">Rejected</p>
+                        <p className="text-2xl font-bold text-red-900">
+                          {consultantApplications.filter(app => app.status === 'rejected').length}
+                        </p>
+                      </div>
+                      <X className="h-7 w-7 text-red-600 opacity-80" />
+                    </div>
+                  </div>
+                  <div className="bg-gray-100 p-4 rounded-lg border border-gray-200/80">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-gray-600 text-sm font-medium">Total</p>
+                        <p className="text-2xl font-bold text-gray-800">{consultantApplications.length}</p>
+                      </div>
+                      <FileText className="h-7 w-7 text-gray-500 opacity-80" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Applications List */}
+            <div className="space-y-4">
+              {consultantApplications.map((app) => (
+                <Card key={app.id} className="bg-white/80 backdrop-blur-sm shadow-md border-gray-200/50 hover:shadow-lg transition-shadow duration-200">
+                  <CardContent className="p-5">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      
+                      {/* Application Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-4 mb-4">
+                            <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold text-xl flex-shrink-0">
+                                    {app.fullLegalName.charAt(0)}
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-lg font-semibold text-gray-800 truncate">{app.fullLegalName}</h3>
+                                    <p className="text-sm text-gray-500 truncate">{app.email}</p>
+                                </div>
+                            </div>
+                            <Badge
+                                className={{
+                                pending: 'bg-yellow-100 text-yellow-800 border-yellow-200/80',
+                                approved: 'bg-green-100 text-green-800 border-green-200/80',
+                                rejected: 'bg-red-100 text-red-800 border-red-200/80',
+                                }[app.status] + ' whitespace-nowrap'}
+                            >
+                                {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                            </Badge>
+                        </div>
+                        
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-gray-200/80 pt-4">
+                          <div>
+                            <p className="text-gray-500">License #</p>
+                            <p className="text-gray-800 font-mono font-medium">{app.rcicLicenseNumber}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">CICC Status</p>
+                            <p className="text-gray-800 font-medium">{app.ciccMembershipStatus}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Location</p>
+                            <p className="text-gray-800 font-medium">{app.cityProvince}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500">Submitted</p>
+                            <p className="text-gray-800 font-medium">{app.submittedAt}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="border-t lg:border-t-0 lg:border-l border-gray-200/80 flex-shrink-0 lg:pl-4 pt-4 lg:pt-0">
+                          <div className="flex flex-col gap-2 w-full lg:w-48">
+                            <Button size="sm" variant="outline" className="flex items-center justify-center gap-2 w-full" onClick={() => handleViewDetails(app)}>
+                              <Eye className="h-4 w-4" />
+                              View Details
+                            </Button>
+                            {app.status === 'pending' && (
+                              <>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 w-full">
+                                  <Check className="h-4 w-4" />
+                                  Approve
+                                </Button>
+                                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 w-full">
+                                  <X className="h-4 w-4" />
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
         {activeTab === 'bookings' && (
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
             <CardContent className="p-6">
@@ -501,6 +716,139 @@ export function AdminDashboard() {
           </div>
         )}
       </div>
+      
+      {/* Application Details Modal */}
+      {showApplicationModal && selectedApplication && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Application Details</h2>
+                  <p className="text-gray-600 mt-1">RCIC Consultant Application Review</p>
+                </div>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Applicant Information */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Applicant Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Full Legal Name</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.fullLegalName}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.email}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Professional Details */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Professional Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">RCIC License Number</label>
+                      <p className="mt-1 text-sm text-gray-900 font-mono">{selectedApplication.rcicLicenseNumber}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">CICC Membership Status</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.ciccMembershipStatus}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Location & Contact */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Location & Contact</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">City, Province</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.cityProvince}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Time Zone</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.timeZone}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Application Status */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Current Status</label>
+                      <div className="mt-2">
+                        <Badge
+                          className={(
+                            selectedApplication.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                            selectedApplication.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
+                            selectedApplication.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                            'bg-gray-100 text-gray-800 border-gray-200'
+                          )}
+                        >
+                          {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Submitted Date</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.submittedAt}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Admin Actions */}
+                {selectedApplication.status === 'pending' && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h3>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 flex-1">
+                        <Check className="h-4 w-4" />
+                        Approve Application
+                      </Button>
+                      <Button className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 flex-1">
+                        <X className="h-4 w-4" />
+                        Reject Application
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Notes Section */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Notes</h3>
+                  <textarea 
+                    className="w-full border border-gray-300 rounded-md p-3 text-sm min-h-[100px]"
+                    placeholder="Add internal notes about this application..."
+                  />
+                  <div className="mt-3">
+                    <Button size="sm" variant="outline">Save Notes</Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <Button variant="outline" onClick={handleCloseModal}>
+                  Close
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Download Application
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,0 +1,1 @@
+from .crud_consultant_application import consultant_application
