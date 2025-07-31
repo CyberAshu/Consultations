@@ -7,41 +7,17 @@ export function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden bg-white">
-        {/* Background Video */}
-        <div className="absolute inset-0 z-0">
-          <video
-            className="absolute inset-0 w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4"
-          >
-            <source 
-              src="https://cdn.pixabay.com/video/2021/09/05/87593-602317653_large.mp4" 
-              type="video/mp4" 
-            />
-            Your browser does not support the video tag.
-          </video>
-          
-          {/* Professional Dark Overlay */}
-          <div className="absolute inset-0 bg-black/60"></div>
-          
-          {/* Subtle Gradient Overlay for Better Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
-        </div>
-
-        <div className="container mx-auto px-6 py-20 relative z-10">
+      <section className="pt-32 pb-20 bg-white">
+        <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white mb-6 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 leading-tight tracking-tight">
               Why We Built 
-              <span className="block font-semibold text-blue-400">This Platform</span>
+              <span className="block font-semibold text-blue-600">This Platform</span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-100 mb-6 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
+            <p className="text-xl md:text-2xl text-gray-600 mb-6 font-light leading-relaxed max-w-2xl mx-auto">
               Real Immigration Help. From Real Experts.
             </p>
-            <p className="text-lg text-gray-200 max-w-3xl mx-auto font-light drop-shadow-md">
+            <p className="text-lg text-gray-500 max-w-3xl mx-auto font-light">
               Born from our own journey, built to empower yours.
             </p>
           </div>
@@ -73,18 +49,23 @@ export function AboutPage() {
           </div>
         </div>
         <div className="w-[95%] md:w-[56%] border-[1px] border-gray-300 rounded-lg overflow-hidden shadow-md" style={{opacity: 1, transform: 'translateY(0px)'}}>
-          <div className="w-full h-[400px] md:h-[500px] bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-100/30 to-transparent"></div>
-            <div className="relative z-10 text-center">
-              <Users className="h-20 w-20 text-blue-600 mb-4 mx-auto" />
-              <span className="text-blue-800 text-lg font-medium">Immigration Success Stories</span>
+          <div className="w-full h-[400px] md:h-[500px] relative">
+            <img 
+              src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+              alt="Immigration Success Stories - Happy families and individuals celebrating their Canadian immigration journey"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+            <div className="absolute bottom-6 left-6 text-white">
+              <h3 className="text-2xl font-light mb-2">Immigration Success Stories</h3>
+              <p className="text-gray-200 font-light">Real people, real journeys, real success</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* What We Stand For Section */}
-      <section className="py-16 md:py-24 bg-gray-50">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">OUR VALUES</h2>
@@ -100,25 +81,25 @@ export function AboutPage() {
                 icon: <Globe className="h-10 w-10" />,
                 title: "Access",
                 description: "Book from anywhere, pay per session—no long-term commitment.",
-                color: "from-blue-500 to-blue-600",
+                color: "from-gray-600 to-gray-700",
               },
               {
                 icon: <Shield className="h-10 w-10" />,
                 title: "Trust",
                 description: "Every consultant is licensed and verified.",
-                color: "from-green-500 to-green-600",
+                color: "from-gray-600 to-gray-700",
               },
               {
                 icon: <Lightbulb className="h-10 w-10" />,
                 title: "Clarity",
                 description: "Transparent pricing. No hidden fees.",
-                color: "from-yellow-500 to-orange-600",
+                color: "from-gray-600 to-gray-700",
               },
               {
                 icon: <Heart className="h-10 w-10" />,
                 title: "Empowerment",
                 description: "You stay in control. We just help you make smarter moves.",
-                color: "from-purple-500 to-pink-600",
+                color: "from-gray-600 to-gray-700",
               },
             ].map((pillar, index) => (
               <Card
@@ -156,28 +137,24 @@ export function AboutPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: "🎓",
+                icon: <Users className="h-8 w-8" />,
                 title: "International Students",
                 question: "Should I switch to PGWP now or wait?",
-                bgColor: "from-blue-50 to-blue-100",
               },
               {
-                icon: "🧑‍🤝‍🧑",
+                icon: <Users className="h-8 w-8" />,
                 title: "Spousal Applicants",
                 question: "Are my relationship docs strong enough?",
-                bgColor: "from-pink-50 to-purple-100",
               },
               {
-                icon: "💼",
+                icon: <Users className="h-8 w-8" />,
                 title: "Workers",
                 question: "Can I apply for PR under Express Entry yet?",
-                bgColor: "from-green-50 to-emerald-100",
               },
               {
-                icon: "🏡",
+                icon: <Users className="h-8 w-8" />,
                 title: "Families & Sponsors",
                 question: "How do I bring my parents here safely?",
-                bgColor: "from-orange-50 to-red-100",
               },
             ].map((persona, index) => (
               <Card
@@ -185,7 +162,7 @@ export function AboutPage() {
                 className="bg-white border border-gray-200 rounded-2xl text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group"
               >
                 <CardContent className="p-8">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${persona.bgColor} rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
                     {persona.icon}
                   </div>
                   <h3 className="text-xl font-light text-gray-900 mb-4">{persona.title}</h3>
@@ -198,7 +175,7 @@ export function AboutPage() {
       </section>
 
       {/* RCICs You Can Trust Section */}
-      <section className="py-16 md:py-24 bg-gray-50">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">OUR EXPERTS</h2>
@@ -238,19 +215,19 @@ export function AboutPage() {
                   icon: <Shield className="h-8 w-8" />,
                   title: "Secure & Private",
                   description: "Your data is encrypted and protected",
-                  color: "from-blue-500 to-blue-600",
+                  color: "from-gray-500 to-gray-600",
                 },
                 {
                   icon: <CheckCircle className="h-8 w-8" />,
                   title: "Licensed Experts",
                   description: "All consultants are CICC verified",
-                  color: "from-green-500 to-green-600",
+                  color: "from-gray-500 to-gray-600",
                 },
                 {
                   icon: <Heart className="h-8 w-8" />,
                   title: "Client-First",
                   description: "Your success is our priority",
-                  color: "from-purple-500 to-purple-600",
+                  color: "from-gray-500 to-gray-600",
                 },
               ].map((promise, index) => (
                 <div key={index} className="text-center">
@@ -273,7 +250,7 @@ export function AboutPage() {
       </section>
 
       {/* Footer Branding */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4 text-center">
           <p className="text-xl text-gray-600 max-w-3xl mx-auto font-light">
             The easiest way to get licensed Canadian immigration help—no stress, no surprises.
