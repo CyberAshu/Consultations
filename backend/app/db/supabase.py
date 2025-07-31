@@ -1,5 +1,22 @@
 from supabase import create_client, Client
 from app.core.config import settings
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.declarative import declarative_base
+
+# SQLAlchemy setup
+DATABASE_URL = settings.DATABASE_URL
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_db():
+    """Get a SQLAlchemy database session"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_supabase() -> Client:
     """Get Supabase client instance with service role key"""
