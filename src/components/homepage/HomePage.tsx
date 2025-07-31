@@ -4,38 +4,26 @@ import { Button } from "../shared/Button"
 import { WaitingListModal } from "../shared/WaitingListModal"
 import "../shared/styles/testimonial-animation.css"
 import {
-  ArrowRight,
-  Search,
   Calendar,
   Star,
-  CheckCircle,
-  ChevronRight,
   ChevronDown,
   Shield,
-  Users,
-  Award,
   Clock,
   Heart,
-  Video,
   Target,
-  Mail,
-  UserCheck,
-  Sparkles,
-  Rocket,
-  Crown,
-  Gem,
   FileText,
   FileEdit,
   RefreshCw,
-  Zap
+  Zap,
+  Globe
 } from "lucide-react"
 
 
 export function HomePage() {
   const navigate = useNavigate()
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false)
-  const [selectedTopic, setSelectedTopic] = useState("")
-  const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  // const [selectedTopic, setSelectedTopic] = useState("")
+  // const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -58,99 +46,99 @@ export function HomePage() {
   }, [])
 
 
-  const testimonials = [
-    {
-      quote: "My study permit strategy was clarified in 30 minutes! The consultant was incredibly knowledgeable and patient with all my questions.",
-      author: "Deepika K.",
-      role: "International Student from India",
-      rating: 5,
-      flag: "🇮🇳",
-      outcome: "Study Permit Approved",
-    },
-    {
-      quote: "File review helped avoid rejection. I highly recommend their thorough document analysis service. Saved me months of delays.",
-      author: "Carlos R.",
-      role: "Express Entry Applicant from Mexico",
-      rating: 5,
-      flag: "🇲🇽",
-      outcome: "PR Application Successful",
-    },
-    {
-      quote: "Finally found honest advice without expensive retainers. Transparent pricing and excellent service throughout the process.",
-      author: "Sarah M.",
-      role: "Family Sponsorship from UK",
-      rating: 5,
-      flag: "🇬🇧",
-      outcome: "Spouse Visa Approved",
-    },
-    {
-      quote: "The RCIC helped me understand complex PNP requirements. Worth every penny for the peace of mind and expert guidance.",
-      author: "Ahmed T.",
-      role: "Provincial Nominee from UAE",
-      rating: 5,
-      flag: "🇦🇪",
-      outcome: "PNP Nomination Received",
-    },
-  ]
+  // const testimonials = [
+  //   {
+  //     quote: "My study permit strategy was clarified in 30 minutes! The consultant was incredibly knowledgeable and patient with all my questions.",
+  //     author: "Deepika K.",
+  //     role: "International Student from India",
+  //     rating: 5,
+  //     flag: "🇮🇳",
+  //     outcome: "Study Permit Approved",
+  //   },
+  //   {
+  //     quote: "File review helped avoid rejection. I highly recommend their thorough document analysis service. Saved me months of delays.",
+  //     author: "Carlos R.",
+  //     role: "Express Entry Applicant from Mexico",
+  //     rating: 5,
+  //     flag: "🇲🇽",
+  //     outcome: "PR Application Successful",
+  //   },
+  //   {
+  //     quote: "Finally found honest advice without expensive retainers. Transparent pricing and excellent service throughout the process.",
+  //     author: "Sarah M.",
+  //     role: "Family Sponsorship from UK",
+  //     rating: 5,
+  //     flag: "🇬🇧",
+  //     outcome: "Spouse Visa Approved",
+  //   },
+  //   {
+  //     quote: "The RCIC helped me understand complex PNP requirements. Worth every penny for the peace of mind and expert guidance.",
+  //     author: "Ahmed T.",
+  //     role: "Provincial Nominee from UAE",
+  //     rating: 5,
+  //     flag: "🇦🇪",
+  //     outcome: "PNP Nomination Received",
+  //   },
+  // ]
 
-  const consultants = [
-    {
-      name: "Dr. Sarah Chen",
-      rcicNumber: "R123456",
-      languages: ["English", "Mandarin", "Cantonese"],
-      specialties: ["Express Entry", "Study Permits", "Work Permits"],
-      rating: 4.9,
-      reviews: 127,
-      experience: "8+ years",
-      location: "Toronto, ON",
-      availability: "Available Today",
-      price: "From $60 CAD",
-      badge: "Top Rated",
-      successRate: "96%",
-    },
-    {
-      name: "Ahmed Hassan",
-      rcicNumber: "R234567",
-      languages: ["English", "Arabic", "French"],
-      specialties: ["Family Sponsorship", "Refugee Claims", "Appeals"],
-      rating: 4.8,
-      reviews: 89,
-      experience: "12+ years",
-      location: "Vancouver, BC",
-      availability: "Available Tomorrow",
-      price: "From $60 CAD",
-      badge: "Expert",
-      successRate: "94%",
-    },
-    {
-      name: "Maria Rodriguez",
-      rcicNumber: "R345678",
-      languages: ["English", "Spanish"],
-      specialties: ["Provincial Nominee", "Work Permits", "PR Applications"],
-      rating: 5.0,
-      reviews: 156,
-      experience: "10+ years",
-      location: "Calgary, AB",
-      availability: "Available in 2 days",
-      price: "From $60 CAD",
-      badge: "Premium",
-      successRate: "98%",
-    },
-    {
-      name: "Jean-Pierre Dubois",
-      rcicNumber: "R456789",
-      languages: ["English", "French"],
-      specialties: ["Quebec Immigration", "Francophone Programs", "Business Immigration"],
-      rating: 4.7,
-      reviews: 94,
-      experience: "15+ years",
-      location: "Montreal, QC",
-      availability: "Available Today",
-      price: "From $60 CAD",
-      badge: "Specialist",
-      successRate: "92%",
-    },
-  ]
+  // const consultants = [
+  //   {
+  //     name: "Dr. Sarah Chen",
+  //     rcicNumber: "R123456",
+  //     languages: ["English", "Mandarin", "Cantonese"],
+  //     specialties: ["Express Entry", "Study Permits", "Work Permits"],
+  //     rating: 4.9,
+  //     reviews: 127,
+  //     experience: "8+ years",
+  //     location: "Toronto, ON",
+  //     availability: "Available Today",
+  //     price: "From $60 CAD",
+  //     badge: "Top Rated",
+  //     successRate: "96%",
+  //   },
+  //   {
+  //     name: "Ahmed Hassan",
+  //     rcicNumber: "R234567",
+  //     languages: ["English", "Arabic", "French"],
+  //     specialties: ["Family Sponsorship", "Refugee Claims", "Appeals"],
+  //     rating: 4.8,
+  //     reviews: 89,
+  //     experience: "12+ years",
+  //     location: "Vancouver, BC",
+  //     availability: "Available Tomorrow",
+  //     price: "From $60 CAD",
+  //     badge: "Expert",
+  //     successRate: "94%",
+  //   },
+  //   {
+  //     name: "Maria Rodriguez",
+  //     rcicNumber: "R345678",
+  //     languages: ["English", "Spanish"],
+  //     specialties: ["Provincial Nominee", "Work Permits", "PR Applications"],
+  //     rating: 5.0,
+  //     reviews: 156,
+  //     experience: "10+ years",
+  //     location: "Calgary, AB",
+  //     availability: "Available in 2 days",
+  //     price: "From $60 CAD",
+  //     badge: "Premium",
+  //     successRate: "98%",
+  //   },
+  //   {
+  //     name: "Jean-Pierre Dubois",
+  //     rcicNumber: "R456789",
+  //     languages: ["English", "French"],
+  //     specialties: ["Quebec Immigration", "Francophone Programs", "Business Immigration"],
+  //     rating: 4.7,
+  //     reviews: 94,
+  //     experience: "15+ years",
+  //     location: "Montreal, QC",
+  //     availability: "Available Today",
+  //     price: "From $60 CAD",
+  //     badge: "Specialist",
+  //     successRate: "92%",
+  //   },
+  // ]
 
   const faqs = [
     {
@@ -175,80 +163,86 @@ export function HomePage() {
     },
   ]
 
-  const services = [
-    {
-      icon: <Clock className="h-6 w-6 text-white" />,
-      title: "General Consultations",
-      description: "Time-based immigration consultations",
-      features: [
-        "30/45/60 min pay-per-session model",
-        "IRCC programs & eligibility",
-        "Portal navigation & documentation",
-        "Options assessment"
-      ],
-      color: "from-blue-600 to-blue-700"
-    },
-    {
-      icon: <FileText className="h-6 w-6 text-white" />,
-      title: "Document Review",
-      description: "Professional review of your immigration documents",
-      features: [
-        "IRCC forms review",
-        "SOP & LOE evaluation",
-        "Refusal analysis",
-        "Live feedback discussion"
-      ],
-      color: "from-blue-600 to-blue-700"
-    },
-    {
-      icon: <FileEdit className="h-6 w-6 text-white" />,
-      title: "Form Filling Assistance",
-      description: "Step-by-step form guidance",
-      features: [
-        "IMM forms & GCKey help",
-        "PR & Sponsorship forms",
-        "TRV & LMIA guidance",
-        "Non-submission support"
-      ],
-      color: "from-blue-600 to-blue-700"
-    },
-    {
-      icon: <RefreshCw className="h-6 w-6 text-white" />,
-      title: "Follow-up Services",
-      description: "Ongoing support and extensions",
-      features: [
-        "+15 min session extensions",
-        "Follow-up bookings",
-        "IRCC response planning",
-        "Procedural fairness help"
-      ],
-      color: "from-blue-600 to-blue-700"
-    },
-    {
-      icon: <Target className="h-6 w-6 text-white" />,
-      title: "Program-Specific Help",
-      description: "Specialized immigration programs",
-      features: [
-        "Express Entry & PNP",
-        "Study/Work Permits",
-        "Family Sponsorship",
-        "Visitor & Super Visas"
-      ],
-      color: "from-blue-600 to-blue-700"
-    },
-    {
-      icon: <Users className="h-6 w-6 text-white" />,
-      title: "Multi-Session Packages",
-      description: "Comprehensive support plans",
-      features: [
-        "3-session bundle available",
-        "PR Planning Kit",
-        "Student-to-PR Track",
-        "Custom packages"
-      ],
-      color: "from-blue-600 to-blue-700"
-    }
-  ]
+  // const services = [
+  //   {
+  //     icon: <Clock className="h-6 w-6 text-white" />,
+  //     title: "Quick Immigration Advice Session",
+  //     description: "30, 45, 60 min. Live 1-on-1 session with a licensed RCIC.",
+  //     features: [
+  //       "Reliable answers from a licensed RCIC.",
+  //       "Clarification on documents, timelines, or eligibility.",
+  //       "Trusted advice before you take your next step.",
+  //       "Ideal for first-time applicants or people seeking clarity.",
+  //       "No document prep required just book and talk."
+  //     ],
+  //     color: "from-blue-600 to-blue-700"
+  //   },
+  //   {
+  //     icon: <FileText className="h-6 w-6 text-white" />,
+  //     title: "Eligibility Check & Program Matching",
+  //     description: "Personalized review of your qualifications.",
+  //     features: [
+  //       "A clear list of immigration options that match.",
+  //       "Advice on which programs are realistic or risky.",
+  //       "Consultant reviews your profile and background.",
+  //       "Get matched with the most realistic Canadian immigration pathways.",
+  //       "Advice on study permits, work permits, PR, Express Entry, etc."
+  //     ],
+  //     color: "from-blue-600 to-blue-700"
+  //   },
+  //   {
+  //     icon: <FileEdit className="h-6 w-6 text-white" />,
+  //     title: "Strategic Immigration Planning",
+  //     description: "Build a long-term or multi-step immigration roadmap.",
+  //     features: [
+  //       "Side-by-side comparison of your possible paths.",
+  //       "Compare multiple programs and options based on your goals.",
+  //       "CRS improvement tips, timelines, and risk analysis.",
+  //       "Ideal for people with complex profiles or multiple pathways.",
+  //       "Tips for maximizing points or preparing your file."
+  //     ],
+  //     color: "from-blue-600 to-blue-700"
+  //   },
+  //   {
+  //     icon: <RefreshCw className="h-6 w-6 text-white" />,
+  //     title: "Final Application Review",
+  //     description: "Document and form check for accuracy and completeness.",
+  //     features: [
+  //       "Upload your draft forms and supporting documents.",
+  //       "Consultant checks for errors, missing info, or red flags.",
+  //       "Receive expert feedback before you submit to IRCC.",
+  //       "Increases your chances of approval without hiring a full representative.",
+  //       "Suggestions to improve supporting evidence."
+  //     ],
+  //     color: "from-blue-600 to-blue-700"
+  //   },
+  //   {
+  //     icon: <Target className="h-6 w-6 text-white" />,
+  //     title: "Refusal Letter Evaluation",
+  //     description: "Clear breakdown of the refusal letter.",
+  //     features: [
+  //       "The consultant reviews your IRCC refusal letter in detail.",
+  //       "Understand what went wrong and what to do next.",
+  //       "Learn whether to reapply, appeal, or change strategy.",
+  //       "Helps avoid repeating the same mistakes.",
+  //       "Expert insights into what likely went wrong."
+  //     ],
+  //     color: "from-blue-600 to-blue-700"
+  //   },
+  //   {
+  //     icon: <Globe className="h-6 w-6 text-white" />,
+  //     title: "International Applicant Guidance",
+  //     description: "Tailored guidance for your country of residence.",
+  //     features: [
+  //       "Designed for clients applying from outside Canada.",
+  //       "Tailored advice based on your country, visa type, and supporting documents.",
+  //       "Consultant helps you prove ties to home and meet Canadian standards.",
+  //       "Especially helpful for study permits, visitor visas, or first-time applicants.",
+  //       "Culturally aware advice from consultants who know your region."
+  //     ],
+  //     color: "from-blue-600 to-blue-700"
+  //   }
+  // ]
 
   return (
     <div className="min-h-full overflow-x-hidden ">
@@ -347,48 +341,67 @@ export function HomePage() {
           <ul className="max-w-2xl mx-auto w-full flex flex-col gap-2">
             {[
               {
-                title: "General Consultations",
-                description: "Time-based immigration consultations with licensed RCICs",
+                title: "Quick Immigration Advice Session",
+                description: "30, 45, 60 min. Live 1-on-1 session with a licensed RCIC.",
                 icon: "📋"
               },
               {
-                title: "Document Review", 
-                description: "Professional review of your immigration documents",
+                title: "Eligibility Check & Program Matching", 
+                description: "Personalized review of your qualifications.",
                 icon: "📄"
               },
               {
-                title: "Form Filling Assistance",
-                description: "Step-by-step form guidance and support", 
+                title: "Strategic Immigration Planning",
+                description: "Build a long-term or multi-step immigration roadmap.", 
                 icon: "✍️"
               },
               {
-                title: "Follow-up Services",
-                description: "Ongoing support and extensions",
+                title: "Final Application Review",
+                description: "Document and form check for accuracy and completeness.",
                 icon: "🔄"
               },
               {
-                title: "Program-Specific Help",
-                description: "Specialized immigration programs expertise",
+                title: "Refusal Letter Evaluation",
+                description: "Clear breakdown of the refusal letter.",
                 icon: "🎯"
+              },
+              {
+                title: "International Applicant Guidance",
+                description: "Tailored guidance for your country of residence.",
+                icon: "🌍"
               }
-            ].map((service, index) => (
-              <div key={index} className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-200 shadow-sm" style={{opacity: 1, transform: 'translateY(0px)'}}>
-                <div className="flex gap-4 flex-col md:flex-row items-center">
-                  <div className="flex justify-center">
-                    <div className="h-14 w-14 rounded-lg bg-gray-100 flex items-center justify-center text-2xl">
-                      {service.icon}
+            ].map((service, index) => {
+              const serviceIds = [
+                'quick-immigration-advice',
+                'eligibility-check-program-matching',
+                'strategic-immigration-planning',
+                'final-application-review',
+                'refusal-letter-evaluation',
+                'international-applicant-guidance'
+              ];
+              
+              return (
+                <div key={index} className="p-4 flex flex-col md:flex-row justify-between items-center hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-200 shadow-sm" style={{opacity: 1, transform: 'translateY(0px)'}}>
+                  <div className="flex gap-4 flex-col md:flex-row items-center">
+                    <div className="flex justify-center">
+                      <div className="h-14 w-14 rounded-lg bg-gray-100 flex items-center justify-center text-2xl">
+                        {service.icon}
+                      </div>
+                    </div>
+                    <div className="text-center md:text-left">
+                      <h3 className="font-medium text-[18px] text-neutral-800 text-center md:text-left">{service.title}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{service.description}</p>
                     </div>
                   </div>
-                  <div className="text-center md:text-left">
-                    <h3 className="font-medium text-[18px] text-neutral-800 text-center md:text-left">{service.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{service.description}</p>
-                  </div>
+                  <button 
+                    className="px-4 py-2 text-sm rounded-[10px] font-medium bg-black hover:bg-gray-800 text-white mt-4 md:mt-0 hover:cursor-pointer w-[170px]"
+                    onClick={() => navigate(`/services?service=${serviceIds[index]}`)}
+                  >
+                    View Details
+                  </button>
                 </div>
-                <button className="px-4 py-2 text-sm rounded-[10px] font-medium bg-black hover:bg-gray-800 text-white mt-4 md:mt-0 hover:cursor-pointer w-[170px]">
-                  View Details
-                </button>
-              </div>
-            ))}
+              )
+            })}
           </ul>
         </div>
       </section>
@@ -502,7 +515,6 @@ export function HomePage() {
                 </div>
                 {index < 2 && (
                   <div className="md:flex hidden items-center justify-center ml-4">
-                    <ArrowRight className="h-5 w-5 text-gray-400" />
                   </div>
                 )}
               </div>

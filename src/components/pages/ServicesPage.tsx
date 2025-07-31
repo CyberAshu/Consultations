@@ -1,13 +1,26 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../shared/Button';
 import { Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Globe, UserCheck, MapPin, HelpCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export function ServicesPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetServiceId = searchParams.get('service');
+  const serviceRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
+    // Service ID mappings - moved inside useEffect to avoid dependency warning
+    const serviceIdMap = {
+      'quick-immigration-advice': 0,
+      'eligibility-check-program-matching': 1,
+      'strategic-immigration-planning': 2,
+      'final-application-review': 3,
+      'refusal-letter-evaluation': 4,
+      'international-applicant-guidance': 5
+    };
+
     const observerOptions = {
       threshold: 0.2,
       rootMargin: '0px 0px -100px 0px'
@@ -30,13 +43,32 @@ export function ServicesPage() {
         (card as HTMLElement).style.animationDelay = `${index * 0.08}s`;
         observer.observe(card);
       });
+
+      // Scroll to specific service if query parameter exists
+      if (targetServiceId && serviceIdMap[targetServiceId as keyof typeof serviceIdMap] !== undefined) {
+        const serviceIndex = serviceIdMap[targetServiceId as keyof typeof serviceIdMap];
+        const targetElement = serviceRefs.current[`service-${serviceIndex}`];
+        if (targetElement) {
+          setTimeout(() => {
+            targetElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            // Add highlight effect
+            targetElement.classList.add('highlight-service');
+            setTimeout(() => {
+              targetElement.classList.remove('highlight-service');
+            }, 3000);
+          }, 500);
+        }
+      }
     }, 100);
 
     return () => {
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, []);
+  }, [targetServiceId]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -60,6 +92,12 @@ export function ServicesPage() {
         
         .card-animate.animate-in {
           animation: slideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        
+        .highlight-service {
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5) !important;
+          border-color: #3b82f6 !important;
+          background-color: #fef3cd !important;
         }
         `
       }} />
@@ -201,7 +239,12 @@ export function ServicesPage() {
               }
             ].map((service, index) => {
               return (
-                <Card key={index} className="card-animate h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 bg-white group">
+                <div 
+                  key={index} 
+                  ref={(el: HTMLDivElement | null) => { serviceRefs.current[`service-${index}`] = el; }}
+                  className="card-animate"
+                >
+                  <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 bg-white group">
                   <CardContent className="p-6 h-full flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors duration-300">
@@ -243,6 +286,7 @@ export function ServicesPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               )
             })}
           </div>

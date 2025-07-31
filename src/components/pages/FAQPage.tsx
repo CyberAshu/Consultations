@@ -232,15 +232,6 @@ export function FAQPage() {
                   </a>
                 </div>
                 <div className="hidden sm:block w-px h-20 bg-gray-200"></div>
-                <div className="text-center flex-1">
-                  <h4 className="text-xl font-semibold text-gray-900 mb-2">Live Chat</h4>
-                  <p className="text-gray-600 mb-4 font-light">Quick answers during business hours</p>
-                  <button
-                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-full transition-all duration-300"
-                  >
-                    Start Chat
-                  </button>
-                </div>
               </div>
             </div>
           </div>
