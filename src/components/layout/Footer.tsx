@@ -60,7 +60,26 @@ export function Footer() {
         <div className="text-center">
           <p className="text-sm text-gray-600">&copy; 2024 ImmigrationConnect. All rights reserved.</p>
           <p className="text-xs text-gray-500 mt-2 max-w-3xl mx-auto">
-            Disclaimer: ImmigrationConnect is not a law firm. We are a technology platform that connects users with independent, licensed Regulated Canadian Immigration Consultants (RCICs) who provide immigration services.
+            Disclaimer: This platform is not a law firm and does not offer legal advice or representation. All
+            immigration consultations are conducted by independently contracted, licensed RCICs
+            (Regulated Canadian Immigration Consultants). No consultant-client relationship is formed with
+            the platform itself. Official IRCC forms and instructions are available free at{' '}
+            <a 
+              href="https://www.canada.ca" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline"
+            >
+              www.canada.ca
+            </a>.
+            Use of this site is subject to our{' '}
+            <Link to="/terms-of-use" className="text-blue-600 hover:text-blue-800 underline">
+              Terms of Use
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy-policy" className="text-blue-600 hover:text-blue-800 underline">
+              Privacy Policy
+            </Link>.
           </p>
         </div>
       </div>

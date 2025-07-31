@@ -17,11 +17,19 @@ import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
 import { BookingFlow } from './components/pages/BookingFlow';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { GlobalDisclaimerModal, useGlobalDisclaimerModal } from './components/shared/GlobalDisclaimerModal';
 
 function App() {
+  const { isOpen: showGlobalDisclaimer, handleClose: handleCloseGlobalDisclaimer } = useGlobalDisclaimerModal();
+
   return (
     <Router>
       <div className="min-h-screen">
+        {/* Global Disclaimer Modal */}
+        <GlobalDisclaimerModal 
+          isOpen={showGlobalDisclaimer} 
+          onClose={handleCloseGlobalDisclaimer} 
+        />
         <Routes>
           {/* Public routes with header/footer */}
           <Route path="/" element={

@@ -30,39 +30,6 @@ import {
   Zap
 } from "lucide-react"
 
-const DisclaimerModal = ({ onAccept }: { onAccept: () => void }) => {
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-blue-700 mb-4">Important Disclaimer</h2>
-        
-        <div className="space-y-4 text-gray-700">
-          <p>
-            The information provided on this website is for general informational purposes only and does not constitute legal advice.
-          </p>
-          <p>
-            Immigration laws and policies change frequently. While we strive to keep the information up to date, we make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability with respect to the website or the information, products, services, or related graphics contained on the website for any purpose.
-          </p>
-          <p>
-            Any reliance you place on such information is therefore strictly at your own risk. For personalized immigration advice, please consult with a licensed immigration consultant or lawyer.
-          </p>
-          <p className="font-medium">
-            By clicking "I Understand and Accept", you acknowledge that you have read and understood this disclaimer.
-          </p>
-        </div>
-        
-        <div className="mt-6 flex justify-end">
-          <Button 
-            onClick={onAccept}
-            className="bg-black hover:bg-gray-800 text-white"
-          >
-            I Understand and Accept
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -70,17 +37,11 @@ export function HomePage() {
   const [selectedTopic, setSelectedTopic] = useState("")
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const [showDisclaimer, setShowDisclaimer] = useState<boolean>(false)
   const heroRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const testimonialScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Check if disclaimer was already accepted
-    const disclaimerAccepted = localStorage.getItem('disclaimerAccepted')
-    if (!disclaimerAccepted) {
-      setShowDisclaimer(true)
-    }
     // Auto-scroll testimonials
     const interval = setInterval(() => {
       if (testimonialScrollRef.current) {
@@ -96,10 +57,6 @@ export function HomePage() {
     return () => clearInterval(interval)
   }, [])
 
-  const handleAcceptDisclaimer = () => {
-    localStorage.setItem('disclaimerAccepted', 'true')
-    setShowDisclaimer(false)
-  }
 
   const testimonials = [
     {
@@ -295,7 +252,6 @@ export function HomePage() {
 
   return (
     <div className="min-h-full overflow-x-hidden ">
-      {showDisclaimer && <DisclaimerModal onAccept={handleAcceptDisclaimer} />}
       {/* Waitlist Modal */}
       <WaitingListModal 
         isOpen={isWaitlistOpen} 

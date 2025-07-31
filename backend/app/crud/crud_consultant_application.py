@@ -1,105 +1,93 @@
-from typing import List, Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.models.consultant_application import ConsultantApplication
+from typing import List, Optional, Dict, Any
+from supabase import Client
 from app.schemas.consultant_application import (
     ConsultantApplicationCreate,
     ConsultantApplicationUpdate
 )
 
 class CRUDConsultantApplication:
-    def create(self, db: Session, *, obj_in: ConsultantApplicationCreate) -> ConsultantApplication:
+    def create(self, db: Client, *, obj_in: ConsultantApplicationCreate) -> Dict[str, Any]:
         """Create a new consultant application"""
-        db_obj = ConsultantApplication(**obj_in.dict())
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+        data = obj_in.dict()
+        # Convert datetime objects to ISO strings for JSON serialization
+        if data.get('submission_date'):
+            data['submission_date'] = data['submission_date'].isoformat()
+        if data.get('date_of_birth'):
+            data['date_of_birth'] = data['date_of_birth'].isoformat()
+        response = db.table("consultant_applications").insert(data).execute()
+        return response.data[0] if response.data else {}
 
-    def get(self, db: Session, id: int) -> Optional[ConsultantApplication]:
+    def get(self, db: Client, id: int) -> Optional[Dict[str, Any]]:
         """Get a consultant application by ID"""
-        return db.query(ConsultantApplication).filter(ConsultantApplication.id == id).first()
+        response = db.table("consultant_applications").select("*").eq("id", id).execute()
+        return response.data[0] if response.data else None
 
-    def get_by_email(self, db: Session, email: str) -> Optional[ConsultantApplication]:
+    def get_by_email(self, db: Client, email: str) -> Optional[Dict[str, Any]]:
         """Get a consultant application by email"""
-        return db.query(ConsultantApplication).filter(ConsultantApplication.email == email).first()
+        response = db.table("consultant_applications").select("*").eq("email", email).execute()
+        return response.data[0] if response.data else None
 
-    def get_by_rcic_number(self, db: Session, rcic_number: str) -> Optional[ConsultantApplication]:
+    def get_by_rcic_number(self, db: Client, rcic_number: str) -> Optional[Dict[str, Any]]:
         """Get a consultant application by RCIC license number"""
-        return db.query(ConsultantApplication).filter(
-            ConsultantApplication.rcic_license_number == rcic_number
-        ).first()
+        response = db.table("consultant_applications").select("*").eq("rcic_license_number", rcic_number).execute()
+        return response.data[0] if response.data else None
 
     def get_multi(
         self, 
-        db: Session, 
+        db: Client, 
         *, 
         skip: int = 0, 
         limit: int = 100,
         status: Optional[str] = None
-    ) -> List[ConsultantApplication]:
+    ) -> List[Dict[str, Any]]:
         """Get multiple consultant applications with optional status filter"""
-        query = db.query(ConsultantApplication)
+        query = db.table("consultant_applications").select("*")
         
         if status:
-            query = query.filter(ConsultantApplication.status == status)
+            query = query.eq("status", status)
             
-        return query.offset(skip).limit(limit).all()
+        response = query.range(skip, skip + limit - 1).execute()
+        return response.data if response.data else []
 
     def update(
         self, 
-        db: Session, 
+        db: Client, 
         *, 
-        db_obj: ConsultantApplication, 
+        db_obj: Dict[str, Any], 
         obj_in: ConsultantApplicationUpdate
-    ) -> ConsultantApplication:
+    ) -> Dict[str, Any]:
         """Update a consultant application"""
         update_dict = obj_in.dict(exclude_unset=True)
-        
-        for field, value in update_dict.items():
-            setattr(db_obj, field, value)
-        
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+        response = db.table("consultant_applications").update(update_dict).eq("id", db_obj["id"]).execute()
+        return response.data[0] if response.data else {}
 
-    def approve(self, db: Session, *, db_obj: ConsultantApplication) -> ConsultantApplication:
+    def approve(self, db: Client, *, db_obj: Dict[str, Any]) -> Dict[str, Any]:
         """Approve a consultant application"""
-        db_obj.status = "approved"
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+        response = db.table("consultant_applications").update({"status": "approved"}).eq("id", db_obj["id"]).execute()
+        return response.data[0] if response.data else {}
 
-    def reject(self, db: Session, *, db_obj: ConsultantApplication) -> ConsultantApplication:
+    def reject(self, db: Client, *, db_obj: Dict[str, Any]) -> Dict[str, Any]:
         """Reject a consultant application"""
-        db_obj.status = "rejected"
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+        response = db.table("consultant_applications").update({"status": "rejected"}).eq("id", db_obj["id"]).execute()
+        return response.data[0] if response.data else {}
 
-    def delete(self, db: Session, *, id: int) -> Optional[ConsultantApplication]:
+    def delete(self, db: Client, *, id: int) -> bool:
         """Delete a consultant application"""
-        obj = db.query(ConsultantApplication).get(id)
-        if obj:
-            db.delete(obj)
-            db.commit()
-        return obj
+        response = db.table("consultant_applications").delete().eq("id", id).execute()
+        return bool(response.data)
 
-    def get_stats(self, db: Session) -> dict:
+    def get_stats(self, db: Client) -> dict:
         """Get application statistics"""
-        total = db.query(func.count(ConsultantApplication.id)).scalar()
-        pending = db.query(func.count(ConsultantApplication.id)).filter(
-            ConsultantApplication.status == "pending"
-        ).scalar()
-        approved = db.query(func.count(ConsultantApplication.id)).filter(
-            ConsultantApplication.status == "approved"
-        ).scalar()
-        rejected = db.query(func.count(ConsultantApplication.id)).filter(
-            ConsultantApplication.status == "rejected"
-        ).scalar()
+        # Get all applications
+        all_apps = db.table("consultant_applications").select("status").execute()
+        
+        if not all_apps.data:
+            return {"total": 0, "pending": 0, "approved": 0, "rejected": 0}
+        
+        total = len(all_apps.data)
+        pending = len([app for app in all_apps.data if app.get("status") == "pending"])
+        approved = len([app for app in all_apps.data if app.get("status") == "approved"])
+        rejected = len([app for app in all_apps.data if app.get("status") == "rejected"])
         
         return {
             "total": total,

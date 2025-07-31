@@ -1,38 +1,81 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../shared/Button';
-import { CheckCircle, Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Calendar } from 'lucide-react';
+import { Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Globe, UserCheck, MapPin, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function ServicesPage() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.2,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in');
+          // Once animated, stop observing this element
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      const cards = document.querySelectorAll('.card-animate');
+      cards.forEach((card, index) => {
+        (card as HTMLElement).style.animationDelay = `${index * 0.08}s`;
+        observer.observe(card);
+      });
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(50px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        
+        .card-animate {
+          opacity: 0;
+          transform: translateY(50px) scale(0.9);
+        }
+        
+        .card-animate.animate-in {
+          animation: slideUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        `
+      }} />
       {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <section className="pt-32 pb-20 bg-white">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 leading-tight tracking-tight">
             Professional Immigration 
             <span className="text-blue-600 block">Consulting Services</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-            Transparent pricing. Expert guidance. No retainers required.
+            The Canadian immigration system can be overwhelming. Whether you're applying for a study permit, exploring PR, or recovering from a refusal, you deserve help that's honest, expert, and focused on results not retainers.
           </p>
           <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-10">
-            Choose from flexible service options designed around your specific immigration needs, 
-            backed by licensed RCICs you can trust.
+            This page helps you choose the right service for your specific needs. Every session is with a licensed RCIC and designed to give you clear next steps, document support, and peace of mind.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button 
-              size="lg" 
-              className="bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-200"
-              onClick={() => navigate('/consultants')}
-            >
-              <Calendar className="h-5 w-5 mr-2" />
-              Book Consultation
-            </Button>
-          </div>
         </div>
       </section>
 
@@ -52,105 +95,135 @@ export function ServicesPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              {
+          {
                 icon: <Clock className="h-8 w-8" />,
-                title: "General Consultations",
-                description: "Time-based immigration consultations with personalized guidance",
+                title: "Quick Immigration Advice Session",
+                description: "30, 45, 60 min. Live 1-on-1 session with a licensed RCIC.",
                 features: [
-                  "30/45/60 min pay-per-session model",
-                  "IRCC programs & eligibility assessment",
-                  "Portal navigation & documentation help",
-                  "Comprehensive options assessment"
+                  "Reliable answers from a licensed RCIC.",
+                  "Clarification on documents, timelines, or eligibility.",
+                  "Trusted advice before you take your next step.",
+                  "Ideal for first-time applicants or people seeking clarity.",
+                  "No document prep required just book and talk."
                 ],
                 color: "blue"
               },
               {
                 icon: <FileText className="h-8 w-8" />,
-                title: "Document Review",
-                description: "Professional review of your immigration documents",
+                title: "Eligibility Check & Program Matching",
+                description: "Personalized review of your qualifications.",
                 features: [
-                  "IRCC forms review & validation",
-                  "SOP & LOE evaluation",
-                  "Refusal analysis & recommendations",
-                  "Live feedback discussion"
+                  "A clear list of immigration options that match.",
+                  "Advice on which programs are realistic or risky.",
+                  "Consultant reviews your profile and background.",
+                  "Get matched with the most realistic Canadian immigration pathways.",
+                  "Advice on study permits, work permits, PR, Express Entry, etc."
                 ],
                 color: "green"
               },
               {
                 icon: <FileEdit className="h-8 w-8" />,
-                title: "Form Filling Assistance",
-                description: "Step-by-step guidance for complex immigration forms",
+                title: "Strategic Immigration Planning",
+                description: "Build a long-term or multi-step immigration roadmap.",
                 features: [
-                  "IMM forms & GCKey help",
-                  "PR & Sponsorship forms",
-                  "TRV & LMIA guidance",
-                  "Non-submission support"
+                  "Side-by-side comparison of your possible paths.",
+                  "Compare multiple programs and options based on your goals.",
+                  "CRS improvement tips, timelines, and risk analysis.",
+                  "Ideal for people with complex profiles or multiple pathways.",
+                  "Tips for maximizing points or preparing your file."
                 ],
                 color: "purple"
               },
               {
                 icon: <RefreshCw className="h-8 w-8" />,
-                title: "Follow-up Services",
-                description: "Ongoing support and session extensions",
+                title: "Final Application Review",
+                description: "Document and form check for accuracy and completeness.",
                 features: [
-                  "+15 min session extensions",
-                  "Follow-up bookings",
-                  "IRCC response planning",
-                  "Procedural fairness help"
+                  "Upload your draft forms and supporting documents.",
+                  "Consultant checks for errors, missing info, or red flags.",
+                  "Receive expert feedback before you submit to IRCC.",
+                  "Increases your chances of approval without hiring a full representative.",
+                  "Suggestions to improve supporting evidence."
                 ],
                 color: "orange"
               },
               {
                 icon: <Target className="h-8 w-8" />,
-                title: "Program-Specific Help",
-                description: "Specialized support for specific immigration programs",
+                title: "Refusal Letter Evaluation",
+                description: "Clear breakdown of the refusal letter.",
                 features: [
-                  "Express Entry & PNP guidance",
-                  "Study/Work Permits",
-                  "Family Sponsorship",
-                  "Visitor & Super Visas"
+                  "The consultant reviews your IRCC refusal letter in detail.",
+                  "Understand what went wrong and what to do next.",
+                  "Learn whether to reapply, appeal, or change strategy.",
+                  "Helps avoid repeating the same mistakes.",
+                  "Expert insights into what likely went wrong."
                 ],
                 color: "indigo"
               },
               {
-                icon: <Users className="h-8 w-8" />,
-                title: "Multi-Session Packages",
-                description: "Comprehensive support plans for complex cases",
+                icon: <Globe className="h-8 w-8" />,
+                title: "International Applicant Guidance",
+                description: "Tailored guidance for your country of residence.",
                 features: [
-                  "3-session bundle available",
-                  "PR Planning Kit",
-                  "Student-to-PR Track",
-                  "Custom packages available"
+                  "Designed for clients applying from outside Canada.",
+                  "Tailored advice based on your country, visa type, and supporting documents.",
+                  "Consultant helps you prove ties to home and meet Canadian standards.",
+                  "Especially helpful for study permits, visitor visas, or first-time applicants.",
+                  "Culturally aware advice from consultants who know your region."
                 ],
                 color: "teal"
+              },
+              {
+                icon: <HelpCircle className="h-8 w-8" />,
+                title: "Expert Support for DIY Applicants",
+                description: "Help with complex form fields.",
+                features: [
+                  "Help with filling out forms, GCKey errors, or tricky application sections.",
+                  "Ask about document prep, cover letters, letters of explanation, and more.",
+                  "Stay in control of your own application, with expert support when needed.",
+                  "Ideal for confident applicants who need help with specific items.",
+                  "Troubleshooting tech or GCKey issues."
+                ],
+                color: "bluegray"
+              },
+              {
+                icon: <MapPin className="h-8 w-8" />,
+                title: "Future Path Planning (Students, Workers, PGWP Holders)",
+                description: "Timeline planning (PGWP → PNP → PR).",
+                features: [
+                  "For those already in Canada planning to stay longer or apply for PR.",
+                  "Understand your next steps: Express Entry, PNP, bridging work permits, etc.",
+                  "Consultant helps you build a timeline around permit expiry.",
+                  "Prevent last-minute panic by planning 1–2 years in advance.",
+                  "Answers to what you should do now to qualify later."
+                ],
+                color: "emerald"
               }
             ].map((service, index) => {
-              const colorClasses = {
-                blue: "bg-blue-100 text-blue-600",
-                green: "bg-green-100 text-green-600",
-                purple: "bg-purple-100 text-purple-600",
-                orange: "bg-orange-100 text-orange-600",
-                indigo: "bg-indigo-100 text-indigo-600",
-                teal: "bg-teal-100 text-teal-600"
-              };
-              
               return (
-                <Card key={index} className="h-full hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg">
-                  <CardContent className="p-8 h-full flex flex-col">
-                    <div className={`w-16 h-16 ${colorClasses[service.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mb-6`}>
-                      {service.icon}
+                <Card key={index} className="card-animate h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 bg-white group">
+                  <CardContent className="p-6 h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors duration-300">
+                        <div className="text-gray-600 group-hover:text-blue-600">{service.icon}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                          PROFESSIONAL
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex-grow">
-                      <h3 className="text-2xl font-light text-gray-900 mb-3">
+                      <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
                         {service.title}
                       </h3>
-                      <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                      <p className="text-gray-600 mb-4 leading-relaxed text-sm">{service.description}</p>
                       
-                      <ul className="space-y-3 mb-8">
+                      <ul className="space-y-2 mb-6">
                         {service.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-start gap-3 text-gray-700 text-sm">
-                            <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <li key={featureIndex} className="flex items-start gap-2 text-gray-700 text-sm">
+                            <div className="w-1 h-1 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                             <span>{feature}</span>
                           </li>
                         ))}
@@ -158,15 +231,15 @@ export function ServicesPage() {
                     </div>
                     
                     <div className="mt-auto">
-                      <div className="text-center mb-4">
+                      <div className="text-center py-4">
+                        <Button 
+                          className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition-all duration-200"
+                          onClick={() => navigate('/consultants')}
+                        >
+                          Book Now
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                       </div>
-                      <Button 
-                        className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition-all duration-200"
-                        onClick={() => navigate('/consultants')}
-                      >
-                        Book Now
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -178,7 +251,7 @@ export function ServicesPage() {
       </section>
       
       {/* Additional Services Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Additional Options</h2>
@@ -195,43 +268,48 @@ export function ServicesPage() {
               {
                 name: "Follow-Up Session",
                 description: "Schedule additional 30-minute sessions within 2 weeks of your initial consultation for continued support",
-                icon: <Users className="h-8 w-8" />,
-                color: "blue"
+                icon: <Users className="h-8 w-8" />
               },
               {
                 name: "Session Extension",
                 description: "Extend your current session by 15 minutes when offered live by your RCIC consultant",
-                icon: <Clock className="h-8 w-8" />,
-                color: "green"
+                icon: <Clock className="h-8 w-8" />
               },
               {
                 name: "Session Summary",
                 description: "Receive a detailed written summary of your consultation session via email",
-                icon: <FileText className="h-8 w-8" />,
-                color: "purple"
+                icon: <FileText className="h-8 w-8" />
               },
               {
                 name: "Multi-Session Bundle",
                 description: "Save with bundled packages including 3 sessions and comprehensive planning tools",
-                icon: <Zap className="h-8 w-8" />,
-                color: "orange"
+                icon: <Zap className="h-8 w-8" />
               },
             ].map((addon, index) => {
-              const colorClasses = {
-                blue: "bg-blue-100 text-blue-600",
-                green: "bg-green-100 text-green-600",
-                purple: "bg-purple-100 text-purple-600",
-                orange: "bg-orange-100 text-orange-600"
-              };
-              
               return (
-                <Card key={index} className="text-center p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg">
-                  <CardContent className="p-6">
-                    <div className={`w-16 h-16 ${colorClasses[addon.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                      {addon.icon}
+                <Card key={index} className="card-animate h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 bg-white group">
+                  <CardContent className="p-6 h-full flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors duration-300">
+                        <div className="text-gray-600 group-hover:text-blue-600">{addon.icon}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                          ADDON
+                        </div>
+                      </div>
                     </div>
-                    <h4 className="text-xl font-light text-gray-900 mb-4">{addon.name}</h4>
-                    <p className="text-gray-600 leading-relaxed">{addon.description}</p>
+                    
+                    <div className="flex-grow">
+                      <h4 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{addon.name}</h4>
+                      <p className="text-gray-600 leading-relaxed text-sm">{addon.description}</p>
+                    </div>
+                    
+                    <div className="mt-auto pt-4">
+                      <div className="w-full h-1 bg-gray-100 rounded-full">
+                        <div className="w-1/3 h-1 bg-blue-600 rounded-full"></div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )
@@ -239,171 +317,54 @@ export function ServicesPage() {
           </div>
         </div>
       </section>
-
-      {/* Service Comparison Table */}
-      <section className="py-20 bg-white">
+      {/* Professional Services Summary */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Service Comparison</h2>
-            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
-              Choose the Right Service
-            </h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Compare our main service types to find the perfect match for your immigration needs.
-            </p>
-          </div>
-
-          <Card className="overflow-hidden shadow-2xl border-0">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left py-6 px-6 font-light text-gray-900 text-lg">Feature</th>
-                      <th className="text-center py-6 px-6 font-light text-blue-600 text-lg">Simple Consultation</th>
-                      <th className="text-center py-6 px-6 font-light text-green-600 text-lg">File Review</th>
-                      <th className="text-center py-6 px-6 font-light text-purple-600 text-lg">File Review + Summary</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white">
-                    {[
-                      {
-                        feature: "Live Zoom Session",
-                        simple: true,
-                        fileReview: true,
-                        summary: true,
-                      },
-                      {
-                        feature: "Document Upload",
-                        simple: "Optional",
-                        fileReview: true,
-                        summary: true,
-                      },
-                      {
-                        feature: "Pre-call Document Review",
-                        simple: false,
-                        fileReview: true,
-                        summary: true,
-                      },
-                      {
-                        feature: "Written Follow-Up Summary",
-                        simple: false,
-                        fileReview: false,
-                        summary: true,
-                      },
-                      {
-                        feature: "Ideal For",
-                        simple: "General questions",
-                        fileReview: "SOP, forms",
-                        summary: "Detailed files, appeals",
-                      },
-                    ].map((row, index) => (
-                      <tr key={index} className={`border-t border-gray-100 ${index % 2 === 0 ? 'bg-gray-50/50' : 'bg-white'}`}>
-                        <td className="py-4 px-6 font-medium text-gray-900">{row.feature}</td>
-                        <td className="py-4 px-6 text-center">
-                          {typeof row.simple === "boolean" ? (
-                            row.simple ? (
-                              <CheckCircle className="h-6 w-6 text-green-500 mx-auto" />
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )
-                          ) : (
-                            <span className="text-gray-700 font-medium">{row.simple}</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          {typeof row.fileReview === "boolean" ? (
-                            row.fileReview ? (
-                              <CheckCircle className="h-6 w-6 text-green-500 mx-auto" />
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )
-                          ) : (
-                            <span className="text-gray-700 font-medium">{row.fileReview}</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          {typeof row.summary === "boolean" ? (
-                            row.summary ? (
-                              <CheckCircle className="h-6 w-6 text-green-500 mx-auto" />
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )
-                          ) : (
-                            <span className="text-gray-700 font-medium">{row.summary}</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Why Choose Our Approach */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-8 tracking-tight">
-              Transparent. Flexible. Professional.
-            </h2>
-            <p className="text-xl text-gray-600 mb-12 leading-relaxed">
-              Most immigration firms require expensive retainers and long commitments. 
-              We believe you should pay only for the specific help you need, when you need it.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-8 mb-12">
-              {[
-                {
-                  icon: <Shield className="h-12 w-12" />,
-                  title: "Transparent Pricing",
-                  description: "Clear, upfront costs with no hidden fees or surprise charges",
-                  color: "blue"
-                },
-                {
-                  icon: <Users className="h-12 w-12" />,
-                  title: "No Commitments",
-                  description: "Pay per session with no long-term contracts or retainer requirements",
-                  color: "green"
-                },
-                {
-                  icon: <CheckCircle className="h-12 w-12" />,
-                  title: "Choose Your Expert",
-                  description: "Select consultants by expertise, language, and availability",
-                  color: "purple"
-                },
-              ].map((benefit, index) => {
-                const colorClasses = {
-                  blue: "bg-blue-100 text-blue-600",
-                  green: "bg-green-100 text-green-600",
-                  purple: "bg-purple-100 text-purple-600"
-                };
-                
-                return (
-                  <Card key={index} className="text-center p-8 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className={`w-20 h-20 ${colorClasses[benefit.color as keyof typeof colorClasses]} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                        {benefit.icon}
-                      </div>
-                      <h3 className="text-2xl font-light text-gray-900 mb-4">{benefit.title}</h3>
-                      <p className="text-gray-600 leading-relaxed">{benefit.description}</p>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
+                Professional Immigration Guidance
+              </h2>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+                Each service is designed by licensed RCICs to provide you with clear, actionable guidance 
+                for your Canadian immigration journey.
+              </p>
             </div>
-
-            <Button
-              size="lg"
-              className="bg-black hover:bg-gray-800 text-white px-12 py-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105"
-              onClick={() => navigate('/consultants')}
-            >
-              Find Your Consultant
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Button>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <Card className="bg-white border border-gray-200 hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-8 text-center">
+                  <div className="p-3 bg-gray-50 rounded-lg mx-auto mb-6 w-fit">
+                    <UserCheck className="h-8 w-8 text-gray-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Licensed Professionals</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">All consultations conducted by licensed RCICs with years of experience</p>
+                  <div className="mt-6 w-12 h-1 bg-gray-200 rounded-full mx-auto"></div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-white border border-gray-200 hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-8 text-center">
+                  <div className="p-3 bg-gray-50 rounded-lg mx-auto mb-6 w-fit">
+                    <Shield className="h-8 w-8 text-gray-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Transparent Pricing</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">Pay only for the specific help you need with no hidden fees or retainers</p>
+                  <div className="mt-6 w-12 h-1 bg-gray-200 rounded-full mx-auto"></div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-white border border-gray-200 hover:shadow-xl transition-all duration-300">
+                <CardContent className="p-8 text-center">
+                  <div className="p-3 bg-gray-50 rounded-lg mx-auto mb-6 w-fit">
+                    <Target className="h-8 w-8 text-gray-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Focused Solutions</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">Tailored advice for your specific situation and immigration goals</p>
+                  <div className="mt-6 w-12 h-1 bg-gray-200 rounded-full mx-auto"></div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
