@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../shared/Button';
-import { Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Globe, UserCheck, MapPin, HelpCircle } from 'lucide-react';
+import { Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Globe, UserCheck, MapPin, HelpCircle, CheckCircle, Star } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export function ServicesPage() {
@@ -121,7 +121,7 @@ export function ServicesPage() {
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase mb-2">Our Services</h2>
+            <h2 className="text-base font-medium text-gray-700 tracking-wider uppercase mb-2">Our Services</h2>
             <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
               Immigration Solutions Tailored to You
             </h3>
@@ -131,161 +131,224 @@ export function ServicesPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="max-w-5xl mx-auto">
             {[
-          {
-                icon: <Clock className="h-8 w-8" />,
+              {
+                icon: <Clock className="h-16 w-16" />,
                 title: "Quick Immigration Advice Session",
-                description: "30, 45, 60 min. Live 1-on-1 session with a licensed RCIC.",
+                subtitle: "Who it's for:",
+                whoFor: "You're new to the process or facing a few 'What should I do?' questions.",
+                description: "What it covers:",
                 features: [
+                  "30, 45, 60 min. Live 1-on-1 session with a licensed RCIC.",
                   "Reliable answers from a licensed RCIC.",
                   "Clarification on documents, timelines, or eligibility.",
                   "Trusted advice before you take your next step.",
                   "Ideal for first-time applicants or people seeking clarity.",
                   "No document prep required just book and talk."
                 ],
-                color: "blue"
+                benefit: "No more guessing. Just clarity from someone who knows exactly how the system works.",
+                mainBenefit: "Get fast, trustworthy answers and peace of mind without long waits or commitments.",
+                cta: "Book Your Session",
+                gradient: "from-blue-500 to-blue-700",
+                bgGradient: "from-blue-50 to-indigo-50"
               },
               {
-                icon: <FileText className="h-8 w-8" />,
+                icon: <FileText className="h-16 w-16" />,
                 title: "Eligibility Check & Program Matching",
-                description: "Personalized review of your qualifications.",
+                subtitle: "Who it's for:",
+                whoFor: "You're unsure which immigration pathway fits your background: study, Express Entry, PNP, work permit?",
+                description: "What it covers:",
                 features: [
-                  "A clear list of immigration options that match.",
-                  "Advice on which programs are realistic or risky.",
-                  "Consultant reviews your profile and background.",
-                  "Get matched with the most realistic Canadian immigration pathways.",
-                  "Advice on study permits, work permits, PR, Express Entry, etc."
+                  "Personalized review of your qualifications",
+                  "A clear list of immigration options that match",
+                  "Advice on which programs are realistic or risky",
+                  "Consultant reviews your profile and background",
+                  "Get matched with the most realistic Canadian immigration pathways",
+                  "Understand which programs you qualify for and which you don't"
                 ],
-                color: "green"
+                benefit: "Avoid wasting time and money on applications you don't qualify for.",
+                mainBenefit: "Avoid rejections by applying to programs you're actually eligible for.",
+                cta: "Find Out If You Qualify",
+                gradient: "from-green-500 to-emerald-700",
+                bgGradient: "from-green-50 to-emerald-50"
               },
               {
-                icon: <FileEdit className="h-8 w-8" />,
+                icon: <FileEdit className="h-16 w-16" />,
                 title: "Strategic Immigration Planning",
-                description: "Build a long-term or multi-step immigration roadmap.",
+                subtitle: "Who it's for:",
+                whoFor: "You're weighing multiple immigration options and want to choose the most secure or fastest route.",
+                description: "What it covers:",
                 features: [
-                  "Side-by-side comparison of your possible paths.",
-                  "Compare multiple programs and options based on your goals.",
-                  "CRS improvement tips, timelines, and risk analysis.",
-                  "Ideal for people with complex profiles or multiple pathways.",
-                  "Tips for maximizing points or preparing your file."
+                  "Side-by-side comparison of your possible paths",
+                  "Build a long-term or multi-step immigration roadmap",
+                  "Compare multiple programs and options based on your goals",
+                  "CRS improvement tips, timelines, and risk analysis",
+                  "Ideal for people with complex profiles or multiple pathways",
+                  "Tips for maximizing points or preparing your file"
                 ],
-                color: "purple"
+                benefit: "A plan you can trust. You'll know where to start, what to expect, and what it'll take to succeed.",
+                mainBenefit: "Leave with a clear, personalized strategy not guesswork or generic advice.",
+                cta: "Build My Immigration Plan",
+                gradient: "from-purple-500 to-purple-700",
+                bgGradient: "from-purple-50 to-violet-50"
               },
               {
-                icon: <RefreshCw className="h-8 w-8" />,
+                icon: <RefreshCw className="h-16 w-16" />,
                 title: "Final Application Review",
-                description: "Document and form check for accuracy and completeness.",
+                subtitle: "Who it's for:",
+                whoFor: "You've done the hard work yourself but want expert eyes before submitting.",
+                description: "What it covers:",
                 features: [
-                  "Upload your draft forms and supporting documents.",
-                  "Consultant checks for errors, missing info, or red flags.",
-                  "Receive expert feedback before you submit to IRCC.",
-                  "Increases your chances of approval without hiring a full representative.",
-                  "Suggestions to improve supporting evidence."
+                  "Document and form check for accuracy and completeness",
+                  "Upload your draft forms and supporting documents",
+                  "Consultant checks for errors, missing info, or red flags",
+                  "Receive expert feedback before you submit to IRCC",
+                  "Increases your chances of approval without hiring a full representative",
+                  "Suggestions to improve supporting evidence"
                 ],
-                color: "orange"
+                benefit: "Catch errors before IRCC does. Increase your approval chances without hiring a full legal team.",
+                mainBenefit: "Catch costly mistakes before submission and maximize your chances of success.",
+                cta: "Get My File Reviewed",
+                gradient: "from-orange-500 to-red-600",
+                bgGradient: "from-orange-50 to-red-50"
               },
               {
-                icon: <Target className="h-8 w-8" />,
+                icon: <Target className="h-16 w-16" />,
                 title: "Refusal Letter Evaluation",
-                description: "Clear breakdown of the refusal letter.",
+                subtitle: "Who it's for:",
+                whoFor: "Your application was refused and you're not sure why—or what to do next.",
+                description: "What it covers:",
                 features: [
-                  "The consultant reviews your IRCC refusal letter in detail.",
-                  "Understand what went wrong and what to do next.",
-                  "Learn whether to reapply, appeal, or change strategy.",
-                  "Helps avoid repeating the same mistakes.",
-                  "Expert insights into what likely went wrong."
+                  "Clear breakdown of the refusal letter",
+                  "The consultant reviews your IRCC refusal letter in detail",
+                  "Understand what went wrong and what to do next",
+                  "Learn whether to reapply, appeal, or change strategy",
+                  "Helps avoid repeating the same mistakes",
+                  "Step-by-step suggestions to fix or reapply"
                 ],
-                color: "indigo"
+                benefit: "You'll stop guessing and start recovering with a concrete path forward.",
+                mainBenefit: "Turn a refusal into a smarter, stronger plan with expert insights.",
+                cta: "Fix My Refused Application",
+                gradient: "from-indigo-500 to-blue-700",
+                bgGradient: "from-indigo-50 to-blue-50"
               },
               {
-                icon: <Globe className="h-8 w-8" />,
+                icon: <Globe className="h-16 w-16" />,
                 title: "International Applicant Guidance",
-                description: "Tailored guidance for your country of residence.",
+                subtitle: "Who it's for:",
+                whoFor: "You're applying from abroad and want to prepare your documents and application properly.",
+                description: "What it covers:",
                 features: [
-                  "Designed for clients applying from outside Canada.",
-                  "Tailored advice based on your country, visa type, and supporting documents.",
-                  "Consultant helps you prove ties to home and meet Canadian standards.",
-                  "Especially helpful for study permits, visitor visas, or first-time applicants.",
-                  "Culturally aware advice from consultants who know your region."
+                  "Tailored guidance for your country of residence",
+                  "Designed for clients applying from outside Canada",
+                  "Tailored advice based on your country, visa type, and supporting documents",
+                  "Consultant helps you prove ties to home and meet Canadian standards",
+                  "Support with proving ties, finances, and intent",
+                  "Culturally aware advice from consultants who know your region"
                 ],
-                color: "teal"
+                benefit: "Confidence that your file meets Canadian expectations, even from outside the country.",
+                mainBenefit: "Apply from overseas with confidence and clarity, no cultural gaps, no guesswork.",
+                cta: "Start My Canada Journey",
+                gradient: "from-teal-500 to-cyan-700",
+                bgGradient: "from-teal-50 to-cyan-50"
               },
               {
-                icon: <HelpCircle className="h-8 w-8" />,
+                icon: <HelpCircle className="h-16 w-16" />,
                 title: "Expert Support for DIY Applicants",
-                description: "Help with complex form fields.",
+                subtitle: "Who it's for:",
+                whoFor: "You're managing your application on your own, but stuck on a specific issue.",
+                description: "What it covers:",
                 features: [
-                  "Help with filling out forms, GCKey errors, or tricky application sections.",
-                  "Ask about document prep, cover letters, letters of explanation, and more.",
-                  "Stay in control of your own application, with expert support when needed.",
-                  "Ideal for confident applicants who need help with specific items.",
-                  "Troubleshooting tech or GCKey issues."
+                  "Help with complex form fields",
+                  "Help with filling out forms, GCKey errors, or tricky application sections",
+                  "Ask about document prep, cover letters, letters of explanation, and more",
+                  "Stay in control of your own application, with expert support when needed",
+                  "Support letters and explanation drafts",
+                  "Troubleshooting tech or GCKey issues"
                 ],
-                color: "bluegray"
+                benefit: "Stay in control, but avoid costly mistakes. Get expert help only where you need it.",
+                mainBenefit: "Maintain control while getting targeted expert assistance for specific challenges.",
+                cta: "Get Help With My Forms",
+                gradient: "from-slate-500 to-gray-700",
+                bgGradient: "from-slate-50 to-gray-50"
               },
               {
-                icon: <MapPin className="h-8 w-8" />,
+                icon: <MapPin className="h-16 w-16" />,
                 title: "Future Path Planning (Students, Workers, PGWP Holders)",
-                description: "Timeline planning (PGWP → PNP → PR).",
+                subtitle: "Who it's for:",
+                whoFor: "You're already in Canada and want to know your next steps toward permanent residence.",
+                description: "What it covers:",
                 features: [
-                  "For those already in Canada planning to stay longer or apply for PR.",
+                  "Timeline planning (PGWP → PNP → PR)",
+                  "For those already in Canada planning to stay longer or apply for PR",
                   "Understand your next steps: Express Entry, PNP, bridging work permits, etc.",
-                  "Consultant helps you build a timeline around permit expiry.",
-                  "Prevent last-minute panic by planning 1–2 years in advance.",
-                  "Answers to what you should do now to qualify later."
+                  "Consultant helps you build a timeline around permit expiry",
+                  "Support for bridging permits or status changes",
+                  "Answers to what you should do now to qualify later"
                 ],
-                color: "emerald"
+                benefit: "Avoid last-minute panic. Plan your next two years in one session.",
+                mainBenefit: "Secure your long-term stay in Canada with a clear, proactive plan.",
+                cta: "Plan My Future in Canada",
+                gradient: "from-emerald-500 to-green-700",
+                bgGradient: "from-emerald-50 to-green-50"
               }
             ].map((service, index) => {
+              const isEven = index % 2 === 0;
               return (
                 <div 
                   key={index} 
                   ref={(el: HTMLDivElement | null) => { serviceRefs.current[`service-${index}`] = el; }}
-                  className="card-animate"
+                  className="py-12 border-b border-gray-200 last:border-b-0"
                 >
-                  <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200 bg-white group">
-                  <CardContent className="p-6 h-full flex flex-col">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="p-3 bg-gray-50 rounded-lg group-hover:bg-blue-50 transition-colors duration-300">
-                        <div className="text-gray-600 group-hover:text-blue-600">{service.icon}</div>
+                  <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Icon Section */}
+                    <div className="flex-shrink-0 lg:w-20">
+                      <div className="text-gray-500">
+                        {service.icon}
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                          PROFESSIONAL
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex-grow">
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
-                        {service.title}
-                      </h3>
-                      <p className="text-gray-600 mb-4 leading-relaxed text-sm">{service.description}</p>
-                      
-                      <ul className="space-y-2 mb-6">
-                        {service.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-start gap-2 text-gray-700 text-sm">
-                            <div className="w-1 h-1 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                     
-                    <div className="mt-auto">
-                      <div className="text-center py-4">
-                        <Button 
-                          className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3 rounded-lg transition-all duration-200"
-                          onClick={() => navigate('/consultants')}
-                        >
-                          Book Now
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </Button>
+                    {/* Content Section */}
+                    <div className="flex-1">
+                      <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4 leading-tight">
+                        {service.title}
+                      </h3>
+                      
+                      <div className="mb-6">
+                        <h4 className="text-lg font-medium text-gray-700 mb-2">{service.subtitle}</h4>
+                        <p className="text-gray-600 mb-4 text-base leading-relaxed">{service.whoFor}</p>
                       </div>
+                      
+                      <div className="mb-6">
+                        <h4 className="text-lg font-medium text-gray-700 mb-3">{service.description}</h4>
+                        <ul className="space-y-1 text-gray-600">
+                          {service.features.map((feature, featureIndex) => (
+                            <li key={featureIndex} className="flex items-start gap-2">
+                              <span className="text-gray-400 mt-2">•</span>
+                              <span className="leading-relaxed text-sm">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div className="mb-8">
+                        <h4 className="text-lg font-medium text-gray-700 mb-2">What's in it for you:</h4>
+                        <p className="text-gray-600 mb-2 text-sm italic">{service.benefit}</p>
+                        <p className="text-base font-medium text-gray-800">
+                          <span className="font-semibold">Benefit:</span> {service.mainBenefit}
+                        </p>
+                      </div>
+                      
+                      <Button 
+                        className="bg-gray-900 text-white font-medium py-3 px-6 rounded-sm text-base hover:bg-gray-800 transition-colors duration-200 inline-flex items-center"
+                        onClick={() => navigate('/consultants')}
+                      >
+                        {service.cta}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
                 </div>
               )
             })}
