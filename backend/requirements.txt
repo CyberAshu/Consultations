@@ -6,7 +6,7 @@ pydantic[email]==2.6.1
 pydantic-settings==2.1.0
 
 # Database and ORM
-supabase==2.7.4
+supabase==2.3.4
 asyncpg==0.29.0
 psycopg2-binary==2.9.9
 sqlalchemy==2.0.27
@@ -19,7 +19,7 @@ python-decouple==3.8
 bcrypt==4.1.2
 
 # HTTP client and async support
-httpx==0.25.2
+httpx==0.24.1
 aiofiles==23.2.1
 
 # Date and time handling
