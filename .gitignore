@@ -6,17 +6,18 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.js
-/src/node_modules
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+frontend/src/node_modules
 
 # testing
-/coverage
-/src/coverage
+frontend/coverage
+frontend/src/coverage
 
 # production
-/build
-/dist
+frontend/build
+frontend/dist
 
 # misc
 .DS_Store
@@ -24,6 +25,10 @@
 .env.development.local
 .env.test.local
 .env.production.local
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
 npm-debug.log*
 yarn-debug.log*
@@ -32,6 +37,7 @@ pnpm-debug.log*
 
 # React specific
 .eslintcache
+frontend/.eslintcache
 
 # ===========================
 # BACKEND (FastAPI/Python) PATTERNS
@@ -343,7 +349,8 @@ out
 
 # Gatsby files
 .cache/
-public
+# public - commented out as it conflicts with React public folder
+# public
 
 # Storybook build outputs
 .out
