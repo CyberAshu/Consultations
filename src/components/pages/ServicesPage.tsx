@@ -108,11 +108,8 @@ export function ServicesPage() {
             Professional Immigration 
             <span className="text-blue-600 block">Consulting Services</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-            The Canadian immigration system can be overwhelming. Whether you're applying for a study permit, exploring PR, or recovering from a refusal, you deserve help that's honest, expert, and focused on results not retainers.
-          </p>
-          <p className="text-lg text-gray-500 max-w-3xl mx-auto mb-10">
-            This page helps you choose the right service for your specific needs. Every session is with a licensed RCIC and designed to give you clear next steps, document support, and peace of mind.
+          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Expert immigration guidance tailored to your needs. Every session with a licensed RCIC.
           </p>
         </div>
       </section>
@@ -120,21 +117,11 @@ export function ServicesPage() {
       {/* Service Cards Grid */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-base font-medium text-gray-700 tracking-wider uppercase mb-2">Our Services</h2>
-            <h3 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
-              Immigration Solutions Tailored to You
-            </h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Choose from our comprehensive range of professional immigration services, 
-              all backed by licensed RCICs.
-            </p>
-          </div>
 
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             {[
               {
-                icon: <Clock className="h-16 w-16" />,
+                icon: <Clock className="h-12 w-12" />,
                 title: "Quick Immigration Advice Session",
                 subtitle: "Who it's for:",
                 whoFor: "You're new to the process or facing a few 'What should I do?' questions.",
@@ -151,10 +138,11 @@ export function ServicesPage() {
                 mainBenefit: "Get fast, trustworthy answers and peace of mind without long waits or commitments.",
                 cta: "Book Your Session",
                 gradient: "from-blue-500 to-blue-700",
-                bgGradient: "from-blue-50 to-indigo-50"
+                bgGradient: "from-blue-50 to-indigo-50",
+                image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <FileText className="h-16 w-16" />,
+                icon: <FileText className="h-12 w-12" />,
                 title: "Eligibility Check & Program Matching",
                 subtitle: "Who it's for:",
                 whoFor: "You're unsure which immigration pathway fits your background: study, Express Entry, PNP, work permit?",
@@ -171,10 +159,11 @@ export function ServicesPage() {
                 mainBenefit: "Avoid rejections by applying to programs you're actually eligible for.",
                 cta: "Find Out If You Qualify",
                 gradient: "from-green-500 to-emerald-700",
-                bgGradient: "from-green-50 to-emerald-50"
+                bgGradient: "from-green-50 to-emerald-50",
+                image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <FileEdit className="h-16 w-16" />,
+                icon: <FileEdit className="h-12 w-12" />,
                 title: "Strategic Immigration Planning",
                 subtitle: "Who it's for:",
                 whoFor: "You're weighing multiple immigration options and want to choose the most secure or fastest route.",
@@ -191,10 +180,11 @@ export function ServicesPage() {
                 mainBenefit: "Leave with a clear, personalized strategy not guesswork or generic advice.",
                 cta: "Build My Immigration Plan",
                 gradient: "from-purple-500 to-purple-700",
-                bgGradient: "from-purple-50 to-violet-50"
+                bgGradient: "from-purple-50 to-violet-50",
+                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <RefreshCw className="h-16 w-16" />,
+                icon: <RefreshCw className="h-12 w-12" />,
                 title: "Final Application Review",
                 subtitle: "Who it's for:",
                 whoFor: "You've done the hard work yourself but want expert eyes before submitting.",
@@ -211,10 +201,11 @@ export function ServicesPage() {
                 mainBenefit: "Catch costly mistakes before submission and maximize your chances of success.",
                 cta: "Get My File Reviewed",
                 gradient: "from-orange-500 to-red-600",
-                bgGradient: "from-orange-50 to-red-50"
+                bgGradient: "from-orange-50 to-red-50",
+                image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <Target className="h-16 w-16" />,
+                icon: <Target className="h-12 w-12" />,
                 title: "Refusal Letter Evaluation",
                 subtitle: "Who it's for:",
                 whoFor: "Your application was refused and you're not sure why—or what to do next.",
@@ -231,10 +222,11 @@ export function ServicesPage() {
                 mainBenefit: "Turn a refusal into a smarter, stronger plan with expert insights.",
                 cta: "Fix My Refused Application",
                 gradient: "from-indigo-500 to-blue-700",
-                bgGradient: "from-indigo-50 to-blue-50"
+                bgGradient: "from-indigo-50 to-blue-50",
+                image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <Globe className="h-16 w-16" />,
+                icon: <Globe className="h-12 w-12" />,
                 title: "International Applicant Guidance",
                 subtitle: "Who it's for:",
                 whoFor: "You're applying from abroad and want to prepare your documents and application properly.",
@@ -251,10 +243,11 @@ export function ServicesPage() {
                 mainBenefit: "Apply from overseas with confidence and clarity, no cultural gaps, no guesswork.",
                 cta: "Start My Canada Journey",
                 gradient: "from-teal-500 to-cyan-700",
-                bgGradient: "from-teal-50 to-cyan-50"
+                bgGradient: "from-teal-50 to-cyan-50",
+                image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <HelpCircle className="h-16 w-16" />,
+                icon: <HelpCircle className="h-12 w-12" />,
                 title: "Expert Support for DIY Applicants",
                 subtitle: "Who it's for:",
                 whoFor: "You're managing your application on your own, but stuck on a specific issue.",
@@ -271,10 +264,11 @@ export function ServicesPage() {
                 mainBenefit: "Maintain control while getting targeted expert assistance for specific challenges.",
                 cta: "Get Help With My Forms",
                 gradient: "from-slate-500 to-gray-700",
-                bgGradient: "from-slate-50 to-gray-50"
+                bgGradient: "from-slate-50 to-gray-50",
+                image: "https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=500&h=400&fit=crop&crop=center"
               },
               {
-                icon: <MapPin className="h-16 w-16" />,
+                icon: <MapPin className="h-12 w-12" />,
                 title: "Future Path Planning (Students, Workers, PGWP Holders)",
                 subtitle: "Who it's for:",
                 whoFor: "You're already in Canada and want to know your next steps toward permanent residence.",
@@ -291,7 +285,8 @@ export function ServicesPage() {
                 mainBenefit: "Secure your long-term stay in Canada with a clear, proactive plan.",
                 cta: "Plan My Future in Canada",
                 gradient: "from-emerald-500 to-green-700",
-                bgGradient: "from-emerald-50 to-green-50"
+                bgGradient: "from-emerald-50 to-green-50",
+                image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&h=400&fit=crop&crop=center"
               }
             ].map((service, index) => {
               const isEven = index % 2 === 0;
@@ -299,56 +294,100 @@ export function ServicesPage() {
                 <div 
                   key={index} 
                   ref={(el: HTMLDivElement | null) => { serviceRefs.current[`service-${index}`] = el; }}
-                  className="py-12 border-b border-gray-200 last:border-b-0"
+                  className="group relative mb-16 last:mb-0"
                 >
-                  <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Icon Section */}
-                    <div className="flex-shrink-0 lg:w-20">
-                      <div className="text-gray-500">
-                        {service.icon}
+                  <div className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-8 lg:gap-12 items-start`}>
+                    {/* Image Section */}
+                    <div className="flex-shrink-0 lg:w-1/2">
+                      <div className="relative overflow-hidden rounded-lg bg-gray-100 aspect-[4/3] group-hover:shadow-xl transition-shadow duration-300">
+                        {/* Background Image */}
+                        {service.image ? (
+                          <img 
+                            src={service.image} 
+                            alt={service.title}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                        )}
+                        
+                        {/* Dark overlay for better text visibility */}
+                        <div className="absolute inset-0 bg-black/30"></div>
+                        
+                        {/* Icon overlay */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="p-6 bg-white/95 rounded-full shadow-lg">
+                            <div className="text-gray-700">
+                              {service.icon}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Service number */}
+                        <div className="absolute top-4 left-4 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                          {String(index + 1).padStart(2, '0')}
+                        </div>
+                        
+                        {/* Professional badge */}
+                        <div className="absolute bottom-4 right-4 bg-white/95 px-3 py-1 rounded-full text-xs font-medium text-gray-700">
+                          RCIC Licensed
+                        </div>
                       </div>
                     </div>
                     
                     {/* Content Section */}
-                    <div className="flex-1">
-                      <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4 leading-tight">
-                        {service.title}
-                      </h3>
-                      
-                      <div className="mb-6">
-                        <h4 className="text-lg font-medium text-gray-700 mb-2">{service.subtitle}</h4>
-                        <p className="text-gray-600 mb-4 text-base leading-relaxed">{service.whoFor}</p>
-                      </div>
-                      
-                      <div className="mb-6">
-                        <h4 className="text-lg font-medium text-gray-700 mb-3">{service.description}</h4>
-                        <ul className="space-y-1 text-gray-600">
-                          {service.features.map((feature, featureIndex) => (
-                            <li key={featureIndex} className="flex items-start gap-2">
-                              <span className="text-gray-400 mt-2">•</span>
-                              <span className="leading-relaxed text-sm">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
+                    <div className="flex-1 lg:py-8">
+                      <div className="mb-4">
+                        <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full mb-3">
+                          {service.subtitle.replace(':', '')}
+                        </span>
+                        <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                          {service.title}
+                        </h3>
+                        <p className="text-gray-600 text-lg leading-relaxed mb-6">{service.whoFor}</p>
                       </div>
                       
                       <div className="mb-8">
-                        <h4 className="text-lg font-medium text-gray-700 mb-2">What's in it for you:</h4>
-                        <p className="text-gray-600 mb-2 text-sm italic">{service.benefit}</p>
-                        <p className="text-base font-medium text-gray-800">
-                          <span className="font-semibold">Benefit:</span> {service.mainBenefit}
-                        </p>
+                        <h4 className="text-xl font-semibold text-gray-900 mb-4">{service.description}</h4>
+                        <div className="grid md:grid-cols-2 gap-3">
+                          {service.features.map((feature, featureIndex) => (
+                            <div key={featureIndex} className="flex items-start gap-3">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
+                              <span className="text-gray-600 text-sm leading-relaxed">{feature}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                       
-                      <Button 
-                        className="bg-gray-900 text-white font-medium py-3 px-6 rounded-sm text-base hover:bg-gray-800 transition-colors duration-200 inline-flex items-center"
-                        onClick={() => navigate('/consultants')}
-                      >
-                        {service.cta}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
+                      <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                          <div className="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-white text-xs font-bold">✓</span>
+                          </div>
+                          Key Benefit
+                        </h4>
+                        <p className="text-gray-700 font-medium text-lg mb-2">{service.mainBenefit}</p>
+                        <p className="text-gray-600 text-sm italic">{service.benefit}</p>
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Button 
+                          className="bg-gray-900 text-white font-semibold py-4 px-8 rounded-lg text-lg hover:bg-gray-800 transition-all duration-300 hover:shadow-lg inline-flex items-center justify-center group-hover:scale-105"
+                          onClick={() => navigate('/consultants')}
+                        >
+                          {service.cta}
+                          <ArrowRight className="h-5 w-5 ml-2" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                  
+                  {/* Connecting line for flow */}
+                  {index < 7 && (
+                    <div className="hidden lg:block absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+                      <div className="w-px h-16 bg-gradient-to-b from-gray-300 to-transparent"></div>
+                    </div>
+                  )}
                 </div>
               )
             })}
