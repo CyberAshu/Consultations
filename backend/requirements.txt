@@ -19,7 +19,7 @@ python-decouple==3.8
 bcrypt==4.1.2
 
 # HTTP client and async support
-httpx>=0.24,<0.26
+httpx==0.25.2
 aiofiles==23.2.1
 
 # Date and time handling
