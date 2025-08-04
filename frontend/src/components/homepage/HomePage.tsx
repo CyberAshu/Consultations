@@ -2,34 +2,49 @@ import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../shared/Button"
 import { WaitingListModal } from "../shared/WaitingListModal"
+import { featuresService, Testimonial, FAQ } from "../../services"
 import "../shared/styles/testimonial-animation.css"
 import {
   Calendar,
   Star,
   ChevronDown,
   Shield,
-  Clock,
   Heart,
-  Target,
-  FileText,
-  FileEdit,
-  RefreshCw,
-  Zap,
-  Globe
+  Zap
 } from "lucide-react"
 
 
 export function HomePage() {
   const navigate = useNavigate()
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false)
-  // const [selectedTopic, setSelectedTopic] = useState("")
-  // const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [faqs, setFaqs] = useState<FAQ[]>([])
+  const [loading, setLoading] = useState(true)
   const heroRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const testimonialScrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+useEffect(() => {
+    // Load testimonials and FAQs from API
+    const loadData = async () => {
+      try {
+        const [loadedTestimonials, loadedFaqs] = await Promise.all([
+          featuresService.getTestimonials(),
+          featuresService.getHomeFAQs()
+        ]);
+
+        setTestimonials(loadedTestimonials);
+        setFaqs(loadedFaqs);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+
     // Auto-scroll testimonials
     const interval = setInterval(() => {
       if (testimonialScrollRef.current) {
@@ -140,28 +155,6 @@ export function HomePage() {
   //   },
   // ]
 
-  const faqs = [
-    {
-      question: "Who are your consultants?",
-      answer: "All our consultants are licensed RCICs (Regulated Canadian Immigration Consultants) verified by the College of Immigration and Citizenship Consultants (CICC). Each consultant displays their license number and has been vetted for experience and professionalism.",
-    },
-    {
-      question: "How do I cancel or reschedule?",
-      answer: "You can cancel or reschedule up to 24 hours before your appointment through your booking confirmation email or by contacting support. Cancellations made less than 24 hours in advance may be subject to a fee.",
-    },
-    {
-      question: "Do I need to upload anything?",
-      answer: "For simple consultations, no uploads are required. For file reviews, you'll upload documents after booking to ensure your consultant is prepared. We'll provide a secure upload link and checklist.",
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards (Visa, Mastercard, American Express) and PayPal. All payments are processed securely through our encrypted payment system.",
-    },
-    {
-      question: "Is my information secure?",
-      answer: "Absolutely. We use bank-level encryption for all data transmission and storage. Your personal information and documents are protected according to Canadian privacy laws.",
-    },
-  ]
 
   // const services = [
   //   {
@@ -538,81 +531,25 @@ export function HomePage() {
           <div className="relative overflow-hidden">
             <div className="flex animate-scroll-horizontal hover:pause-animation">
               {/* First set of testimonials */}
-              {[
-                {
-                  quote: "Sweet! Smoothest process ever.",
-                  author: "Deepika K.",
-                  role: "International Student",
-                  company: "from India"
-                },
-                {
-                  quote: "Extremely seamless and expert experience. They handled the process for my co-founder end-to-end.",
-                  author: "Carlos R.", 
-                  role: "Express Entry Applicant",
-                  company: "from Mexico"
-                },
-                {
-                  quote: "Solid UX - super simple to understand",
-                  author: "Sarah M.",
-                  role: "Family Sponsorship", 
-                  company: "from UK"
-                },
-                {
-                  quote: "Seamless process, great support",
-                  author: "Ahmed T.",
-                  role: "Provincial Nominee",
-                  company: "from UAE" 
-                },
-                {
-                  quote: "Professional and efficient service throughout the entire process.",
-                  author: "Maria L.",
-                  role: "Work Permit Holder",
-                  company: "from Spain"
-                },
-                {
-                  quote: "Couldn't have asked for better guidance on my immigration journey.",
-                  author: "James W.",
-                  role: "Permanent Resident",
-                  company: "from Australia"
-                }
-              ].concat([
-                {
-                  quote: "Sweet! Smoothest process ever.",
-                  author: "Deepika K.",
-                  role: "International Student",
-                  company: "from India"
-                },
-                {
-                  quote: "Extremely seamless and expert experience. They handled the process for my co-founder end-to-end.",
-                  author: "Carlos R.", 
-                  role: "Express Entry Applicant",
-                  company: "from Mexico"
-                },
-                {
-                  quote: "Solid UX - super simple to understand",
-                  author: "Sarah M.",
-                  role: "Family Sponsorship", 
-                  company: "from UK"
-                },
-                {
-                  quote: "Seamless process, great support",
-                  author: "Ahmed T.",
-                  role: "Provincial Nominee",
-                  company: "from UAE" 
-                },
-                {
-                  quote: "Professional and efficient service throughout the entire process.",
-                  author: "Maria L.",
-                  role: "Work Permit Holder",
-                  company: "from Spain"
-                },
-                {
-                  quote: "Couldn't have asked for better guidance on my immigration journey.",
-                  author: "James W.",
-                  role: "Permanent Resident",
-                  company: "from Australia"
-                }
-              ]).map((testimonial, index) => (
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="relative w-[350px] md:w-[400px] flex-shrink-0 rounded-2xl border border-gray-200 bg-gray-100 px-8 py-6 shadow-md mx-2 animate-pulse">
+                    <div className="space-y-4">
+                      <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-full bg-gray-300"></div>
+                        <div className="space-y-2">
+                          <div className="h-3 bg-gray-300 rounded w-20"></div>
+                          <div className="h-3 bg-gray-300 rounded w-16"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                testimonials.concat(testimonials).map((testimonial, index) => (
                 <div key={index} className="relative w-[350px] md:w-[400px] flex-shrink-0 rounded-2xl border border-gray-200 bg-white px-8 py-6 shadow-md hover:shadow-lg transition-shadow duration-300 mx-2">
                   <blockquote>
                     <p className="text-gray-900 text-base leading-relaxed font-normal mb-6">
@@ -621,17 +558,21 @@ export function HomePage() {
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <span className="text-gray-600 text-sm font-semibold">
-                          {testimonial.author.split(' ').map(n => n[0]).join('')}
+                          {testimonial.author?.split(' ').map(n => n[0]).join('') || '?'}
                         </span>
                       </div>
                       <div className="flex flex-col">
                         <span className="text-gray-900 text-sm font-semibold">{testimonial.author}</span>
-                        <span className="text-gray-500 text-xs">{testimonial.role} {testimonial.company}</span>
+                        <span className="text-gray-500 text-xs">{testimonial.role} {testimonial.flag || ''}</span>
+                        {testimonial.outcome && (
+                          <span className="text-green-600 text-xs font-medium">{testimonial.outcome}</span>
+                        )}
                       </div>
                     </div>
                   </blockquote>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
           <div className="pb-[80px]" style={{opacity: 1, transform: 'translateY(30px)'}}>
@@ -658,40 +599,58 @@ export function HomePage() {
           </div>
 
           <div className="space-y-3">
-            {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-all duration-200"
-              >
-                <button
-                  className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
-                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+            {loading ? (
+              // Loading skeleton for FAQs
+              Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg bg-gray-100 animate-pulse">
+                  <div className="p-6">
+                    <div className="h-6 bg-gray-300 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              faqs.filter(faq => faq.is_active).map((faq, index) => (
+                <div
+                  key={faq.id}
+                  className="border border-gray-200 rounded-lg overflow-hidden bg-white hover:shadow-md transition-all duration-200"
                 >
-                  <span className="font-semibold text-lg text-black pr-4">
-                    {faq.question}
-                  </span>
-                  <div className="flex-shrink-0 ml-4">
-                    <ChevronDown
-                      className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                        openFaq === index ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                </button>
-                {openFaq === index && (
-                  <div className="px-6 pb-6 border-t border-gray-100 bg-gray-50">
-                    <div className="pt-4">
-                      <p className="text-neutral-700 leading-relaxed">
-                        {faq.answer}
-                      </p>
+                  <button
+                    className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:bg-gray-50"
+                    onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                  >
+                    <span className="font-semibold text-lg text-black pr-4">
+                      {faq.question}
+                    </span>
+                    <div className="flex-shrink-0 ml-4">
+                      <ChevronDown
+                        className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
+                          openFaq === faq.id ? "rotate-180" : ""
+                        }`}
+                      />
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  </button>
+                  {openFaq === faq.id && (
+                    <div className="px-6 pb-6 border-t border-gray-100 bg-gray-50">
+                      <div className="pt-4">
+                        <p className="text-neutral-700 leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-12 space-y-4">
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors duration-200 mr-4"
+              onClick={() => navigate('/faq')}
+            >
+              View All FAQs
+            </Button>
             <Button
               className="bg-black text-white hover:bg-gray-800 px-8 py-3 rounded-lg font-medium transition-colors duration-200"
             >

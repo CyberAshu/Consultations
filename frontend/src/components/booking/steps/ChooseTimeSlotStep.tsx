@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ExternalLink
 } from 'lucide-react'
+import { bookingService } from '../../../services/bookingService'
 
 interface ChooseTimeSlotStepProps {
   onDataChange: (data: any) => void
@@ -30,36 +31,35 @@ export function ChooseTimeSlotStep({
   const [currentDate, setCurrentDate] = useState(new Date())
   const [useCalendly, setUseCalendly] = useState(false)
 
-  // Mock available time slots
-  const generateTimeSlots = (date: Date) => {
-    const slots = []
-    const baseTime = new Date(date)
-    baseTime.setHours(9, 0, 0, 0) // Start at 9 AM
-    
-    for (let i = 0; i < 16; i++) { // 9 AM to 5 PM (8 hours, 30min slots)
-      const time = new Date(baseTime)
-      time.setMinutes(baseTime.getMinutes() + (i * 30))
-      
-      // Skip lunch hours (12-1 PM) and add some randomness for availability
-      if (time.getHours() === 12 || Math.random() > 0.7) {
-        continue
-      }
-      
-      slots.push({
-        id: i,
-        time: time.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        }),
-        datetime: time,
-        available: true
-      })
-    }
-    return slots
-  }
+  const [availableSlots, setAvailableSlots] = useState<any[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
 
-  const [availableSlots, setAvailableSlots] = useState(generateTimeSlots(currentDate))
+  // Fetch available time slots from RCIC availability API
+  const fetchAvailableSlots = async (date: Date, consultantId: number) => {
+    if (!consultantId) return
+    
+    setLoadingSlots(true)
+    try {
+      const dateString = date.toISOString().split('T')[0] // YYYY-MM-DD format
+      const availability = await bookingService.getConsultantAvailability(consultantId, dateString)
+      
+      const slots = availability.slots
+        .filter((slot: any) => slot.available)
+        .map((slot: any, index: number) => ({
+          id: index,
+          time: slot.time,
+          datetime: new Date(`${dateString}T${slot.time}:00`),
+          available: true
+        }))
+      
+      setAvailableSlots(slots)
+    } catch (error) {
+      console.error('Failed to fetch availability:', error)
+      setAvailableSlots([])
+    } finally {
+      setLoadingSlots(false)
+    }
+  }
 
   const timezones = [
     { value: 'America/Toronto', label: 'Eastern Time (ET)', offset: 'UTC-5' },
@@ -69,6 +69,13 @@ export function ChooseTimeSlotStep({
     { value: 'America/Halifax', label: 'Atlantic Time (AT)', offset: 'UTC-4' },
     { value: 'America/St_Johns', label: 'Newfoundland Time (NT)', offset: 'UTC-3:30' }
   ]
+
+  // Fetch slots when RCIC or date changes
+  useEffect(() => {
+    if (rcic?.id) {
+      fetchAvailableSlots(currentDate, rcic.id)
+    }
+  }, [rcic?.id, currentDate])
 
   useEffect(() => {
     onDataChange({
@@ -96,8 +103,8 @@ export function ChooseTimeSlotStep({
     const newDate = new Date(currentDate)
     newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1))
     setCurrentDate(newDate)
-    setAvailableSlots(generateTimeSlots(newDate))
     setSelectedTimeSlot(null) // Reset selection when date changes
+    // fetchAvailableSlots will be called automatically by useEffect
   }
 
   const formatDate = (date: Date) => {
@@ -281,7 +288,12 @@ export function ChooseTimeSlotStep({
             <CardContent className="p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Time Slots</h3>
               
-              {availableSlots.length > 0 ? (
+              {loadingSlots ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                  <p className="text-gray-500">Loading available time slots...</p>
+                </div>
+              ) : availableSlots.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {availableSlots.map((slot) => (
                     <Button

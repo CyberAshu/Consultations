@@ -180,11 +180,11 @@ export function FloatingBookingSummary({
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {bookingData.rcic?.name?.split(' ').map((n: string) => n[0]).join('')}
+                  {(bookingData.rcic?.name || '').split(' ').map((n: string) => n[0]).join('') || 'N/A'}
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 text-sm">{bookingData.rcic?.name}</p>
-                  <p className="text-xs text-gray-600">{bookingData.rcic?.license}</p>
+                  <p className="text-xs text-gray-600">{bookingData.rcic?.rcic_number || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -195,11 +195,11 @@ export function FloatingBookingSummary({
             <div className="bg-green-50 rounded-lg p-3 border border-green-200">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{bookingData.service.name}</p>
-                  <p className="text-xs text-gray-600">{bookingData.service.duration}</p>
+                  <p className="font-medium text-gray-900 text-sm">{bookingData.service?.name || 'N/A'}</p>
+                  <p className="text-xs text-gray-600">{bookingData.service?.duration || 'N/A'}</p>
                 </div>
                 <Badge className="bg-green-100 text-green-800 text-xs">
-                  ${bookingData.service.price}
+                  ${bookingData.service?.price || 0}
                 </Badge>
               </div>
             </div>
@@ -211,11 +211,11 @@ export function FloatingBookingSummary({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-gray-900">{bookingData.timeSlot.date}</span>
+                  <span className="text-sm font-medium text-gray-900">{bookingData.timeSlot?.date || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm text-gray-700">{bookingData.timeSlot.time}</span>
+                  <span className="text-sm text-gray-700">{bookingData.timeSlot?.time || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-purple-600" />
@@ -232,7 +232,7 @@ export function FloatingBookingSummary({
                 <Receipt className="h-4 w-4 text-emerald-600" />
                 <span className="text-sm font-medium text-emerald-900">Payment Confirmed</span>
               </div>
-              <p className="text-xs text-emerald-700">ID: {bookingData.payment.id}</p>
+              <p className="text-xs text-emerald-700">ID: {bookingData.payment?.id || 'N/A'}</p>
             </div>
           )}
 

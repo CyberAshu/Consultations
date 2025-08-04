@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Text, JSON, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 import enum
 from app.db.base import Base
 
@@ -46,6 +47,12 @@ class Booking(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    consultant = relationship("Consultant", back_populates="bookings")
+    service = relationship("ConsultantService", back_populates="bookings")
+    documents = relationship("BookingDocument", back_populates="booking", cascade="all, delete-orphan")
+    payment = relationship("Payment", back_populates="booking", uselist=False)
 
 class BookingDocument(Base):
     __tablename__ = "booking_documents"
@@ -58,3 +65,6 @@ class BookingDocument(Base):
     file_type = Column(String)
     is_required = Column(Boolean, default=False)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    booking = relationship("Booking", back_populates="documents")

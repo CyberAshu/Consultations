@@ -1,11 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../ui/Card'
 import { ChevronDown, HelpCircle } from 'lucide-react'
+import { featuresService, FAQ } from '../../services'
 
 export function FAQPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [openFaq, setOpenFaq] = useState<string | number | null>(null)
+  const [faqs, setFaqs] = useState<FAQ[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const faqs = [
+  useEffect(() => {
+    const loadAllFAQs = async () => {
+      try {
+        const allFaqs = await featuresService.getFAQs();
+        setFaqs(allFaqs);
+      } catch (error) {
+        console.error('Failed to load FAQs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAllFAQs();
+  }, []);
+
+  const staticFaqs = [
     {
       category: "Getting Started",
       questions: [
@@ -138,69 +156,150 @@ export function FAQPage() {
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            {faqs.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="mb-12">
-                <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
-                  <HelpCircle className="h-6 w-6 text-blue-600" />
-                  {category.category}
-                </h2>
-
-                <div className="space-y-4">
-                  {category.questions.map((faq, faqIndex) => {
-                    const globalIndex = categoryIndex * 100 + faqIndex
-                    return (
-                      <Card
-                        key={faqIndex}
-                        className={`border shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden ${
-                          openFaq === globalIndex 
-                            ? 'border-blue-300 bg-white shadow-xl' 
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <CardContent className="p-0">
-                          <button
-                            className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
-                              openFaq === globalIndex 
-                                ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
-                                : 'hover:bg-gray-50'
-                            }`}
-                            onClick={() => setOpenFaq(openFaq === globalIndex ? null : globalIndex)}
-                          >
-                            <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
-                              openFaq === globalIndex 
-                                ? 'text-blue-700' 
-                                : 'text-gray-900 group-hover:text-blue-600'
-                            }`}>
-                              {faq.question}
-                            </span>
-                            <div className={`p-2 rounded-full transition-all duration-300 ${
-                              openFaq === globalIndex 
-                                ? 'bg-blue-200 text-blue-700' 
-                                : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
-                            }`}>
-                              <ChevronDown
-                                className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
-                                  openFaq === globalIndex ? "rotate-180" : ""
-                                }`}
-                              />
-                            </div>
-                          </button>
-                          {openFaq === globalIndex && (
-                            <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
-                              <div className="pt-4">
-                                <p className="text-gray-700 leading-relaxed text-base">
-                                  {faq.answer}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, categoryIndex) => (
+                <div key={categoryIndex} className="mb-12">
+                  <div className="h-8 bg-gray-300 rounded w-1/3 mb-8 animate-pulse"></div>
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, faqIndex) => (
+                      <div key={faqIndex} className="border border-gray-200 rounded-2xl p-6 bg-gray-100 animate-pulse">
+                        <div className="h-6 bg-gray-300 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <>
+                {/* API FAQs Section */}
+                {faqs.length > 0 && (
+                  <div className="mb-12">
+                    <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
+                      <HelpCircle className="h-6 w-6 text-blue-600" />
+                      Common Questions
+                    </h2>
+                    <div className="space-y-4">
+{faqs.map((faq, faqIndex) => (
+                        <Card
+                          key={faq.id}
+                          className={`border shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden ${
+                            openFaq === faq.id 
+                              ? 'border-blue-300 bg-white shadow-xl' 
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <CardContent className="p-0">
+                            <button
+                              className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
+                                openFaq === faq.id 
+                                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
+                                  : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                            >
+                              <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
+                                openFaq === faq.id 
+                                  ? 'text-blue-700' 
+                                  : 'text-gray-900 group-hover:text-blue-600'
+                              }`}>
+                                {faq.question}
+                              </span>
+                              <div className={`p-2 rounded-full transition-all duration-300 ${
+                                openFaq === faq.id 
+                                  ? 'bg-blue-200 text-blue-700' 
+                                  : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                              }`}>
+                                <ChevronDown
+                                  className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
+                                    openFaq === faq.id ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </div>
+                            </button>
+                            {openFaq === faq.id && (
+                              <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
+                                <div className="pt-4">
+                                  <p className="text-gray-700 leading-relaxed text-base">
+                                    {faq.answer}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Static FAQs by Category */}
+                {staticFaqs.map((category, categoryIndex) => (
+                  <div key={categoryIndex} className="mb-12">
+                    <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
+                      <HelpCircle className="h-6 w-6 text-blue-600" />
+                      {category.category}
+                    </h2>
+
+                    <div className="space-y-4">
+                      {category.questions.map((faq, faqIndex) => {
+                        const globalIndex = `static-${categoryIndex}-${faqIndex}`
+                        return (
+                          <Card
+                            key={faqIndex}
+                            className={`border shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden ${
+                              openFaq === globalIndex 
+                                ? 'border-blue-300 bg-white shadow-xl' 
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                            }`}
+                          >
+                            <CardContent className="p-0">
+                              <button
+                                className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
+                                  openFaq === globalIndex 
+                                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
+                                    : 'hover:bg-gray-50'
+                                }`}
+                                onClick={() => setOpenFaq(openFaq === globalIndex ? null : globalIndex)}
+                              >
+                                <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
+                                  openFaq === globalIndex 
+                                    ? 'text-blue-700' 
+                                    : 'text-gray-900 group-hover:text-blue-600'
+                                }`}>
+                                  {faq.question}
+                                </span>
+                                <div className={`p-2 rounded-full transition-all duration-300 ${
+                                  openFaq === globalIndex 
+                                    ? 'bg-blue-200 text-blue-700' 
+                                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                                }`}>
+                                  <ChevronDown
+                                    className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
+                                      openFaq === globalIndex ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </div>
+                              </button>
+                              {openFaq === globalIndex && (
+                                <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
+                                  <div className="pt-4">
+                                    <p className="text-gray-700 leading-relaxed text-base">
+                                      {faq.answer}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </section>

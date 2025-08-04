@@ -19,11 +19,19 @@ def read_testimonials(db: Client = Depends(deps.get_db)) -> Any:
     return testimonials
 
 @router.get("/faqs", response_model=List[dict])
-def read_faqs(db: Client = Depends(deps.get_db)) -> Any:
+def read_all_faqs(db: Client = Depends(deps.get_db)) -> Any:
     """
-    Retrieve frequently asked questions from database.
+    Retrieve all frequently asked questions from database.
     """
     faqs = crud_faq.get_faqs(db, limit=100)
+    return faqs
+
+@router.get("/home-faqs", response_model=List[dict])
+def read_home_faqs(db: Client = Depends(deps.get_db)) -> Any:
+    """
+    Retrieve limited FAQs for home page (4-5 FAQs).
+    """
+    faqs = crud_faq.get_home_faqs(db, limit=5)
     return faqs
 
 @router.get("/services", response_model=List[dict])

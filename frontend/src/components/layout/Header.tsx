@@ -7,7 +7,6 @@ export function Header() {
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
-  const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('up')
   const [lastScrollY, setLastScrollY] = useState(0)
   const [user, setUser] = useState<{email: string, role: string, isAuthenticated: boolean} | null>(null)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -33,9 +32,8 @@ export function Header() {
           // Update scroll state
           setIsScrolled(currentScrollY > scrollThreshold)
           
-          // Determine scroll direction
+          // Update last scroll position
           if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
-            setScrollDirection(currentScrollY > lastScrollY ? 'down' : 'up')
             setLastScrollY(currentScrollY)
           }
           

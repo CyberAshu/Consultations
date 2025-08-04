@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
@@ -19,17 +19,20 @@ import {
   AlertCircle,
   Plus,
   Search,
-  Filter
+  Filter,
+  Loader
 } from 'lucide-react'
+import { bookingService } from '../../services/bookingService'
+import { authService } from '../../services/authService'
+import { Booking, User } from '../../services/types'
 
 export function ClientDashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
-
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    navigate('/login')
-  }
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const tabs = [
     { id: 'dashboard', label: 'Home / Dashboard', icon: <Home className="h-4 w-4" /> },
@@ -38,15 +41,105 @@ export function ClientDashboard() {
     { id: 'settings', label: 'Account Settings', icon: <Settings className="h-4 w-4" /> }
   ]
 
-  const upcomingSessions = [
-    { id: 1, rcic: 'Dr. Sarah Chen', service: 'Express Entry Consultation', date: 'Dec 16, 2024', time: '2:00 PM', status: 'confirmed' },
-    { id: 2, rcic: 'Ahmed Hassan', service: 'Document Review', date: 'Dec 18, 2024', time: '10:00 AM', status: 'confirmed' }
-  ]
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Get current user from localStorage first
+        const storedUser = authService.getStoredUser()
+        if (storedUser) {
+          setCurrentUser(storedUser)
+        }
+        
+        // Fetch user's bookings
+        const userBookings = await bookingService.getBookings()
+        setBookings(userBookings)
+        
+        // Try to get fresh user data from API
+        try {
+          const freshUser = await authService.getCurrentUser()
+          setCurrentUser(freshUser)
+        } catch (userError) {
+          // If API fails, we'll keep using stored user data
+          console.warn('Could not fetch fresh user data:', userError)
+        }
+        
+      } catch (err) {
+        console.error('Error loading dashboard data:', err)
+        setError('Failed to load dashboard data. Please try refreshing the page.')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const pastSessions = [
-    { id: 3, rcic: 'Maria Rodriguez', service: 'PNP Consultation', date: 'Dec 10, 2024', time: '3:00 PM', status: 'completed' },
-    { id: 4, rcic: 'Jean-Pierre Dubois', service: 'Study Permit Consultation', date: 'Nov 28, 2024', time: '11:00 AM', status: 'completed' }
-  ]
+    loadDashboardData()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+    navigate('/login')
+  }
+
+  // Separate bookings into upcoming and past
+  const now = new Date()
+  const upcomingSessions = bookings.filter(booking => {
+    const bookingDate = new Date(booking.scheduled_date)
+    return bookingDate > now && booking.status !== 'cancelled'
+  })
+  
+  const pastSessions = bookings.filter(booking => {
+    const bookingDate = new Date(booking.scheduled_date)
+    return bookingDate <= now || booking.status === 'completed'
+  })
+
+  // Format date and time for display
+  const formatDateTime = (dateTimeString: string) => {
+    const date = new Date(dateTimeString)
+    const dateStr = date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    })
+    const timeStr = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    })
+    return { date: dateStr, time: timeStr }
+  }
+
+  // Get status badge color
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'bg-green-100 text-green-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'completed':
+        return 'bg-blue-100 text-blue-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
@@ -69,7 +162,9 @@ export function ClientDashboard() {
                   <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     Client Dashboard
                   </h1>
-                  <p className="text-gray-600 text-sm sm:text-base">Welcome back, John Smith</p>
+                  <p className="text-gray-600 text-sm sm:text-base">
+                    Welcome back, {currentUser?.full_name || currentUser?.email || 'Guest'}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -120,6 +215,20 @@ export function ClientDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
+        {/* Error State */}
+        {error && (
+          <div className="mb-6">
+            <Card className="bg-red-50 border-red-200 shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                  <p className="text-red-800">{error}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
@@ -131,7 +240,9 @@ export function ClientDashboard() {
                     <CheckCircle className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-1">Welcome back, John!</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-1">
+                      Welcome back, {currentUser?.full_name?.split(' ')[0] || 'Client'}!
+                    </h2>
                     <p className="text-gray-600">Here's an overview of your immigration consultation activities.</p>
                   </div>
                 </div>
@@ -146,21 +257,23 @@ export function ClientDashboard() {
                   Upcoming Sessions
                 </h3>
                 <div className="space-y-4">
-                  {upcomingSessions.map((session) => (
-                    <div key={session.id} className="border border-blue-200/50 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{session.service}</h4>
-                          <p className="text-sm text-gray-600">with {session.rcic}</p>
-                          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                            <Clock className="h-4 w-4" />
-                            {session.date} at {session.time}
-                          </p>
+                  {upcomingSessions.map((session) => {
+                    const { date, time } = formatDateTime(session.scheduled_date)
+                    return (
+                      <div key={session.id} className="border border-blue-200/50 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{session.service_type}</h4>
+                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                              <Clock className="h-4 w-4" />
+                              {date} at {time}
+                            </p>
+                          </div>
+                          <Badge className={getStatusBadgeClass(session.status)}>
+                            {session.status}
+                          </Badge>
                         </div>
-                        <Badge className="bg-green-100 text-green-800">
-                          {session.status}
-                        </Badge>
-                      </div>
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-shrink-0">
                       <Video className="h-4 w-4 mr-1" />
@@ -175,10 +288,20 @@ export function ClientDashboard() {
                       Cancel
                     </Button>
                   </div>
-                    </div>
-                  ))}
+                      </div>
+                    )
+                  })}
                   {upcomingSessions.length === 0 && (
-                    <p className="text-gray-500 text-center py-8">No upcoming sessions scheduled</p>
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500">No upcoming sessions scheduled</p>
+                      <Button 
+                        className="mt-3 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => navigate('/book-consultation')}
+                      >
+                        Book Your First Session
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -222,25 +345,28 @@ export function ClientDashboard() {
                 
                 {/* Mobile Card View */}
                 <div className="block lg:hidden space-y-4">
-                  {upcomingSessions.map((session) => (
-                    <div key={session.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{session.service}</h4>
-                          <p className="text-sm text-gray-600">with {session.rcic}</p>
-                          <p className="text-sm text-gray-500">{session.date} at {session.time}</p>
+                  {upcomingSessions.map((session) => {
+                    const { date, time } = formatDateTime(session.scheduled_date)
+                    return (
+                      <div key={session.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{session.service_type}</h4>
+                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <p className="text-sm text-gray-500">{date} at {time}</p>
+                          </div>
+                          <Badge className={getStatusBadgeClass(session.status)}>
+                            {session.status}
+                          </Badge>
                         </div>
-                        <Badge className="bg-green-100 text-green-800">
-                          {session.status}
-                        </Badge>
-                      </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0">Join</Button>
                         <Button size="sm" variant="outline" className="flex-1 min-w-0">Reschedule</Button>
                         <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1 min-w-0">Cancel</Button>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 
                 {/* Desktop Table View */}
@@ -256,16 +382,18 @@ export function ClientDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {upcomingSessions.map((session) => (
-                        <tr key={session.id} className="border-b">
-                          <td className="p-3 font-medium">{session.service}</td>
-                          <td className="p-3">{session.rcic}</td>
-                          <td className="p-3">{session.date} {session.time}</td>
-                          <td className="p-3">
-                            <Badge className="bg-green-100 text-green-800">
-                              {session.status}
-                            </Badge>
-                          </td>
+                      {upcomingSessions.map((session) => {
+                        const { date, time } = formatDateTime(session.scheduled_date)
+                        return (
+                          <tr key={session.id} className="border-b">
+                            <td className="p-3 font-medium">{session.service_type}</td>
+                            <td className="p-3">Consultant ID: {session.consultant_id}</td>
+                            <td className="p-3">{date} {time}</td>
+                            <td className="p-3">
+                              <Badge className={getStatusBadgeClass(session.status)}>
+                                {session.status}
+                              </Badge>
+                            </td>
                           <td className="p-3">
                             <div className="flex flex-wrap gap-1">
                               <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Join</Button>
@@ -274,7 +402,8 @@ export function ClientDashboard() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -286,24 +415,27 @@ export function ClientDashboard() {
                 
                 {/* Mobile Card View */}
                 <div className="block lg:hidden space-y-4">
-                  {pastSessions.map((session) => (
-                    <div key={session.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{session.service}</h4>
-                          <p className="text-sm text-gray-600">with {session.rcic}</p>
-                          <p className="text-sm text-gray-500">{session.date} at {session.time}</p>
+                  {pastSessions.map((session) => {
+                    const { date, time } = formatDateTime(session.scheduled_date)
+                    return (
+                      <div key={session.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{session.service_type}</h4>
+                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <p className="text-sm text-gray-500">{date} at {time}</p>
+                          </div>
+                          <Badge className={getStatusBadgeClass(session.status)}>
+                            {session.status}
+                          </Badge>
                         </div>
-                        <Badge className="bg-blue-100 text-blue-800">
-                          {session.status}
-                        </Badge>
-                      </div>
                       <div className="flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" className="flex-1 min-w-0">View Summary</Button>
                         <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1 min-w-0">Rebook</Button>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
                 
                 {/* Desktop Table View */}
@@ -319,16 +451,18 @@ export function ClientDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pastSessions.map((session) => (
-                        <tr key={session.id} className="border-b">
-                          <td className="p-3 font-medium">{session.service}</td>
-                          <td className="p-3">{session.rcic}</td>
-                          <td className="p-3">{session.date} {session.time}</td>
-                          <td className="p-3">
-                            <Badge className="bg-blue-100 text-blue-800">
-                              {session.status}
-                            </Badge>
-                          </td>
+                      {pastSessions.map((session) => {
+                        const { date, time } = formatDateTime(session.scheduled_date)
+                        return (
+                          <tr key={session.id} className="border-b">
+                            <td className="p-3 font-medium">{session.service_type}</td>
+                            <td className="p-3">Consultant ID: {session.consultant_id}</td>
+                            <td className="p-3">{date} {time}</td>
+                            <td className="p-3">
+                              <Badge className={getStatusBadgeClass(session.status)}>
+                                {session.status}
+                              </Badge>
+                            </td>
                           <td className="p-3">
                             <div className="flex flex-wrap gap-1">
                               <Button size="sm" variant="outline">View Summary</Button>
@@ -336,7 +470,8 @@ export function ClientDashboard() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -427,7 +562,7 @@ export function ClientDashboard() {
                       <input 
                         className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         type="text"
-                        defaultValue="John"
+                        defaultValue={currentUser?.full_name?.split(' ')[0] || ''}
                       />
                     </div>
                     <div>
@@ -435,7 +570,7 @@ export function ClientDashboard() {
                       <input 
                         className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         type="text"
-                        defaultValue="Smith"
+                        defaultValue={currentUser?.full_name?.split(' ').slice(1).join(' ') || ''}
                       />
                     </div>
                   </div>
@@ -445,7 +580,7 @@ export function ClientDashboard() {
                     <input 
                       className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
                       type="email"
-                      defaultValue="john.smith@example.com"
+                      defaultValue={currentUser?.email || ''}
                     />
                   </div>
                   

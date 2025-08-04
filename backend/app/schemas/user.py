@@ -29,8 +29,16 @@ class User(UserInDBBase):
     pass
 
 # Additional properties stored in DB
-class UserInDB(UserInDBBase):
-    hashed_password: str
+class UserInDB(BaseModel):
+    id: str
+    email: str
+    full_name: Optional[str] = None
+    role: str = "client"
+    email_verified: bool = False
+    is_active: bool = True
+    created_at: Optional[str] = None
+    last_sign_in: Optional[str] = None
+    consultant_profile: Optional[dict] = None
 
 # New schemas for Supabase Auth
 class UserRegister(BaseModel):

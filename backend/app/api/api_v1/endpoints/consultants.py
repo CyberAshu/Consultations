@@ -25,18 +25,31 @@ def read_consultants(
     # In production, you would implement database-level filtering
     consultants = crud_consultant.get_consultants(db, skip=skip, limit=limit)
     
-    # Apply filters (mock implementation)
+    # Apply filters
     filtered_consultants = consultants
     
-    # TODO: Implement actual filtering in crud_consultant
-    # if language:
-    #     filtered_consultants = [c for c in filtered_consultants if language in c.get('languages', [])]
-    # if province:
-    #     filtered_consultants = [c for c in filtered_consultants if province in c.get('location', '')]
-    # if specialty:
-    #     filtered_consultants = [c for c in filtered_consultants if specialty in c.get('specialties', [])]
-    # if search:
-    #     filtered_consultants = [c for c in filtered_consultants if search.lower() in c.get('name', '').lower()]
+    # Filter by language
+    if language:
+        filtered_consultants = [c for c in filtered_consultants if language in c.get('languages', [])]
+    
+    # Filter by province
+    if province:
+        filtered_consultants = [c for c in filtered_consultants if province in c.get('location', '')]
+    
+    # Filter by specialty
+    if specialty:
+        filtered_consultants = [c for c in filtered_consultants if specialty in c.get('specialties', [])]
+    
+    # Filter by search term (name, bio, specialties, languages)
+    if search:
+        search_lower = search.lower()
+        filtered_consultants = [
+            c for c in filtered_consultants 
+            if search_lower in c.get('name', '').lower() or
+               search_lower in c.get('bio', '').lower() or
+               any(search_lower in spec.lower() for spec in c.get('specialties', [])) or
+               any(search_lower in lang.lower() for lang in c.get('languages', []))
+        ]
     
     return filtered_consultants
 
@@ -52,6 +65,9 @@ def read_consultant(
     consultant = crud_consultant.get_consultant(db=db, consultant_id=consultant_id)
     if not consultant:
         raise HTTPException(status_code=404, detail="Consultant not found")
+    # Add services to the consultant object
+    services = crud_consultant.get_services_by_consultant(db=db, consultant_id=consultant_id)
+    consultant["services"] = services
     return consultant
 
 @router.post("/", response_model=ConsultantInDB)

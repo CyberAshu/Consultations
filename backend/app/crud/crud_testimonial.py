@@ -7,13 +7,18 @@ def get_testimonials(
     db: Client, *, skip: int = 0, limit: int = 100, is_active: str = "true"
 ) -> List[Dict[str, Any]]:
     """Get testimonials from database"""
-    query = db.table("testimonials").select("*")
-    
-    if is_active:
-        query = query.eq("is_active", is_active)
-    
-    result = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
-    return result.data if result.data else []
+    try:
+        query = db.table("testimonials").select("*")
+        
+        if is_active:
+            query = query.eq("is_active", is_active)
+        
+        result = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
+        return result.data if result.data else []
+    except Exception as e:
+        # Return empty list if table doesn't exist
+        print(f"Warning: testimonials table not found: {e}")
+        return []
 
 
 def get_testimonial(db: Client, *, testimonial_id: int) -> Optional[Dict[str, Any]]:

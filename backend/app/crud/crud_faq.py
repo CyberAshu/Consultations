@@ -7,13 +7,36 @@ def get_faqs(
     db: Client, *, skip: int = 0, limit: int = 100, is_active: str = "true"
 ) -> List[Dict[str, Any]]:
     """Get FAQs from database"""
-    query = db.table("faqs").select("*")
-    
-    if is_active:
-        query = query.eq("is_active", is_active)
-    
-    result = query.order("order_index").range(skip, skip + limit - 1).execute()
-    return result.data if result.data else []
+    try:
+        query = db.table("faqs").select("*")
+        
+        if is_active:
+            query = query.eq("is_active", is_active)
+        
+        result = query.order("order_index").range(skip, skip + limit - 1).execute()
+        return result.data if result.data else []
+    except Exception as e:
+        # Return empty list if table doesn't exist
+        print(f"Warning: faqs table not found: {e}")
+        return []
+
+
+def get_home_faqs(
+    db: Client, *, limit: int = 5, is_active: str = "true"
+) -> List[Dict[str, Any]]:
+    """Get limited FAQs for home page"""
+    try:
+        query = db.table("faqs").select("*")
+        
+        if is_active:
+            query = query.eq("is_active", is_active)
+        
+        result = query.order("order_index").limit(limit).execute()
+        return result.data if result.data else []
+    except Exception as e:
+        # Return empty list if table doesn't exist
+        print(f"Warning: faqs table not found: {e}")
+        return []
 
 
 def get_faq(db: Client, *, faq_id: int) -> Optional[Dict[str, Any]]:

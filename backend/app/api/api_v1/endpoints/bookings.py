@@ -5,8 +5,25 @@ from supabase import Client
 from app.api import deps
 from app.crud import crud_booking
 from app.schemas.booking import BookingInDB, BookingCreate, BookingUpdate, BookingDocumentCreate
+from app.models.booking import BookingStatus, PaymentStatus
 
 router = APIRouter()
+
+def sanitize_booking_data(bookings: List[dict]) -> List[dict]:
+    """Sanitize booking data to handle null status and payment_status"""
+    sanitized = []
+    for booking in bookings:
+        # Create a copy to avoid modifying original data
+        booking_copy = booking.copy()
+        
+        # Handle null status and payment_status
+        if booking_copy.get('status') is None:
+            booking_copy['status'] = BookingStatus.pending.value
+        if booking_copy.get('payment_status') is None:
+            booking_copy['payment_status'] = PaymentStatus.pending.value
+            
+        sanitized.append(booking_copy)
+    return sanitized
 
 @router.get("/", response_model=List[BookingInDB])
 def read_bookings(
@@ -22,14 +39,22 @@ def read_bookings(
         # First get consultant profile for this user
         consultant_response = db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
         if not consultant_response.data:
-            raise HTTPException(status_code=404, detail="Consultant profile not found")
+            # Check if there are any consultants at all and what user_ids they have
+            all_consultants = db.table("consultants").select("id, user_id, name").execute()
+            detail_msg = f"Consultant profile not found for user_id: {current_user['id']}. "
+            if all_consultants.data:
+                detail_msg += f"Available consultants: {all_consultants.data}"
+            else:
+                detail_msg += "No consultants found in database."
+            raise HTTPException(status_code=404, detail=detail_msg)
         consultant_id = consultant_response.data[0]["id"]
         bookings = crud_booking.get_bookings_by_consultant(db, consultant_id=consultant_id)
     else:
         # Admin can see all bookings
         bookings = db.table("bookings").select("*, documents:booking_documents(*)").execute().data
     
-    return bookings
+    # Sanitize booking data to handle null values
+    return sanitize_booking_data(bookings)
 
 @router.get("/{booking_id}", response_model=BookingInDB)
 def read_booking(
@@ -49,7 +74,8 @@ def read_booking(
     if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    return booking
+    # Sanitize booking data to handle null values
+    return sanitize_booking_data([booking])[0]
 
 @router.post("/", response_model=BookingInDB)
 def create_booking(
@@ -66,7 +92,8 @@ def create_booking(
         booking_in.client_id = current_user["id"]
     
     booking = crud_booking.create_booking(db=db, obj_in=booking_in)
-    return booking
+    # Sanitize booking data to handle null values
+    return sanitize_booking_data([booking])[0]
 
 @router.put("/{booking_id}", response_model=BookingInDB)
 def update_booking(
@@ -90,7 +117,8 @@ def update_booking(
     updated_booking = crud_booking.update_booking(
         db=db, booking_id=booking_id, obj_in=booking_in
     )
-    return updated_booking
+    # Sanitize booking data to handle null values
+    return sanitize_booking_data([updated_booking])[0]
 
 @router.get("/consultants/{consultant_id}/availability")
 def get_consultant_availability(

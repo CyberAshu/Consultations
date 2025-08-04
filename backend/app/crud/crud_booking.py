@@ -6,7 +6,7 @@ def get_booking(db: Client, booking_id: int) -> Optional[Dict]:
     response = db.table("bookings").select("*, documents:booking_documents(*)").eq("id", booking_id).execute()
     return response.data[0] if response.data else None
 
-def get_bookings_by_client(db: Client, client_id: int) -> List[Dict]:
+def get_bookings_by_client(db: Client, client_id: str) -> List[Dict]:
     response = db.table("bookings").select("*, documents:booking_documents(*)").eq("client_id", client_id).execute()
     return response.data
 
@@ -15,8 +15,18 @@ def get_bookings_by_consultant(db: Client, consultant_id: int) -> List[Dict]:
     return response.data
 
 def create_booking(db: Client, *, obj_in: BookingCreate) -> Dict:
-    response = db.table("bookings").insert(obj_in.dict()).execute()
-    return response.data[0]
+    booking_data = obj_in.dict()
+    # Set default values for status and payment_status if not provided
+    if "status" not in booking_data or booking_data["status"] is None:
+        booking_data["status"] = "pending"
+    if "payment_status" not in booking_data or booking_data["payment_status"] is None:
+        booking_data["payment_status"] = "pending"
+    
+    response = db.table("bookings").insert(booking_data).execute()
+    booking_id = response.data[0]["id"]
+    
+    # Return the booking with documents included (initially empty)
+    return get_booking(db, booking_id)
 
 def update_booking(db: Client, *, booking_id: int, obj_in: BookingUpdate) -> Dict:
     response = db.table("bookings").update(obj_in.dict(exclude_unset=True)).eq("id", booking_id).execute()

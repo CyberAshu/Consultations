@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Any
 from datetime import datetime
 from app.models.booking import BookingStatus, PaymentStatus
+import json
 
 # Booking Document Schemas
 class BookingDocumentBase(BaseModel):
@@ -24,14 +25,14 @@ class BookingDocumentInDB(BookingDocumentBase):
 class BookingBase(BaseModel):
     consultant_id: int
     service_id: int
-    booking_date: datetime
+    booking_date: str  # Accept as ISO string from frontend
     timezone: str = "America/Toronto"
     intake_form_data: Optional[Any] = None
     total_amount: float
 
 class BookingCreate(BookingBase):
-    client_id: int
-    payment_intent_id: str
+    client_id: Optional[str] = None  # Will be set from auth context (UUID string)
+    payment_intent_id: Optional[str] = None
 
 class BookingUpdate(BaseModel):
     status: Optional[BookingStatus] = None
@@ -40,7 +41,7 @@ class BookingUpdate(BaseModel):
 
 class BookingInDB(BookingBase):
     id: int
-    client_id: int
+    client_id: str  # UUID string
     status: BookingStatus
     payment_status: PaymentStatus
     payment_intent_id: Optional[str] = None

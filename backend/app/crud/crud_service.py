@@ -7,13 +7,18 @@ def get_services(
     db: Client, *, skip: int = 0, limit: int = 100, is_active: str = "true"
 ) -> List[Dict[str, Any]]:
     """Get services from database"""
-    query = db.table("services").select("*")
-    
-    if is_active:
-        query = query.eq("is_active", is_active)
-    
-    result = query.order("order_index").range(skip, skip + limit - 1).execute()
-    return result.data if result.data else []
+    try:
+        query = db.table("services").select("*")
+        
+        if is_active:
+            query = query.eq("is_active", is_active)
+        
+        result = query.order("order_index").range(skip, skip + limit - 1).execute()
+        return result.data if result.data else []
+    except Exception as e:
+        # Return empty list if table doesn't exist
+        print(f"Warning: services table not found: {e}")
+        return []
 
 
 def get_service(db: Client, *, service_id: int) -> Optional[Dict[str, Any]]:

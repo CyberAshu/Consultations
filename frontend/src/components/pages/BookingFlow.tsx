@@ -11,9 +11,7 @@ import {
   DollarSign, 
   FileText, 
   Calendar,
-  User,
-  Shield,
-  MapPin
+  User
 } from 'lucide-react'
 import { SelectRCICStep } from '../booking/steps/SelectRCICStep'
 import { ChooseTimeSlotStep } from '../booking/steps/ChooseTimeSlotStep'
@@ -22,6 +20,8 @@ import { IntakeFormStep } from '../booking/steps/IntakeFormStep'
 import { BookingConfirmation } from '../booking/steps/BookingConfirmation'
 import { FloatingBookingSummary } from '../booking/FloatingBookingSummary'
 import { ScrollToTop } from '../ui/ScrollToTop'
+import { bookingService } from '../../services/bookingService'
+import { CreateBookingRequest } from '../../services/types'
 
 export function BookingFlow() {
   const navigate = useNavigate()
@@ -86,10 +86,73 @@ export function BookingFlow() {
     }
   ]
 
-  const handleNext = () => {
-    if (currentStep < 5) {
+  const handleNext = async () => {
+    if (currentStep === 4) {
+      // Create actual booking when moving from step 4 to 5
+      try {
+        await createActualBooking()
+        setCurrentStep(currentStep + 1)
+      } catch (error) {
+        console.error('Failed to create booking:', error)
+        let errorMessage = 'Failed to create booking. Please try again.'
+        if (error instanceof Error) {
+          errorMessage = error.message
+        }
+        alert(`Booking Error: ${errorMessage}`)
+      }
+    } else if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
     }
+  }
+
+  const createActualBooking = async () => {
+    if (!bookingData.rcic || !bookingData.service || !bookingData.timeSlot || !bookingData.payment) {
+      throw new Error('Missing required booking data')
+    }
+
+    // Get the scheduled date - use datetime if available, otherwise construct from date/time
+    let scheduleDate: Date
+    
+    if (bookingData.timeSlot.datetime) {
+      // Use the datetime object directly if available
+      scheduleDate = new Date(bookingData.timeSlot.datetime)
+    } else if (bookingData.timeSlot.time) {
+      // Fallback: construct from current date context and time
+      // This handles the case where we have a time string like "14:30"
+      const today = new Date()
+      const [hours, minutes] = bookingData.timeSlot.time.split(':')
+      scheduleDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+    } else {
+      throw new Error('No valid date/time information available')
+    }
+    
+    // Validate the final date
+    if (isNaN(scheduleDate.getTime())) {
+      throw new Error('Invalid date or time format')
+    }
+
+    // Prepare booking data for API
+    const bookingRequest: CreateBookingRequest = {
+      consultant_id: bookingData.rcic.id,
+      service_id: bookingData.service.id,
+      booking_date: scheduleDate.toISOString(),
+      timezone: bookingData.timezone,
+      total_amount: bookingData.totalAmount,
+      payment_intent_id: bookingData.payment.id,
+      intake_form_data: bookingData.intakeForm
+    }
+
+    console.log('Creating booking with data:', bookingRequest)
+    console.log('Service object:', bookingData.service)
+    console.log('RCIC object:', bookingData.rcic)
+
+    const createdBooking = await bookingService.createBooking(bookingRequest)
+    
+    // Update booking data with the created booking ID
+    setBookingData((prev: any) => ({
+      ...prev,
+      bookingId: createdBooking.id
+    }))
   }
 
   const handlePrevious = () => {

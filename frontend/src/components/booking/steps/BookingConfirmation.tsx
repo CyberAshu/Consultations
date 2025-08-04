@@ -89,8 +89,8 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
                   <p className="text-sm text-gray-600">License: {bookingData.rcic?.license}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{bookingData.rcic?.rating}</span>
-                    <span className="text-sm text-gray-500">({bookingData.rcic?.reviews} reviews)</span>
+                  <span className="text-sm font-medium">{bookingData.rcic?.rating || 'N/A'}</span>
+                    <span className="text-sm text-gray-500">({bookingData.rcic?.total_reviews || bookingData.rcic?.review_count || 0} reviews)</span>
                   </div>
                 </div>
               </div>

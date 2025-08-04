@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { GlassCard, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Input } from '../ui/Input'
-import { Mail, Lock, AlertCircle, LogIn, Eye, EyeOff, Shield, Users, FileText } from 'lucide-react'
+import { authService } from '../../services/authService'
+import { Mail, Lock, AlertCircle, LogIn, Eye, EyeOff, Shield } from 'lucide-react'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -17,33 +18,35 @@ export function LoginPage() {
     setLoading(true)
     setError('')
 
-    // Dummy authentication
-    const credentials = {
-      'admin@gmail.com': { password: 'pass@123', role: 'admin', redirect: '/admin-dashboard' },
-      'client@gmail.com': { password: 'pass@123', role: 'client', redirect: '/client-dashboard' },
-      'rcic@gmail.com': { password: 'pass@123', role: 'rcic', redirect: '/rcic-dashboard' }
-    }
+    try {
+      const response = await authService.login({ email, password })
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const user = credentials[email as keyof typeof credentials]
-    
-    if (user && user.password === password) {
       // Store user info in localStorage
       localStorage.setItem('user', JSON.stringify({
-        email,
-        role: user.role,
+        email: response.user.email,
+        role: response.user.role,
         isAuthenticated: true
       }))
-      
-      // Redirect to appropriate dashboard
-      navigate(user.redirect)
-    } else {
+
+      // Redirect based on role
+      switch (response.user.role) {
+        case 'admin':
+          navigate('/admin-dashboard')
+          break
+        case 'client':
+          navigate('/client-dashboard')
+          break
+        case 'rcic':
+          navigate('/rcic-dashboard')
+          break
+        default:
+          navigate('/')
+      }
+    } catch (err) {
       setError('Invalid email or password')
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   return (
@@ -154,36 +157,6 @@ export function LoginPage() {
               </Button>
             </form>
   
-            {/* Demo Credentials */}
-            <div className="mt-8 pt-6 border-t border-gray-300">
-              <div className="flex items-center justify-center mb-3">
-                <Users className="h-4 w-4 text-gray-600 mr-2" />
-                <h4 className="text-sm font-semibold text-gray-800">Example Accounts</h4>
-              </div>
-              <div className="space-y-3">
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-blue-700">Admin Access</span>
-                    <Shield className="h-3 w-3 text-blue-600" />
-                  </div>
-                  <p className="text-xs text-blue-600 mt-1">admin@gmail.com / pass@123</p>
-                </div>
-                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-green-700">Client Access</span>
-                    <Users className="h-3 w-3 text-green-600" />
-                  </div>
-                  <p className="text-xs text-green-600 mt-1">client@gmail.com / pass@123</p>
-                </div>
-                <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-purple-700">RCIC Access</span>
-                    <FileText className="h-3 w-3 text-purple-600" />
-                  </div>
-                  <p className="text-xs text-purple-600 mt-1">rcic@gmail.com / pass@123</p>
-                </div>
-              </div>
-            </div>
           </div>
         </CardContent>
 

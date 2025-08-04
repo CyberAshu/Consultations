@@ -1,3 +1,23 @@
+/* Shimmer animation for loading skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 1.5s infinite;
+  background: linear-gradient(to right, #f6f7f8 0%, #eaeaea 50%, #f6f7f8 100%);
+  background-size: 200% 100%;
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

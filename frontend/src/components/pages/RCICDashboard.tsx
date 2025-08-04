@@ -1,13 +1,33 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
-import { Calendar, Clock, User, FileText, Settings, DollarSign, AlertCircle, LogOut, ArrowLeft, Bell, Award, TrendingUp, CheckCircle, Home, Users, FolderOpen, CreditCard, Menu, X } from 'lucide-react'
+import { Calendar, Clock, User, FileText, Settings, DollarSign, AlertCircle, LogOut, ArrowLeft, Bell, Award } from 'lucide-react'
+import { bookingService } from '../../services/bookingService'
+import { Booking } from '../../services/types'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch bookings on component mount
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const data = await bookingService.getBookings()
+        setBookings(data)
+      } catch (error) {
+        console.error('Failed to fetch bookings:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBookings()
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('user')
@@ -22,18 +42,36 @@ export function RCICDashboard() {
     { id: 'payments', label: 'Payments', icon: <DollarSign className="h-4 w-4" /> }
   ]
 
-  const todayAppointments = [
-    { id: 1, client: 'John Smith', time: '10:00 AM', service: 'Express Entry Consultation', status: 'upcoming' },
-    { id: 2, client: 'Sarah Johnson', time: '2:00 PM', service: 'Document Review', status: 'upcoming' },
-    { id: 3, client: 'Mike Chen', time: '4:00 PM', service: 'Follow-up Session', status: 'completed' }
-  ]
+  // Compute today's appointments from real booking data
+  const today = new Date().toDateString()
+  const todayAppointments = bookings
+    .filter(booking => new Date(booking.scheduled_date).toDateString() === today)
+    .map(booking => ({
+      id: booking.id,
+      client: `Client ${booking.client_id}`, // In real app, you'd fetch client name
+      time: new Date(booking.scheduled_date).toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true 
+      }),
+      service: booking.service_type,
+      status: booking.status === 'confirmed' ? 'upcoming' : booking.status
+    }))
 
-  const allSessions = [
-    { id: 1, client: 'John Smith', date: 'Today', time: '10:00 AM', service: 'Express Entry Consultation', status: 'upcoming' },
-    { id: 2, client: 'Sarah Johnson', date: 'Today', time: '2:00 PM', service: 'Document Review', status: 'upcoming' },
-    { id: 3, client: 'Mike Chen', date: 'Today', time: '4:00 PM', service: 'Follow-up Session', status: 'completed' },
-    { id: 4, client: 'Lisa Wang', date: 'Yesterday', time: '3:00 PM', service: 'PNP Consultation', status: 'completed' }
-  ]
+  // All sessions from real booking data
+  const allSessions = bookings.map(booking => ({
+    id: booking.id,
+    client: `Client ${booking.client_id}`, // In real app, you'd fetch client name
+    date: new Date(booking.scheduled_date).toDateString() === today ? 'Today' : 
+          new Date(booking.scheduled_date).toLocaleDateString(),
+    time: new Date(booking.scheduled_date).toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    }),
+    service: booking.service_type,
+    status: booking.status === 'confirmed' ? 'upcoming' : booking.status
+  }))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50/30 to-cyan-50/30">
@@ -122,27 +160,39 @@ export function RCICDashboard() {
                   Today's Appointments
                 </h2>
                 <div className="space-y-4">
-                  {todayAppointments.map((appointment) => (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-4">
-                        <Clock className="h-5 w-5 text-gray-400" />
-                        <div>
-                          <p className="font-medium text-gray-900">{appointment.time}</p>
-                          <p className="text-sm text-gray-600">{appointment.client}</p>
-                          <p className="text-xs text-gray-500">{appointment.service}</p>
-                        </div>
-                      </div>
-                      <Badge
-                        className={
-                          appointment.status === 'upcoming' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }
-                      >
-                        {appointment.status}
-                      </Badge>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
+                      <p className="text-gray-500">Loading appointments...</p>
                     </div>
-                  ))}
+                  ) : todayAppointments.length > 0 ? (
+                    todayAppointments.map((appointment) => (
+                      <div key={appointment.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-4">
+                          <Clock className="h-5 w-5 text-gray-400" />
+                          <div>
+                            <p className="font-medium text-gray-900">{appointment.time}</p>
+                            <p className="text-sm text-gray-600">{appointment.client}</p>
+                            <p className="text-xs text-gray-500">{appointment.service}</p>
+                          </div>
+                        </div>
+                        <Badge
+                          className={
+                            appointment.status === 'upcoming' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-green-100 text-green-800'
+                          }
+                        >
+                          {appointment.status}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500">No appointments scheduled for today</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

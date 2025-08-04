@@ -40,6 +40,7 @@ class ConsultantReviewInDB(ConsultantReviewBase):
 
 # Consultant Schemas
 class ConsultantBase(BaseModel):
+    name: str
     rcic_number: str
     location: Optional[str] = None
     timezone: Optional[str] = "America/Toronto"
@@ -49,6 +50,7 @@ class ConsultantBase(BaseModel):
     experience: Optional[str] = None
     success_rate: Optional[str] = None
     calendly_url: Optional[str] = None
+    profile_image_url: Optional[str] = None
     is_verified: bool = False
     is_available: bool = True
 
@@ -60,8 +62,8 @@ class ConsultantUpdate(ConsultantBase):
 
 class ConsultantInDB(ConsultantBase):
     id: int
-    user_id: int
-    rating: float
+    user_id: str  # UUID field
+    rating: Optional[float] = None  # Can be null if no reviews
     review_count: int
     services: List[ConsultantServiceInDB] = []
     reviews: List[ConsultantReviewInDB] = []
