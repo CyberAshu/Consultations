@@ -58,6 +58,30 @@ class ConsultantApplicationService {
   async deleteApplication(applicationId: number): Promise<{ message: string }> {
     return apiDelete<{ message: string }>(`/consultant-applications/${applicationId}`);
   }
+
+  // View/Download document by filename
+  async viewDocument(filename: string): Promise<void> {
+    try {
+      // Get signed URL from backend using our apiGet helper
+      const data = await apiGet<{url: string}>(`/consultant-applications/documents/${filename}`);
+      
+      if (data.url) {
+        // Open document in new tab/window
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No URL received from server');
+      }
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      alert('Failed to open document. Please try again.');
+    }
+  }
+
+  // Get document URL for viewing
+  getDocumentUrl(filename: string): string {
+    const baseUrl = process.env.REACT_APP_API_BASE_URL;
+    return `${baseUrl}/api/v1/consultant-applications/documents/${filename}`;
+  }
 }
 
 export const consultantApplicationService = new ConsultantApplicationService();

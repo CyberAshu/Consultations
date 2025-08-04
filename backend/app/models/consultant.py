@@ -8,7 +8,7 @@ class Consultant(Base):
     __tablename__ = "consultants"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(UUID(as_uuid=True), nullable=False)  # References auth.users.id
+    user_id = Column(String, nullable=False)  # UUID string from Supabase
     name = Column(String, nullable=False)
     rcic_number = Column(String, unique=True, index=True, nullable=False)
     location = Column(String)

@@ -5,34 +5,152 @@ import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Calendar, Clock, User, FileText, Settings, DollarSign, AlertCircle, LogOut, ArrowLeft, Bell, Award } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
-import { Booking } from '../../services/types'
+import { consultantService } from '../../services/consultantService'
+import { useAuth } from '../../hooks/useAuth'
+import { Booking, Consultant, ConsultantServiceInDB } from '../../services/types'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [consultant, setConsultant] = useState<Consultant | null>(null)
+  
+  
 
-  // Fetch bookings on component mount
+  // Profile form state with extended Supabase auth fields
+  const [profileForm, setProfileForm] = useState({
+    // Basic Profile
+    full_name: '',
+    name: '',
+    email: '',
+    bio: '',
+    languages: [] as string[] | string,
+    specialties: [] as string[] | string,
+    location: '',
+    experience: '',
+    rcic_number: '',
+    timezone: 'America/Toronto',
+    calendly_url: '',
+    profile_image_url: '',
+    // Supabase Auth fields
+    phone: '',
+    email_verified: false,
+    role: 'rcic' as 'client' | 'rcic' | 'admin',
+    created_at: '',
+    updated_at: ''
+  })
+
+  // Fetch consultant details first
   useEffect(() => {
+    if (!user) return;
+
+    const fetchConsultantDetails = async () => {
+      try {
+        console.log('Current user:', user);
+        
+        // First, get all consultants and find the one matching current user's user_id
+        const allConsultants = await consultantService.getConsultants();
+        console.log('All consultants:', allConsultants);
+        
+        const currentConsultant = allConsultants.find(consultant => consultant.user_id === user.id);
+        console.log('Found consultant for current user:', currentConsultant);
+        
+        if (currentConsultant) {
+          setConsultant(currentConsultant);
+          
+          // Set comprehensive profile form with Supabase auth data
+          setProfileForm({
+            // Basic Profile Fields
+            full_name: user.full_name || '',
+            name: currentConsultant.name,
+            email: user.email || '',
+            bio: currentConsultant.bio || '',
+            languages: currentConsultant.languages || [],
+            specialties: currentConsultant.specialties || [],
+            location: currentConsultant.location || '',
+            experience: currentConsultant.experience || '',
+            rcic_number: currentConsultant.rcic_number || '',
+            timezone: currentConsultant.timezone || 'America/Toronto',
+            calendly_url: currentConsultant.calendly_url || '',
+            profile_image_url: currentConsultant.profile_image_url || '',
+            // Supabase Auth Fields
+            phone: '',
+            email_verified: user.email_verified,
+            role: user.role,
+            created_at: '',
+            updated_at: ''
+          });
+
+        } else {
+          console.warn('No consultant record found for current user');
+          // Set default values from user data if no consultant record exists
+          setProfileForm(prev => ({
+            ...prev,
+            name: user.full_name || 'RCIC User'
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch consultant details:', error);
+        // If fetching fails, set some default values from user data
+        if (user) {
+          setProfileForm(prev => ({
+            ...prev,
+            name: user.full_name || 'RCIC User'
+          }));
+        }
+      }
+    };
+
+    fetchConsultantDetails();
+  }, [user]);
+
+  // Fetch bookings after consultant data is loaded
+  useEffect(() => {
+    if (!consultant) return;
+
     const fetchBookings = async () => {
       try {
-        const data = await bookingService.getBookings()
-        setBookings(data)
+        setLoading(true);
+        // Get bookings for the current consultant
+        const data = await bookingService.getBookings();
+        console.log('Fetched bookings:', data);
+        
+        // Filter bookings for the current consultant
+        const filteredBookings = data.filter(booking => booking.consultant_id === consultant.id);
+        console.log('Filtered bookings for consultant:', consultant.id, filteredBookings);
+        
+        setBookings(filteredBookings);
       } catch (error) {
-        console.error('Failed to fetch bookings:', error)
+        console.error('Failed to fetch bookings:', error);
+        // Set empty array if fetching fails
+        setBookings([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
+    };
+
+    fetchBookings();
+  }, [consultant]);
+
+
+  const handleLogout = async () => {
+    try {
+      // Clear all auth data properly
+      localStorage.removeItem('user')
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('token_expires_at')
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Navigate to login even if logout fails
+      navigate('/login')
     }
-
-    fetchBookings()
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    navigate('/login')
   }
+
+
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <User className="h-4 w-4" /> },
@@ -98,7 +216,7 @@ export function RCICDashboard() {
                     <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                       RCIC Dashboard
                     </h1>
-                    <p className="text-gray-600 text-sm sm:text-base">Welcome back, Dr. Sarah Chen</p>
+                    <p className="text-gray-600 text-sm sm:text-base">Welcome back, {consultant?.name || user?.full_name || 'User'}</p>
                   </div>
                 </div>
               </div>

@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from app.core.config import settings
-from app.db.supabase import get_supabase
+from app.db.supabase import get_supabase, get_supabase_admin
 from supabase import Client
 import requests
 
@@ -12,6 +12,14 @@ security_bearer = HTTPBearer()
 
 def get_db() -> Generator:
     db = get_supabase()
+    try:
+        yield db
+    finally:
+        pass
+
+def get_admin_db() -> Generator:
+    """Get admin database client that bypasses RLS for public/admin operations"""
+    db = get_supabase_admin()
     try:
         yield db
     finally:

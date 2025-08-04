@@ -25,6 +25,15 @@ def get_supabase() -> Client:
         settings.SUPABASE_SERVICE_ROLE_KEY
     )
 
+def get_supabase_admin() -> Client:
+    """Get Supabase client instance with service role key that bypasses RLS"""
+    client = create_client(
+        settings.SUPABASE_URL,
+        settings.SUPABASE_SERVICE_ROLE_KEY
+    )
+    # Service role bypasses RLS by default, but ensure it's explicit
+    return client
+
 def get_supabase_anon() -> Client:
     """Get Supabase client instance with anon key"""
     return create_client(

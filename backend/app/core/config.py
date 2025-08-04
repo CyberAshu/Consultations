@@ -18,12 +18,14 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Immigration Consultations API"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
     
-    # Email (optional)
-    SMTP_TLS: Optional[bool] = True
-    SMTP_PORT: Optional[int] = 587
-    SMTP_HOST: Optional[str] = None
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
+    # Email (required for notifications)
+    SMTP_TLS: bool
+    SMTP_PORT: int
+    SMTP_HOST: str
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+    FROM_EMAIL: Optional[str] = None
+    FROM_NAME: Optional[str] = "Immigration Connect Team"
     
     # Stripe
     STRIPE_PUBLISHABLE_KEY: Optional[str] = None

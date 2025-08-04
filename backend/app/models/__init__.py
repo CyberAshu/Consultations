@@ -2,6 +2,7 @@
 from .user import UserRole
 from .consultant import Consultant, ConsultantService, ConsultantReview
 from .consultant_application import ConsultantApplication
+from .consultant_onboarding import ConsultantOnboarding
 from .booking import Booking, BookingDocument, BookingStatus, PaymentStatus
 from .blog import BlogPost, BlogComment, BlogLike
 from .testimonial import Testimonial

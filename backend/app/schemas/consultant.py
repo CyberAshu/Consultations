@@ -55,7 +55,7 @@ class ConsultantBase(BaseModel):
     is_available: bool = True
 
 class ConsultantCreate(ConsultantBase):
-    user_id: int
+    user_id: str  # UUID string from Supabase
 
 class ConsultantUpdate(ConsultantBase):
     pass

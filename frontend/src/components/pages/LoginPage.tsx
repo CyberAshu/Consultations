@@ -20,14 +20,8 @@ export function LoginPage() {
 
     try {
       const response = await authService.login({ email, password })
-
-      // Store user info in localStorage
-      localStorage.setItem('user', JSON.stringify({
-        email: response.user.email,
-        role: response.user.role,
-        isAuthenticated: true
-      }))
-
+      
+      // authService.login already handles storing user data and tokens
       // Redirect based on role
       switch (response.user.role) {
         case 'admin':

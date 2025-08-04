@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
+import { consultantApplicationService } from '../../services/consultantApplicationService'
 import { 
   Users, 
   Calendar, 
@@ -28,6 +29,39 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
+  const [consultantApplications, setConsultantApplications] = useState<any[]>([])
+  const [applicationStats, setApplicationStats] = useState<any>({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadConsultantApplications = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const applications = await consultantApplicationService.getApplications()
+      setConsultantApplications(applications || [])
+      
+      // Calculate stats
+      const total = applications.length
+      const pending = applications.filter((app: any) => app.status === 'pending').length
+      const approved = applications.filter((app: any) => app.status === 'approved').length
+      const rejected = applications.filter((app: any) => app.status === 'rejected').length
+
+      console.log({ total, pending, approved, rejected })
+    } catch (error) {
+      console.error('Error loading consultant applications:', error)
+      setError('Failed to load consultant applications')
+      // Keep dummy data as fallback
+      setConsultantApplications(dummyConsultantApplications)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Load consultant applications on component mount
+  useEffect(() => {
+    loadConsultantApplications()
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('user')
@@ -40,8 +74,40 @@ export function AdminDashboard() {
   }
 
   const handleCloseModal = () => {
-    setShowApplicationModal(false)
-    setSelectedApplication(null)
+    setShowApplicationModal(false);
+    setSelectedApplication(null);
+  }
+
+  const handleApproveApplication = async (applicationId: number) => {
+    try {
+      setLoading(true);
+      await consultantApplicationService.approveApplication(applicationId);
+      await loadConsultantApplications();
+      if (selectedApplication && selectedApplication.id === applicationId) {
+        handleCloseModal();
+      }
+    } catch (error) {
+      console.error('Error approving application:', error);
+      setError('Failed to approve application');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleRejectApplication = async (applicationId: number) => {
+    try {
+      setLoading(true);
+      await consultantApplicationService.rejectApplication(applicationId);
+      await loadConsultantApplications();
+      if (selectedApplication && selectedApplication.id === applicationId) {
+        handleCloseModal();
+      }
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      setError('Failed to reject application');
+    } finally {
+      setLoading(false);
+    }
   }
 
   const tabs = [
@@ -82,7 +148,8 @@ export function AdminDashboard() {
     { id: 4, client: 'Lisa Wang', rcic: 'Jean-Pierre Dubois', service: 'Study Permit', date: 'Dec 15, 2024', status: 'Cancelled' }
   ]
 
-  const consultantApplications = [
+  // Dummy data as fallback
+  const dummyConsultantApplications = [
     { 
       id: 1, 
       fullLegalName: 'Dr. Emily Thompson', 
@@ -398,9 +465,45 @@ export function AdminDashboard() {
         {/* Applications Tab */}
         {activeTab === 'applications' && (
           <div className="space-y-6">
-            {/* Header with Stats and Actions */}
-            <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
-              <CardContent className="p-6">
+            {/* Loading State */}
+            {loading && (
+              <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading consultant applications...</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Error State */}
+            {error && !loading && (
+              <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <X className="h-6 w-6 text-red-600" />
+                      </div>
+                      <p className="text-red-600 font-medium mb-2">{error}</p>
+                      <Button onClick={loadConsultantApplications} className="bg-purple-600 hover:bg-purple-700">
+                        Try Again
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Main Content - Only show when not loading */}
+            {!loading && (
+              <>
+                {/* Header with Stats and Actions */}
+                <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+                  <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-800">Consultant Applications</h2>
@@ -481,19 +584,20 @@ export function AdminDashboard() {
                         <div className="flex items-center justify-between gap-4 mb-4">
                             <div className="flex items-center gap-4 min-w-0">
                                 <div className="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold text-xl flex-shrink-0">
-                                    {app.fullLegalName.charAt(0)}
+                                    {app.fullLegalName ? app.fullLegalName.charAt(0).toUpperCase() : app.full_legal_name ? app.full_legal_name.charAt(0).toUpperCase() : '?'}
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-lg font-semibold text-gray-800 truncate">{app.fullLegalName}</h3>
-                                    <p className="text-sm text-gray-500 truncate">{app.email}</p>
+                                    <h3 className="text-lg font-semibold text-gray-800 truncate">{app.fullLegalName || app.full_legal_name || 'Unknown Name'}</h3>
+                                    <p className="text-sm text-gray-500 truncate">{app.email || 'No email provided'}</p>
                                 </div>
                             </div>
                             <Badge
-                                className={{
-                                pending: 'bg-yellow-100 text-yellow-800 border-yellow-200/80',
-                                approved: 'bg-green-100 text-green-800 border-green-200/80',
-                                rejected: 'bg-red-100 text-red-800 border-red-200/80',
-                                }[app.status] + ' whitespace-nowrap'}
+                                className={`${app.status === 'pending' 
+                                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200/80' 
+                                  : app.status === 'approved' 
+                                  ? 'bg-green-100 text-green-800 border-green-200/80'
+                                  : 'bg-red-100 text-red-800 border-red-200/80'
+                                } whitespace-nowrap`}
                             >
                                 {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                             </Badge>
@@ -503,19 +607,19 @@ export function AdminDashboard() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-gray-200/80 pt-4">
                           <div>
                             <p className="text-gray-500">License #</p>
-                            <p className="text-gray-800 font-mono font-medium">{app.rcicLicenseNumber}</p>
+                            <p className="text-gray-800 font-mono font-medium">{app.rcicLicenseNumber || app.rcic_license_number || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">CICC Status</p>
-                            <p className="text-gray-800 font-medium">{app.ciccMembershipStatus}</p>
+                            <p className="text-gray-800 font-medium">{app.ciccMembershipStatus || app.cicc_membership_status || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">Location</p>
-                            <p className="text-gray-800 font-medium">{app.cityProvince}</p>
+                            <p className="text-gray-800 font-medium">{app.cityProvince || app.city_province || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-gray-500">Submitted</p>
-                            <p className="text-gray-800 font-medium">{app.submittedAt}</p>
+                            <p className="text-gray-800 font-medium">{app.submittedAt || app.submitted_at || app.created_at || 'N/A'}</p>
                           </div>
                         </div>
                       </div>
@@ -529,13 +633,23 @@ export function AdminDashboard() {
                             </Button>
                             {app.status === 'pending' && (
                               <>
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 w-full">
+                                <Button 
+                                  size="sm" 
+                                  className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 w-full"
+                                  onClick={() => handleApproveApplication(app.id)}
+                                  disabled={loading}
+                                >
                                   <Check className="h-4 w-4" />
-                                  Approve
+                                  {loading ? 'Approving...' : 'Approve'}
                                 </Button>
-                                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 w-full">
+                                <Button 
+                                  size="sm" 
+                                  className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 w-full"
+                                  onClick={() => handleRejectApplication(app.id)}
+                                  disabled={loading}
+                                >
                                   <X className="h-4 w-4" />
-                                  Reject
+                                  {loading ? 'Rejecting...' : 'Reject'}
                                 </Button>
                               </>
                             )}
@@ -546,6 +660,8 @@ export function AdminDashboard() {
                 </Card>
               ))}
             </div>
+              </>
+            )}
           </div>
         )}
         {activeTab === 'bookings' && (
@@ -720,130 +836,380 @@ export function AdminDashboard() {
       {/* Application Details Modal */}
       {showApplicationModal && selectedApplication && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
+          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-y-auto shadow-2xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+              <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Application Details</h2>
-                  <p className="text-gray-600 mt-1">RCIC Consultant Application Review</p>
+                  <h2 className="text-2xl font-bold text-gray-900">RCIC Application Review</h2>
+                  <div className="flex items-center gap-4 mt-2">
+                    <p className="text-gray-600">Application ID: #{selectedApplication.id}</p>
+                    <Badge
+                      className={(
+                        selectedApplication.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                        selectedApplication.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
+                        selectedApplication.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
+                        'bg-gray-100 text-gray-800 border-gray-200'
+                      )}
+                    >
+                      {selectedApplication.status?.charAt(0).toUpperCase() + selectedApplication.status?.slice(1)}
+                    </Badge>
+                  </div>
                 </div>
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
                 >
                   <X className="h-6 w-6" />
                 </button>
               </div>
-              
-              <div className="space-y-6">
-                {/* Applicant Information */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Applicant Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Full Legal Name</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.fullLegalName}</p>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  
+                  {/* Section 1: Personal & Contact Information */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Personal & Contact Information
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Full Legal Name</label>
+                        <p className="mt-1 text-sm text-gray-900 font-medium">{selectedApplication.full_legal_name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Preferred Display Name</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.preferred_display_name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                        <p className="mt-1 text-sm text-gray-900 font-mono">{selectedApplication.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Mobile Phone</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.mobile_phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.date_of_birth || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">City, Province</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.city_province || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Time Zone</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.time_zone || 'N/A'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.email}</p>
+                  </div>
+
+                  {/* Section 2: Licensing & Credentials */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Licensing & Credentials
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">RCIC License Number</label>
+                        <p className="mt-1 text-sm text-gray-900 font-mono bg-white px-2 py-1 rounded border">{selectedApplication.rcic_license_number || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Year of Initial Licensing</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.year_of_initial_licensing || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">CICC Membership Status</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.cicc_membership_status || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Practice Details */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      Practice Details
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Practice Type</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.practice_type || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Business/Firm Name</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.business_firm_name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Website/LinkedIn</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.website_linkedin || 'N/A'}</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700 w-48">Canadian Business Registration:</span>
+                          <Badge className={selectedApplication.canadian_business_registration ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {selectedApplication.canadian_business_registration ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700 w-48">IRB Authorization:</span>
+                          <Badge className={selectedApplication.irb_authorization ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {selectedApplication.irb_authorization ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700 w-48">Taking Clients (Private Practice):</span>
+                          <Badge className={selectedApplication.taking_clients_private_practice ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {selectedApplication.taking_clients_private_practice ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-sm font-medium text-gray-700 w-48">Representing Clients (IRCC/IRB):</span>
+                          <Badge className={selectedApplication.representing_clients_ircc_irb ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                            {selectedApplication.representing_clients_ircc_irb ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Areas of Expertise */}
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-orange-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Areas of Expertise
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Expertise Areas</label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplication.areas_of_expertise && Array.isArray(selectedApplication.areas_of_expertise) 
+                            ? selectedApplication.areas_of_expertise.map((area: string, index: number) => (
+                              <Badge key={index} className="bg-orange-100 text-orange-800 text-xs">
+                                {area}
+                              </Badge>
+                            ))
+                            : <p className="text-sm text-gray-500">No expertise areas specified</p>
+                          }
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Other Expertise</label>
+                        <p className="mt-1 text-sm text-gray-900 bg-white p-2 rounded border">{selectedApplication.other_expertise || 'N/A'}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                
-                {/* Professional Details */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Professional Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">RCIC License Number</label>
-                      <p className="mt-1 text-sm text-gray-900 font-mono">{selectedApplication.rcicLicenseNumber}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">CICC Membership Status</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.ciccMembershipStatus}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Location & Contact */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Location & Contact</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">City, Province</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.cityProvince}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Time Zone</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.timeZone}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Application Status */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Status</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Current Status</label>
-                      <div className="mt-2">
-                        <Badge
-                          className={(
-                            selectedApplication.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                            selectedApplication.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
-                            selectedApplication.status === 'rejected' ? 'bg-red-100 text-red-800 border-red-200' :
-                            'bg-gray-100 text-gray-800 border-gray-200'
-                          )}
-                        >
-                          {selectedApplication.status.charAt(0).toUpperCase() + selectedApplication.status.slice(1)}
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  
+                  {/* Section 5: Languages */}
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-indigo-900 mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Languages Spoken
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Primary Language</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.primary_language || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Other Languages</label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplication.other_languages && Array.isArray(selectedApplication.other_languages) 
+                            ? selectedApplication.other_languages.map((lang: string, index: number) => (
+                              <Badge key={index} className="bg-indigo-100 text-indigo-800 text-xs">
+                                {lang}
+                              </Badge>
+                            ))
+                            : <p className="text-sm text-gray-500">No additional languages specified</p>
+                          }
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-700 w-48">Multilingual Consultations:</span>
+                        <Badge className={selectedApplication.multilingual_consultations ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {selectedApplication.multilingual_consultations ? 'Yes' : 'No'}
                         </Badge>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Submitted Date</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedApplication.submittedAt}</p>
+                  </div>
+
+                  {/* Section 6: Documents */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Uploaded Documents
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="flex items-center justify-between p-3 bg-white rounded border">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">CICC Register Screenshot</p>
+                            <p className="text-xs text-gray-500">{selectedApplication.cicc_register_screenshot_url || 'Not provided'}</p>
+                          </div>
+{selectedApplication.cicc_register_screenshot_url && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs" 
+                              onClick={() => consultantApplicationService.viewDocument(selectedApplication.cicc_register_screenshot_url)}
+                            >
+                              View
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-white rounded border">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Proof of Good Standing</p>
+                            <p className="text-xs text-gray-500">{selectedApplication.proof_of_good_standing_url || 'Not provided'}</p>
+                          </div>
+{selectedApplication.proof_of_good_standing_url && (
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => consultantApplicationService.viewDocument(selectedApplication.proof_of_good_standing_url)}>
+                              View
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-white rounded border">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Insurance Certificate</p>
+                            <p className="text-xs text-gray-500">{selectedApplication.insurance_certificate_url || 'Not provided'}</p>
+                          </div>
+{selectedApplication.insurance_certificate_url && (
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => consultantApplicationService.viewDocument(selectedApplication.insurance_certificate_url)}>
+                              View
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-white rounded border">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Government ID</p>
+                            <p className="text-xs text-gray-500">{selectedApplication.government_id_url || 'Not provided'}</p>
+                          </div>
+{selectedApplication.government_id_url && (
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => consultantApplicationService.viewDocument(selectedApplication.government_id_url)}>
+                              View
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Admin Actions */}
-                {selectedApplication.status === 'pending' && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h3>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 flex-1">
-                        <Check className="h-4 w-4" />
-                        Approve Application
-                      </Button>
-                      <Button className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 flex-1">
-                        <X className="h-4 w-4" />
-                        Reject Application
-                      </Button>
+
+                  {/* Section 7: Declarations & Agreements */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-yellow-900 mb-4 flex items-center gap-2">
+                      <Check className="h-5 w-5" />
+                      Declarations & Agreements
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-700 flex-1">Confirmed Licensed RCIC:</span>
+                        <Badge className={selectedApplication.confirm_licensed_rcic ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {selectedApplication.confirm_licensed_rcic ? 'Confirmed' : 'Not Confirmed'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-700 flex-1">Agreed to Terms & Guidelines:</span>
+                        <Badge className={selectedApplication.agree_terms_guidelines ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {selectedApplication.agree_terms_guidelines ? 'Agreed' : 'Not Agreed'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-700 flex-1">Agreed to Compliance IRPA:</span>
+                        <Badge className={selectedApplication.agree_compliance_irpa ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {selectedApplication.agree_compliance_irpa ? 'Agreed' : 'Not Agreed'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-700 flex-1">Agreed No Outside Contact:</span>
+                        <Badge className={selectedApplication.agree_no_outside_contact ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {selectedApplication.agree_no_outside_contact ? 'Agreed' : 'Not Agreed'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium text-gray-700 flex-1">Consent to Session Reviews:</span>
+                        <Badge className={selectedApplication.consent_session_reviews ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {selectedApplication.consent_session_reviews ? 'Consented' : 'Not Consented'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                )}
-                
-                {/* Notes Section */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Admin Notes</h3>
-                  <textarea 
-                    className="w-full border border-gray-300 rounded-md p-3 text-sm min-h-[100px]"
-                    placeholder="Add internal notes about this application..."
-                  />
-                  <div className="mt-3">
-                    <Button size="sm" variant="outline">Save Notes</Button>
+
+                  {/* Section 8: Signature & Submission */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Signature & Submission
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Digital Signature Name</label>
+                        <p className="mt-1 text-sm text-gray-900 bg-white px-2 py-1 rounded border font-mono">{selectedApplication.digital_signature_name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Submission Date</label>
+                        <p className="mt-1 text-sm text-gray-900">{selectedApplication.submission_date || selectedApplication.created_at || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Admin Notes Section */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-4">Admin Notes</h3>
+                    <textarea 
+                      className="w-full border border-gray-300 rounded-md p-3 text-sm min-h-[100px]"
+                      placeholder="Add internal notes about this application..."
+                      defaultValue={selectedApplication.admin_notes || ''}
+                    />
+                    <div className="mt-3">
+                      <Button size="sm" variant="outline">Save Notes</Button>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="mt-6 flex justify-end gap-3">
-                <Button variant="outline" onClick={handleCloseModal}>
-                  Close
-                </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Download Application
-                </Button>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                {/* Admin Actions */}
+                {selectedApplication.status === 'pending' && (
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
+                      onClick={() => handleApproveApplication(selectedApplication.id)}
+                      disabled={loading}
+                    >
+                      <Check className="h-4 w-4" />
+                      {loading ? 'Approving...' : 'Approve Application'}
+                    </Button>
+                    <Button 
+                      className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
+                      onClick={() => handleRejectApplication(selectedApplication.id)}
+                      disabled={loading}
+                    >
+                      <X className="h-4 w-4" />
+                      {loading ? 'Rejecting...' : 'Reject Application'}
+                    </Button>
+                  </div>
+                )}
+                
+                <div className="flex gap-3 w-full sm:w-auto">
+                  <Button variant="outline" onClick={handleCloseModal} className="flex-1 sm:flex-none">
+                    Close
+                  </Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none">
+                    Download PDF
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -23,7 +23,7 @@ def read_consultants(
     """
     # For now, get all consultants and filter in memory
     # In production, you would implement database-level filtering
-    consultants = crud_consultant.get_consultants(db, skip=skip, limit=limit)
+    consultants = crud_consultant.consultant.get_multi(db, skip=skip, limit=limit)
     
     # Apply filters
     filtered_consultants = consultants
@@ -62,7 +62,7 @@ def read_consultant(
     """
     Get consultant by ID.
     """
-    consultant = crud_consultant.get_consultant(db=db, consultant_id=consultant_id)
+    consultant = crud_consultant.consultant.get(db=db, consultant_id=consultant_id)
     if not consultant:
         raise HTTPException(status_code=404, detail="Consultant not found")
     # Add services to the consultant object
@@ -80,7 +80,7 @@ def create_consultant(
     """
     Create new consultant.
     """
-    consultant = crud_consultant.create_consultant(db=db, obj_in=consultant_in)
+    consultant = crud_consultant.consultant.create(db=db, obj_in=consultant_in)
     return consultant
 
 @router.put("/{consultant_id}", response_model=ConsultantInDB)
@@ -94,7 +94,7 @@ def update_consultant(
     """
     Update consultant.
     """
-    consultant = crud_consultant.update_consultant(
+    consultant = crud_consultant.consultant.update(
         db=db, consultant_id=consultant_id, obj_in=consultant_in
     )
     return consultant
@@ -114,6 +114,51 @@ def create_consultant_service(
     service_data["consultant_id"] = consultant_id
     service = crud_consultant.create_consultant_service(db=db, obj_in=service_data)
     return service
+
+@router.put("/{consultant_id}/services/{service_id}")
+def update_consultant_service(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+    service_id: int,
+    service_in: ConsultantServiceCreate,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Update service for consultant.
+    """
+    service = crud_consultant.update_consultant_service(
+        db=db, service_id=service_id, obj_in=service_in
+    )
+    return service
+
+@router.get("/{consultant_id}/services")
+def get_consultant_services(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+) -> Any:
+    """
+    Get all services for a consultant.
+    """
+    services = crud_consultant.get_services_by_consultant(db=db, consultant_id=consultant_id)
+    return services
+
+@router.delete("/{consultant_id}/services/{service_id}")
+def delete_consultant_service(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+    service_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Delete service for consultant.
+    """
+    success = crud_consultant.delete_consultant_service(
+        db=db, service_id=service_id
+    )
+    return {"success": success}
 
 @router.post("/{consultant_id}/reviews")
 def create_consultant_review(

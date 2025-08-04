@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../shared/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { consultantApplicationService } from '../../services/consultantApplicationService';
 
 export function BecomeConsultantPage() {
   const [formData, setFormData] = useState({
@@ -58,6 +59,7 @@ export function BecomeConsultantPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const timeZones = [
     'Pacific Time (PT)', 'Mountain Time (MT)', 'Central Time (CT)', 
@@ -84,12 +86,79 @@ export function BecomeConsultantPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitted(true);
-    setIsSubmitting(false);
+    try {
+      // Create FormData for file uploads
+      const submitFormData = new FormData();
+      
+      // Add all form fields
+      submitFormData.append('full_legal_name', formData.fullLegalName);
+      submitFormData.append('preferred_display_name', formData.preferredDisplayName);
+      submitFormData.append('email', formData.email);
+      submitFormData.append('mobile_phone', formData.mobilePhone);
+      submitFormData.append('date_of_birth', formData.dateOfBirth);
+      submitFormData.append('city_province', formData.cityProvince);
+      submitFormData.append('time_zone', formData.timeZone);
+      
+      // Section 2: Licensing & Credentials
+      submitFormData.append('rcic_license_number', formData.rcicLicenseNumber);
+      submitFormData.append('year_of_initial_licensing', formData.yearOfInitialLicensing.toString());
+      submitFormData.append('cicc_membership_status', formData.ciccMembershipStatus);
+      
+      // Add file uploads
+      if (files.ciccRegisterScreenshot) {
+        submitFormData.append('cicc_register_screenshot', files.ciccRegisterScreenshot);
+      }
+      if (files.proofOfGoodStanding) {
+        submitFormData.append('proof_of_good_standing', files.proofOfGoodStanding);
+      }
+      if (files.insuranceCertificate) {
+        submitFormData.append('insurance_certificate', files.insuranceCertificate);
+      }
+      if (files.governmentPhotoID) {
+        submitFormData.append('government_id', files.governmentPhotoID);
+      }
+      
+      // Section 3: Practice Details
+      submitFormData.append('practice_type', formData.practiceType);
+      submitFormData.append('business_firm_name', formData.businessFirmName);
+      submitFormData.append('website_linkedin', formData.websiteLinkedIn);
+      submitFormData.append('canadian_business_registration', formData.hasBusinessRegistration.toString());
+      submitFormData.append('irb_authorization', formData.isIRBAuthorized.toString());
+      submitFormData.append('taking_clients_private_practice', formData.takingPrivateClients.toString());
+      submitFormData.append('representing_clients_ircc_irb', formData.representsClientsIRCC.toString());
+      
+      // Section 4: Areas of Expertise
+      submitFormData.append('areas_of_expertise', JSON.stringify(formData.areasOfExpertise));
+      submitFormData.append('other_expertise', formData.otherExpertise);
+      
+      // Section 5: Languages
+      submitFormData.append('primary_language', formData.primaryLanguage);
+      submitFormData.append('other_languages', JSON.stringify(formData.otherLanguages));
+      submitFormData.append('multilingual_consultations', formData.multiLanguageConsultations.toString());
+      
+      // Section 6: Declarations
+      submitFormData.append('confirm_licensed_rcic', formData.confirmLicensedRCIC.toString());
+      submitFormData.append('agree_terms_guidelines', formData.agreeToTerms.toString());
+      submitFormData.append('agree_compliance_irpa', formData.agreeToIRPACompliance.toString());
+      submitFormData.append('agree_no_outside_contact', formData.agreeNoPersonalContact.toString());
+      submitFormData.append('consent_session_reviews', formData.consentToReviews.toString());
+      
+      // Section 7: Signature
+      submitFormData.append('digital_signature_name', formData.digitalSignature);
+      submitFormData.append('submission_date', new Date().toISOString());
+      
+      // Submit application
+      await consultantApplicationService.createApplication(submitFormData);
+      
+      setIsSubmitted(true);
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
+      setSubmitError(error.message || 'Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -184,6 +253,24 @@ export function BecomeConsultantPage() {
         </div>
         
         <div className="mt-6 sm:mt-10 space-y-6 sm:space-y-8">
+          {submitError && (
+            <div className="bg-red-50 border border-red-300 rounded-md p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Submission Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{submitError}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Section 1: Personal & Contact Information */}
             <Card className="shadow-sm border border-gray-200">

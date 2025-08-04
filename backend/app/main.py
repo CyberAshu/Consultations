@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.api_v1.api import api_router
 from app.core.config import settings
+from app.services.storage_service import storage_service
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,5 +19,13 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    print("Starting up application...")
+    # Create storage bucket if it doesn't exist
+    storage_service.create_bucket_if_not_exists()
+    print("Application startup complete.")
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

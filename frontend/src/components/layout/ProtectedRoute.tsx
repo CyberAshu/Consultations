@@ -7,21 +7,33 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  // Get user data from localStorage
+  // Get user data and access token from localStorage
   const userStr = localStorage.getItem('user')
+  const accessToken = localStorage.getItem('access_token')
+  const expiresAt = localStorage.getItem('token_expires_at')
   
-  if (!userStr) {
+  if (!userStr || !accessToken) {
     // User not logged in, redirect to login
     return <Navigate to="/login" replace />
   }
 
-  try {
-    const user = JSON.parse(userStr)
+  // Check if token is expired
+  if (expiresAt) {
+    const now = Date.now() / 1000; // Convert to seconds
+    const expiry = parseInt(expiresAt, 10);
     
-    // Check if user is authenticated
-    if (!user.isAuthenticated) {
+    if (now >= expiry) {
+      // Token expired, clear auth data and redirect to login
+      localStorage.removeItem('user')
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('token_expires_at')
       return <Navigate to="/login" replace />
     }
+  }
+
+  try {
+    const user = JSON.parse(userStr)
 
     // Check role-based access if allowedRoles are specified
     if (allowedRoles && allowedRoles.length > 0) {

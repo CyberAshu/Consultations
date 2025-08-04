@@ -61,6 +61,7 @@ export interface Consultant {
   total_reviews?: number;
   review_count?: number;  // Alternative name for total_reviews
   profile_image_url?: string;
+  calendly_url?: string;  // Added for calendar integration
   is_active?: boolean;
   availability_status?: string;
   created_at?: string;
@@ -204,6 +205,34 @@ export interface Service {
   category?: string;
   is_active: boolean;
   created_at: string;
+}
+
+// Consultant Service Types
+export interface ConsultantServiceInDB {
+  id: number;
+  consultant_id: number;
+  name: string;
+  duration: string;
+  price: number;
+  description?: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface ConsultantServiceCreate {
+  name: string;
+  duration: string;
+  price: number;
+  description?: string;
+  is_active?: boolean;
+}
+
+export interface ConsultantServiceUpdate {
+  name?: string;
+  duration?: string;
+  price?: number;
+  description?: string;
+  is_active?: boolean;
 }
 
 // Newsletter Types
