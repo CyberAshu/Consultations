@@ -20,6 +20,7 @@ def get_db() -> Generator:
 def get_admin_db() -> Generator:
     """Get admin database client that bypasses RLS for public/admin operations"""
     db = get_supabase_admin()
+    print(f"DEBUG: Using admin database client with service role")
     try:
         yield db
     finally:

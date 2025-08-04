@@ -8,14 +8,34 @@ from app.schemas.consultant_application import (
 class CRUDConsultantApplication:
     def create(self, db: Client, *, obj_in: ConsultantApplicationCreate) -> Dict[str, Any]:
         """Create a new consultant application"""
-        data = obj_in.dict()
-        # Convert datetime objects to ISO strings for JSON serialization
-        if data.get('submission_date'):
-            data['submission_date'] = data['submission_date'].isoformat()
-        if data.get('date_of_birth'):
-            data['date_of_birth'] = data['date_of_birth'].isoformat()
-        response = db.table("consultant_applications").insert(data).execute()
-        return response.data[0] if response.data else {}
+        try:
+            data = obj_in.dict()
+            # Convert datetime objects to ISO strings for JSON serialization
+            if data.get('submission_date'):
+                data['submission_date'] = data['submission_date'].isoformat()
+            if data.get('date_of_birth'):
+                data['date_of_birth'] = data['date_of_birth'].isoformat()
+            
+            # Add default status if not provided
+            if 'status' not in data or data['status'] is None:
+                data['status'] = 'pending'
+            
+            # Remove None values to avoid potential issues
+            clean_data = {k: v for k, v in data.items() if v is not None}
+            
+            print(f"DEBUG: Attempting to insert consultant application with data keys: {list(clean_data.keys())}")
+            print(f"DEBUG: Email: {clean_data.get('email')}, RCIC: {clean_data.get('rcic_license_number')}")
+            
+            response = db.table("consultant_applications").insert(clean_data).execute()
+            
+            if not response.data:
+                raise Exception("No data returned from insert operation")
+                
+            return response.data[0]
+        except Exception as e:
+            print(f"ERROR in consultant_application.create: {str(e)}")
+            print(f"ERROR type: {type(e)}")
+            raise
 
     def get(self, db: Client, id: int) -> Optional[Dict[str, Any]]:
         """Get a consultant application by ID"""
