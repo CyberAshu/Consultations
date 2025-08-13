@@ -12,6 +12,8 @@ import { BlogPage } from './components/pages/BlogPage';
 import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
 import { TermsOfUsePage } from './components/pages/TermsOfUsePage';
 import { LoginPage } from './components/pages/LoginPage';
+import { ForgotPassword } from './components/pages/ForgotPassword';
+import { ResetPassword } from './components/pages/ResetPassword';
 import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
@@ -98,8 +100,10 @@ function App() {
             </div>
           } />
           
-          {/* Login route without header/footer */}
+          {/* Login and password reset routes without header/footer */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Dashboard routes without header/footer */}
           <Route path="/admin-dashboard" element={

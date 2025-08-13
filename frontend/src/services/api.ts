@@ -118,11 +118,11 @@ export const apiDelete = <T>(endpoint: string): Promise<T> => {
 };
 
 // Helper for form data requests (file uploads, etc.)
-export const apiPostFormData = <T>(endpoint: string, formData: FormData): Promise<T> => {
+export const apiPostFormData = <T>(endpoint: string, formData: FormData, method: string = 'POST'): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
   
   const config: RequestInit = {
-    method: 'POST',
+    method: method.toUpperCase(),
     body: formData,
     headers: {},
   };

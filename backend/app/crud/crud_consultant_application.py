@@ -77,7 +77,17 @@ class CRUDConsultantApplication:
         obj_in: ConsultantApplicationUpdate
     ) -> Dict[str, Any]:
         """Update a consultant application"""
+        from datetime import datetime, date
+        
         update_dict = obj_in.dict(exclude_unset=True)
+        
+        # Convert datetime objects to ISO strings for JSON serialization
+        for key, value in update_dict.items():
+            if isinstance(value, datetime):
+                update_dict[key] = value.isoformat()
+            elif isinstance(value, date):
+                update_dict[key] = value.isoformat()
+        
         response = db.table("consultant_applications").update(update_dict).eq("id", db_obj["id"]).execute()
         return response.data[0] if response.data else {}
 

@@ -82,6 +82,66 @@ class ConsultantApplicationService {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     return `${baseUrl}/api/v1/consultant-applications/documents/${filename}`;
   }
+
+  // Upload additional document (Admin only)
+  async uploadAdditionalDocument(applicationId: number, file: File): Promise<{
+    message: string;
+    document: {
+      filename: string;
+      original_name: string;
+      file_path: string;
+      uploaded_by: string;
+      uploaded_at: string;
+    };
+    application_id: number;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return apiPostFormData<{
+      message: string;
+      document: {
+        filename: string;
+        original_name: string;
+        file_path: string;
+        uploaded_by: string;
+        uploaded_at: string;
+      };
+      application_id: number;
+    }>(`/consultant-applications/${applicationId}/additional-documents`, formData);
+  }
+
+  // Update admin notes (Admin only)
+  async updateAdminNotes(applicationId: number, adminNotes: string): Promise<ConsultantApplication> {
+    const formData = new FormData();
+    formData.append('admin_notes', adminNotes);
+    
+    return apiPostFormData<ConsultantApplication>(
+      `/consultant-applications/${applicationId}/admin-notes`, 
+      formData,
+      'PUT'
+    );
+  }
+
+  // Delete additional document (Admin only)
+  async deleteAdditionalDocument(applicationId: number, documentFilename: string): Promise<{ message: string }> {
+    return apiDelete<{ message: string }>(`/consultant-applications/${applicationId}/additional-documents/${documentFilename}`);
+  }
+
+  // Send credentials to consultant (Admin only)
+  async sendCredentials(applicationId: number): Promise<{
+    success: boolean;
+    message: string;
+    email: string;
+    full_name: string;
+  }> {
+    return apiPost<{
+      success: boolean;
+      message: string;
+      email: string;
+      full_name: string;
+    }>(`/consultant-applications/${applicationId}/send-credentials`);
+  }
 }
 
 export const consultantApplicationService = new ConsultantApplicationService();

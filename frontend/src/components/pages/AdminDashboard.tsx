@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
@@ -21,7 +21,13 @@ import {
   FileText,
   Eye,
   Check,
-  X
+  X,
+  Upload,
+  Download,
+  Save,
+  Trash2,
+  Paperclip,
+  Mail
 } from 'lucide-react'
 
 export function AdminDashboard() {
@@ -33,6 +39,9 @@ export function AdminDashboard() {
   const [applicationStats, setApplicationStats] = useState<any>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [adminNotes, setAdminNotes] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadConsultantApplications = async () => {
     try {
@@ -70,6 +79,7 @@ export function AdminDashboard() {
 
   const handleViewDetails = (application: any) => {
     setSelectedApplication(application)
+    setAdminNotes(application.admin_notes || '')
     setShowApplicationModal(true)
   }
 
@@ -147,6 +157,120 @@ export function AdminDashboard() {
     { id: 3, client: 'Mike Chen', rcic: 'Maria Rodriguez', service: 'PNP Consultation', date: 'Dec 15, 2024', status: 'Completed' },
     { id: 4, client: 'Lisa Wang', rcic: 'Jean-Pierre Dubois', service: 'Study Permit', date: 'Dec 15, 2024', status: 'Cancelled' }
   ]
+
+  // Handler for uploading additional documents
+  const handleUploadAdditionalDocument = async (file: File) => {
+    if (!selectedApplication) return
+    
+    try {
+      setUploading(true)
+      await consultantApplicationService.uploadAdditionalDocument(selectedApplication.id, file)
+      // Reload the application to get updated documents
+      const updatedApplication = await consultantApplicationService.getApplicationById(selectedApplication.id)
+      setSelectedApplication(updatedApplication)
+      // Also reload the applications list
+      await loadConsultantApplications()
+    } catch (error) {
+      console.error('Error uploading document:', error)
+      setError('Failed to upload document')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Handler for saving admin notes
+  const handleSaveAdminNotes = async () => {
+    if (!selectedApplication) return
+    
+    try {
+      setLoading(true)
+      await consultantApplicationService.updateAdminNotes(selectedApplication.id, adminNotes)
+      // Update the selected application
+      setSelectedApplication({ ...selectedApplication, admin_notes: adminNotes })
+      // Also reload the applications list
+      await loadConsultantApplications()
+    } catch (error) {
+      console.error('Error saving admin notes:', error)
+      setError('Failed to save admin notes')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handler for deleting additional documents
+  const handleDeleteAdditionalDocument = async (documentFilename: string) => {
+    if (!selectedApplication) return
+    
+    if (!window.confirm('Are you sure you want to delete this document?')) {
+      return
+    }
+    
+    try {
+      setLoading(true)
+      await consultantApplicationService.deleteAdditionalDocument(selectedApplication.id, documentFilename)
+      // Reload the application to get updated documents
+      const updatedApplication = await consultantApplicationService.getApplicationById(selectedApplication.id)
+      setSelectedApplication(updatedApplication)
+      // Also reload the applications list
+      await loadConsultantApplications()
+    } catch (error) {
+      console.error('Error deleting document:', error)
+      setError('Failed to delete document')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handler for file input change
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png']
+      if (!allowedTypes.includes(file.type)) {
+        alert('Invalid file type. Please upload PDF, DOCX, JPG, or PNG files only.')
+        return
+      }
+      
+      // Validate file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size too large. Maximum size is 10MB.')
+        return
+      }
+      
+      handleUploadAdditionalDocument(file)
+    }
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  // Handler for sending credentials manually
+  const handleSendCredentials = async () => {
+    if (!selectedApplication) return
+    
+    if (!window.confirm(`Are you sure you want to send login credentials to ${selectedApplication.full_legal_name}?`)) {
+      return
+    }
+    
+    try {
+      setLoading(true)
+      const result = await consultantApplicationService.sendCredentials(selectedApplication.id)
+      
+      if (result.success) {
+        alert(`✅ Success!\n\nCredentials have been sent to:\n${result.full_name} (${result.email})\n\nThe consultant will receive their login details via email.`)
+      } else {
+        alert(`❌ Failed to send credentials: ${result.message}`)
+      }
+    } catch (error: any) {
+      console.error('Error sending credentials:', error)
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Unknown error occurred'
+      alert(`❌ Error sending credentials: ${errorMessage}`)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Dummy data as fallback
   const dummyConsultantApplications = [
@@ -1161,16 +1285,104 @@ export function AdminDashboard() {
                     </div>
                   </div>
 
+                  {/* Additional Documents Section */}
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-5">
+                    <h3 className="text-lg font-semibold text-pink-900 mb-4 flex items-center gap-2">
+                      <Paperclip className="h-5 w-5" />
+                      Additional Documents (Admin Only)
+                    </h3>
+                    
+                    {/* Upload Section */}
+                    <div className="mb-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          onChange={handleFileInputChange}
+                          accept=".pdf,.docx,.jpg,.jpeg,.png"
+                          className="hidden"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => fileInputRef.current?.click()} 
+                          disabled={uploading}
+                          className="bg-pink-600 hover:bg-pink-700"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {uploading ? 'Uploading...' : 'Upload Document'}
+                        </Button>
+                        <span className="text-xs text-gray-500">PDF, DOCX, JPG, PNG (max 10MB)</span>
+                      </div>
+                    </div>
+                    
+                    {/* Additional Documents List */}
+                    <div className="space-y-2">
+                      {selectedApplication.additional_documents && selectedApplication.additional_documents.length > 0 ? (
+                        selectedApplication.additional_documents.map((doc: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">{doc.original_name}</p>
+                              <p className="text-xs text-gray-500">
+                                Uploaded by {doc.uploader_email} on {doc.timestamp ? new Date(doc.timestamp).toLocaleDateString() : 'Unknown date'}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-xs" 
+                                onClick={() => consultantApplicationService.viewDocument(doc.file_path)}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                className="bg-red-600 hover:bg-red-700 text-xs" 
+                                onClick={() => handleDeleteAdditionalDocument(doc.filename)}
+                                disabled={loading}
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 bg-white p-3 rounded border text-center">No additional documents uploaded</p>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Admin Notes Section */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
-                    <h3 className="text-lg font-semibold text-blue-900 mb-4">Admin Notes</h3>
+                    <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Admin Notes
+                    </h3>
                     <textarea 
                       className="w-full border border-gray-300 rounded-md p-3 text-sm min-h-[100px]"
                       placeholder="Add internal notes about this application..."
-                      defaultValue={selectedApplication.admin_notes || ''}
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
                     />
-                    <div className="mt-3">
-                      <Button size="sm" variant="outline">Save Notes</Button>
+                    <div className="mt-3 flex gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={handleSaveAdminNotes}
+                        disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {loading ? 'Saving...' : 'Save Notes'}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setAdminNotes(selectedApplication.admin_notes || '')}
+                      >
+                        Reset
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1181,26 +1393,40 @@ export function AdminDashboard() {
             <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 {/* Admin Actions */}
-                {selectedApplication.status === 'pending' && (
-                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  {selectedApplication.status === 'pending' && (
+                    <>
+                      <Button 
+                        className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
+                        onClick={() => handleApproveApplication(selectedApplication.id)}
+                        disabled={loading}
+                      >
+                        <Check className="h-4 w-4" />
+                        {loading ? 'Approving...' : 'Approve Application'}
+                      </Button>
+                      <Button 
+                        className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
+                        onClick={() => handleRejectApplication(selectedApplication.id)}
+                        disabled={loading}
+                      >
+                        <X className="h-4 w-4" />
+                        {loading ? 'Rejecting...' : 'Reject Application'}
+                      </Button>
+                    </>
+                  )}
+                  
+                  {/* Send Credentials Button - Available for approved applications */}
+                  {selectedApplication.status === 'approved' && (
                     <Button 
-                      className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
-                      onClick={() => handleApproveApplication(selectedApplication.id)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2"
+                      onClick={handleSendCredentials}
                       disabled={loading}
                     >
-                      <Check className="h-4 w-4" />
-                      {loading ? 'Approving...' : 'Approve Application'}
+                      <Mail className="h-4 w-4" />
+                      {loading ? 'Sending...' : 'Send ID & Password'}
                     </Button>
-                    <Button 
-                      className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
-                      onClick={() => handleRejectApplication(selectedApplication.id)}
-                      disabled={loading}
-                    >
-                      <X className="h-4 w-4" />
-                      {loading ? 'Rejecting...' : 'Reject Application'}
-                    </Button>
-                  </div>
-                )}
+                  )}
+                </div>
                 
                 <div className="flex gap-3 w-full sm:w-auto">
                   <Button variant="outline" onClick={handleCloseModal} className="flex-1 sm:flex-none">

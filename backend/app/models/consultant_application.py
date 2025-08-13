@@ -57,6 +57,7 @@ class ConsultantApplication(Base):
     # Admin fields
     status = Column(String, default="pending")  # pending, approved, rejected
     admin_notes = Column(Text)  # Admin review notes
+    additional_documents = Column(JSON)  # Admin uploaded additional documents [{'filename': str, 'original_name': str, 'file_path': str, 'uploaded_by': str, 'uploaded_at': str}]
     reviewed_by = Column(String)  # Admin who reviewed
     reviewed_at = Column(DateTime(timezone=True))
     

@@ -65,3 +65,15 @@ def get_current_active_user(
     if not current_user.get("is_active", True):
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+def get_current_admin_user(
+    current_user: dict = Depends(get_current_active_user),
+) -> dict:
+    """Get current user and verify admin role"""
+    user_role = current_user.get("role", "client")
+    if user_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions. Admin access required."
+        )
+    return current_user

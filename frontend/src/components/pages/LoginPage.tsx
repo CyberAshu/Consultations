@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { GlassCard, CardContent, CardHeader, CardTitle } from '../ui/Card'
 import { Input } from '../ui/Input'
@@ -132,6 +132,16 @@ export function LoginPage() {
                 </div>
               </div>
   
+              <div className="flex items-center justify-between mb-6">
+                <div></div>
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
               <Button
                 type="submit"
                 disabled={loading}
