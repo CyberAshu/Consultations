@@ -139,7 +139,9 @@ export function BookingFlow() {
       timezone: bookingData.timezone,
       total_amount: bookingData.totalAmount,
       payment_intent_id: bookingData.payment.id,
-      intake_form_data: bookingData.intakeForm
+      intake_form_data: bookingData.intakeForm,
+      // Pass client_id if present (e.g., when booking created by rcic/admin on behalf of a client)
+      client_id: bookingData?.client?.id || bookingData?.client_id
     }
 
     console.log('Creating booking with data:', bookingRequest)

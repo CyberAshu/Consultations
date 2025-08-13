@@ -12,6 +12,7 @@ import { BlogPage } from './components/pages/BlogPage';
 import { PrivacyPolicyPage } from './components/pages/PrivacyPolicyPage';
 import { TermsOfUsePage } from './components/pages/TermsOfUsePage';
 import { LoginPage } from './components/pages/LoginPage';
+import { RegisterPage } from './components/pages/RegisterPage';
 import { ForgotPassword } from './components/pages/ForgotPassword';
 import { ResetPassword } from './components/pages/ResetPassword';
 import { AdminDashboard } from './components/pages/AdminDashboard';
@@ -100,8 +101,9 @@ function App() {
             </div>
           } />
           
-          {/* Login and password reset routes without header/footer */}
+          {/* Auth routes without header/footer */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           {/* Handle recovery URLs that might come with different paths */}

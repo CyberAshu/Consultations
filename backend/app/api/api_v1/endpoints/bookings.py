@@ -87,9 +87,14 @@ def create_booking(
     """
     Create new booking.
     """
-    # Ensure the client_id matches the current user
+    # Ensure the client_id is set appropriately based on role
     if current_user["role"] == "client":
+        # Always set to the authenticated client
         booking_in.client_id = current_user["id"]
+    else:
+        # For rcic/admin, require explicit client_id in request
+        if not booking_in.client_id:
+            raise HTTPException(status_code=400, detail="client_id is required when creating a booking as rcic or admin")
     
     booking = crud_booking.create_booking(db=db, obj_in=booking_in)
     # Sanitize booking data to handle null values

@@ -18,9 +18,9 @@ import {
   CheckCircle,
   AlertCircle,
   Plus,
-  Search,
-  Filter,
-  Loader
+  Loader,
+  Trash2,
+  Eye
 } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { authService } from '../../services/authService'
@@ -33,6 +33,9 @@ export function ClientDashboard() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const tabs = [
     { id: 'dashboard', label: 'Home / Dashboard', icon: <Home className="h-4 w-4" /> },
@@ -89,12 +92,12 @@ export function ClientDashboard() {
   // Separate bookings into upcoming and past
   const now = new Date()
   const upcomingSessions = bookings.filter(booking => {
-    const bookingDate = new Date(booking.scheduled_date)
+    const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
     return bookingDate > now && booking.status !== 'cancelled'
   })
   
   const pastSessions = bookings.filter(booking => {
-    const bookingDate = new Date(booking.scheduled_date)
+    const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
     return bookingDate <= now || booking.status === 'completed'
   })
 
@@ -128,6 +131,69 @@ export function ClientDashboard() {
       default:
         return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  // Get all documents from all bookings
+  const allDocuments = bookings.flatMap(booking => 
+    (booking.documents || []).map(doc => ({
+      ...doc,
+      booking_id: booking.id,
+      booking_service: booking.service_type || `Service #${booking.service_id}`,
+      booking_date: booking.booking_date || booking.scheduled_date
+    }))
+  )
+
+  // Get intake forms from bookings
+  const intakeForms = bookings.filter(booking => booking.intake_form_data).map(booking => ({
+    id: booking.id,
+    service: booking.service_type || `Service #${booking.service_id}`,
+    date: booking.booking_date || booking.scheduled_date || new Date().toISOString(),
+    data: booking.intake_form_data
+  }))
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      setUploadError(null)
+    }
+  }
+
+  const handleFileUpload = async () => {
+    if (!selectedFile || !upcomingSessions.length) {
+      setUploadError('Please select a file and ensure you have an upcoming booking')
+      return
+    }
+
+    try {
+      setUploading(true)
+      setUploadError(null)
+      
+      // Upload to the first upcoming booking (you might want to let user choose which booking)
+      const bookingId = upcomingSessions[0].id
+      await bookingService.uploadBookingDocument(bookingId, selectedFile)
+      
+      // Refresh bookings to get updated documents
+      const updatedBookings = await bookingService.getBookings()
+      setBookings(updatedBookings)
+      
+      setSelectedFile(null)
+      // Reset file input
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement
+      if (fileInput) fileInput.value = ''
+    } catch (err: any) {
+      setUploadError(err?.message || 'Failed to upload document')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const formatDocumentDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
   }
 
   if (loading) {
@@ -258,7 +324,8 @@ export function ClientDashboard() {
                 </h3>
                 <div className="space-y-4">
                   {upcomingSessions.map((session) => {
-                    const { date, time } = formatDateTime(session.scheduled_date)
+                    const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
+                    const { date, time } = formatDateTime(safeDateTime)
                     return (
                       <div key={session.id} className="border border-blue-200/50 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
@@ -297,7 +364,7 @@ export function ClientDashboard() {
                       <p className="text-gray-500">No upcoming sessions scheduled</p>
                       <Button 
                         className="mt-3 bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate('/book-consultation')}
+                        onClick={() => navigate('/consultants')}
                       >
                         Book Your First Session
                       </Button>
@@ -312,17 +379,28 @@ export function ClientDashboard() {
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <Button className="bg-green-600 hover:bg-green-700 h-12 sm:h-14 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2">
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700 h-12 sm:h-14 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
+                    onClick={() => navigate('/consultants')}
+                  >
                     <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="hidden sm:inline">Book New Session</span>
                     <span className="sm:hidden">Book Session</span>
                   </Button>
-                  <Button variant="outline" className="h-12 sm:h-14 text-sm sm:text-base font-medium border-2 border-blue-200 text-blue-700 hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all duration-200">
+                  <Button 
+                    variant="outline" 
+                    className="h-12 sm:h-14 text-sm sm:text-base font-medium border-2 border-blue-200 text-blue-700 hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all duration-200"
+                    onClick={() => setActiveTab('documents')}
+                  >
                     <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                     <span className="hidden sm:inline">Request Summary</span>
                     <span className="sm:hidden">Summary</span>
                   </Button>
-                  <Button variant="outline" className="h-12 sm:h-14 text-sm sm:text-base font-medium border-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 shadow-lg hover:shadow-xl transition-all duration-200 col-span-1 sm:col-span-2 lg:col-span-1">
+                  <Button 
+                    variant="outline" 
+                    className="h-12 sm:h-14 text-sm sm:text-base font-medium border-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 shadow-lg hover:shadow-xl transition-all duration-200 col-span-1 sm:col-span-2 lg:col-span-1"
+                    onClick={() => navigate('/consultants')}
+                  >
                     <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                     <span className="hidden sm:inline">Book Follow-up</span>
                     <span className="sm:hidden">Follow-up</span>
@@ -346,7 +424,8 @@ export function ClientDashboard() {
                 {/* Mobile Card View */}
                 <div className="block lg:hidden space-y-4">
                   {upcomingSessions.map((session) => {
-                    const { date, time } = formatDateTime(session.scheduled_date)
+                    const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
+                    const { date, time } = formatDateTime(safeDateTime)
                     return (
                       <div key={session.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
                         <div className="flex justify-between items-start">
@@ -383,7 +462,8 @@ export function ClientDashboard() {
                     </thead>
                     <tbody>
                       {upcomingSessions.map((session) => {
-                        const { date, time } = formatDateTime(session.scheduled_date)
+                        const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
+                        const { date, time } = formatDateTime(safeDateTime)
                         return (
                           <tr key={session.id} className="border-b">
                             <td className="p-3 font-medium">{session.service_type}</td>
@@ -416,7 +496,8 @@ export function ClientDashboard() {
                 {/* Mobile Card View */}
                 <div className="block lg:hidden space-y-4">
                   {pastSessions.map((session) => {
-                    const { date, time } = formatDateTime(session.scheduled_date)
+                    const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
+                    const { date, time } = formatDateTime(safeDateTime)
                     return (
                       <div key={session.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
                         <div className="flex justify-between items-start">
@@ -452,7 +533,8 @@ export function ClientDashboard() {
                     </thead>
                     <tbody>
                       {pastSessions.map((session) => {
-                        const { date, time } = formatDateTime(session.scheduled_date)
+                        const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
+                        const { date, time } = formatDateTime(safeDateTime)
                         return (
                           <tr key={session.id} className="border-b">
                             <td className="p-3 font-medium">{session.service_type}</td>
@@ -483,6 +565,42 @@ export function ClientDashboard() {
         {/* My Documents Tab */}
         {activeTab === 'documents' && (
           <div className="space-y-6">
+            {/* Intake Forms Section */}
+            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Intake Forms</h2>
+                
+                {intakeForms.length > 0 ? (
+                  <div className="space-y-4">
+                    {intakeForms.map((form) => (
+                      <div key={form.id} className="border border-blue-200/50 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h3 className="font-medium text-gray-900">{form.service}</h3>
+                            <p className="text-sm text-gray-600">Submitted on {formatDocumentDate(form.date || new Date().toISOString())}</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="flex items-center gap-2">
+                            <Eye className="h-4 w-4" />
+                            View Form
+                          </Button>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <p>Form data submitted for this consultation</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p>No intake forms submitted yet</p>
+                    <p className="text-sm">Complete an intake form when booking a consultation</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Documents Section */}
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">My Documents</h2>
@@ -490,58 +608,110 @@ export function ClientDashboard() {
                 {/* Upload Section */}
                 <div className="mb-8">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Documents</h3>
-                  <div className="border-2 border-dashed border-blue-300/50 rounded-xl p-8 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-400/70 transition-colors">
-                    <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">Drag and drop files here, or click to select files</p>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      Choose Files
-                    </Button>
-                    <p className="text-sm text-gray-500 mt-2">Supported formats: PDF, JPG, PNG (Max 10MB)</p>
-                  </div>
+                  
+                  {upcomingSessions.length === 0 ? (
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50">
+                      <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-4">No upcoming sessions to upload documents to</p>
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => navigate('/consultants')}
+                      >
+                        Book a Consultation
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-blue-300/50 rounded-xl p-8 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-400/70 transition-colors">
+                      <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-4">Upload documents for your upcoming consultation</p>
+                      
+                      <div className="space-y-4">
+                        <input
+                          id="file-upload"
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                        />
+                        <div className="flex items-center justify-center gap-3">
+                          <Button 
+                            onClick={() => document.getElementById('file-upload')?.click()}
+                            variant="outline"
+                            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                          >
+                            Choose Files
+                          </Button>
+                          {selectedFile && (
+                            <Button 
+                              onClick={handleFileUpload}
+                              disabled={uploading}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {uploading ? 'Uploading...' : 'Upload'}
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {selectedFile && (
+                          <div className="text-sm text-gray-600">
+                            Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                          </div>
+                        )}
+                        
+                        {uploadError && (
+                          <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                            {uploadError}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <p className="text-sm text-gray-500 mt-4">Supported formats: PDF, JPG, PNG, DOC (Max 10MB)</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Uploaded Documents */}
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Uploaded Documents</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 border border-gray-200/50 rounded-xl bg-gradient-to-r from-white to-gray-50/50 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                        <div>
-                          <p className="font-medium text-gray-900">Passport Copy.pdf</p>
-                          <p className="text-sm text-gray-500">Uploaded Dec 10, 2024</p>
+                  
+                  {allDocuments.length > 0 ? (
+                    <div className="space-y-3">
+                      {allDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200/50 rounded-xl bg-gradient-to-r from-white to-gray-50/50 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                            <div>
+                              <p className="font-medium text-gray-900">{doc.file_name}</p>
+                              <p className="text-sm text-gray-600">{doc.booking_service}</p>
+                              <p className="text-sm text-gray-500">
+                                Uploaded {formatDocumentDate(doc.uploaded_at || doc.created_at || new Date().toISOString())}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </Button>
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                        <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                          Delete
-                        </Button>
-                      </div>
+                      ))}
                     </div>
-                    
-                    <div className="flex items-center justify-between p-4 border border-gray-200/50 rounded-xl bg-gradient-to-r from-white to-gray-50/50 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                        <div>
-                          <p className="font-medium text-gray-900">Education Credentials.pdf</p>
-                          <p className="text-sm text-gray-500">Uploaded Dec 8, 2024</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                        <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                          Delete
-                        </Button>
-                      </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p>No documents uploaded yet</p>
+                      <p className="text-sm">Upload documents for your consultations above</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../ui/Card'
 import { Button } from '../shared/Button'
@@ -26,51 +26,59 @@ export function ConsultantsPage() {
   const [activeModalTab, setActiveModalTab] = useState<'bio' | 'reviews'>('bio')
   const [consultants, setConsultants] = useState<Consultant[]>([])
   const [loading, setLoading] = useState(true)
+  const [initialLoaded, setInitialLoaded] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Load all consultants once to populate filter options
   const [allConsultants, setAllConsultants] = useState<Consultant[]>([])
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   
-  // Load consultants from API with debouncing
-  useEffect(() => {
-    const loadConsultants = async () => {
-      try {
-        setLoading(true)
-        
-        // For initial load, get all consultants for filter options
-        if (isInitialLoad) {
-          const allLoadedConsultants = await consultantService.getConsultants({})
-          setAllConsultants(allLoadedConsultants)
-          setConsultants(allLoadedConsultants)
-          setIsInitialLoad(false)
-        } else {
-          // For subsequent loads, apply filters
-          const filters = {
-            search: searchTerm || undefined,
-            language: selectedLanguage || undefined,
-            province: selectedProvince || undefined,
-            specialty: selectedSpecialty || undefined,
-          }
-          
-          const loadedConsultants = await consultantService.getConsultants(filters)
-          setConsultants(loadedConsultants)
+  // Centralized fetch with optional spinner
+  const didFetchRef = useRef(false)
+  const fetchConsultants = async (showSpinner: boolean) => {
+    try {
+      if (showSpinner && !initialLoaded) setLoading(true); else setRefreshing(true)
+      if (isInitialLoad) {
+        const allLoaded = await consultantService.getConsultants({})
+        setAllConsultants(allLoaded)
+        setConsultants(allLoaded)
+        setIsInitialLoad(false)
+      } else {
+        const filters = {
+          search: searchTerm || undefined,
+          language: selectedLanguage || undefined,
+          province: selectedProvince || undefined,
+          specialty: selectedSpecialty || undefined,
         }
-        
-        setError(null)
-      } catch (err) {
-        console.error('Failed to load consultants:', err)
-        setError('Failed to load consultants. Please try again later.')
-      } finally {
+        const loaded = await consultantService.getConsultants(filters)
+        setConsultants(loaded)
+      }
+      setError(null)
+    } catch (err) {
+      console.error('Failed to load consultants:', err)
+      setError('Failed to load consultants. Please try again later.')
+    } finally {
+      if (showSpinner && !initialLoaded) {
         setLoading(false)
+        setInitialLoaded(true)
+      } else {
+        setRefreshing(false)
       }
     }
+  }
 
-    // Debounce the API call to prevent multiple rapid calls
+  // Run on mount and on filters, with debounce; only show spinner on first load
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
-      loadConsultants()
-    }, isInitialLoad ? 0 : 300) // No delay for initial load, 300ms for subsequent
-
+      // Avoid StrictMode double-run showing spinner twice
+      if (!didFetchRef.current) {
+        didFetchRef.current = true
+        fetchConsultants(true)
+      } else {
+        fetchConsultants(false)
+      }
+    }, isInitialLoad ? 0 : 300)
     return () => clearTimeout(timeoutId)
   }, [searchTerm, selectedLanguage, selectedProvince, selectedSpecialty, isInitialLoad])
   

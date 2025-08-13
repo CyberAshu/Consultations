@@ -2,6 +2,9 @@ import { apiGet, apiPost, apiPut, apiDelete, apiPostFormData } from './api';
 import { 
   Consultant, 
   ConsultantFilters,
+  ConsultantServiceInDB,
+  ConsultantServiceCreate,
+  ConsultantServiceUpdate,
 } from './types';
 
 class ConsultantService {
@@ -36,16 +39,16 @@ class ConsultantService {
   }
 
   // Service management methods
-  async getConsultantServices(consultantId: number): Promise<any[]> {
-    return apiGet<any[]>(`/consultants/${consultantId}/services`);
+  async getConsultantServices(consultantId: number): Promise<ConsultantServiceInDB[]> {
+    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services`);
   }
 
-  async createConsultantService(consultantId: number, serviceData: any): Promise<any> {
-    return apiPost<any>(`/consultants/${consultantId}/services`, serviceData);
+  async createConsultantService(consultantId: number, serviceData: ConsultantServiceCreate): Promise<ConsultantServiceInDB> {
+    return apiPost<ConsultantServiceInDB>(`/consultants/${consultantId}/services`, serviceData);
   }
 
-  async updateConsultantService(consultantId: number, serviceId: number, serviceData: any): Promise<any> {
-    return apiPut<any>(`/consultants/${consultantId}/services/${serviceId}`, serviceData);
+  async updateConsultantService(consultantId: number, serviceId: number, serviceData: ConsultantServiceUpdate): Promise<ConsultantServiceInDB> {
+    return apiPut<ConsultantServiceInDB>(`/consultants/${consultantId}/services/${serviceId}`, serviceData);
   }
 
   async deleteConsultantService(consultantId: number, serviceId: number): Promise<void> {

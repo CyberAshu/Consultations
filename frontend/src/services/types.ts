@@ -83,8 +83,10 @@ export interface Booking {
   id: number;
   client_id: string;
   consultant_id: number;
-  service_type: string;
-  scheduled_date: string;
+  service_type?: string; // legacy
+  scheduled_date?: string; // legacy
+  booking_date?: string; // backend field
+  service_id?: number; // backend field
   duration_minutes: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   total_amount: number;
@@ -93,6 +95,7 @@ export interface Booking {
   created_at: string;
   updated_at: string;
   documents?: BookingDocument[];
+  intake_form_data?: any; // Add this field for intake forms
 }
 
 export interface BookingDocument {
@@ -103,6 +106,7 @@ export interface BookingDocument {
   file_size?: number;
   file_type?: string;
   uploaded_at: string;
+  created_at?: string; // Add this field for compatibility
 }
 
 export interface CreateBookingRequest {
@@ -113,6 +117,7 @@ export interface CreateBookingRequest {
   total_amount: number;
   payment_intent_id: string;
   intake_form_data?: any;
+  client_id?: string; // optional; backend will override for clients
 }
 
 export interface ConsultantAvailability {

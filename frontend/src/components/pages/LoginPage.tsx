@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '../shared/Button'
-import { GlassCard, CardContent, CardHeader, CardTitle } from '../ui/Card'
+import { CardContent } from '../ui/Card'
 import { Input } from '../ui/Input'
 import { authService } from '../../services/authService'
-import { Mail, Lock, AlertCircle, LogIn, Eye, EyeOff, Shield } from 'lucide-react'
+import { Mail, Lock, AlertCircle, LogIn, Shield } from 'lucide-react'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -160,7 +160,10 @@ export function LoginPage() {
                 )}
               </Button>
             </form>
-  
+            <div className="mt-4 text-center text-sm text-gray-700">
+              Don’t have an account?{' '}
+              <Link to="/register" className="text-blue-200 underline">Create one</Link>
+            </div>
           </div>
         </CardContent>
 
