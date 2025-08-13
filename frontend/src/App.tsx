@@ -104,6 +104,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Handle recovery URLs that might come with different paths */}
+          <Route path="/auth/callback" element={<ResetPassword />} />
           
           {/* Dashboard routes without header/footer */}
           <Route path="/admin-dashboard" element={

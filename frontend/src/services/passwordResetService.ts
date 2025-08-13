@@ -77,18 +77,35 @@ class PasswordResetService {
     };
   }
 
-  // Simulate session check for reset password flow
+  // Check for valid password reset session
   async getSession() {
-    // For now, we'll assume the user has a valid session if they reach the reset page
-    // In a real implementation, this would check for valid reset tokens
     const urlParams = new URLSearchParams(window.location.search);
     const fragment = new URLSearchParams(window.location.hash.substring(1));
     
     // Check if we have reset tokens in URL (from email link)
-    const hasResetTokens = urlParams.has('access_token') || fragment.has('access_token') ||
-                          urlParams.has('token') || fragment.has('token');
+    const accessToken = fragment.get('access_token') || urlParams.get('access_token');
+    const tokenType = fragment.get('type') || urlParams.get('type');
+    const expiresAt = fragment.get('expires_at') || urlParams.get('expires_at');
     
-    return hasResetTokens ? { user: { email: 'user@example.com' } } : null;
+    // Validate that we have the required tokens and it's a recovery type
+    if (!accessToken || tokenType !== 'recovery') {
+      return null;
+    }
+    
+    // Check if token is expired
+    if (expiresAt) {
+      const expirationTime = parseInt(expiresAt) * 1000; // Convert to milliseconds
+      if (Date.now() > expirationTime) {
+        console.warn('Recovery token has expired');
+        return null;
+      }
+    }
+    
+    return { 
+      user: { email: 'user@example.com' },
+      access_token: accessToken,
+      expires_at: expiresAt
+    };
   }
 
   // Sign out user (placeholder)

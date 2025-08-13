@@ -26,6 +26,28 @@ export function HomePage() {
   const testimonialScrollRef = useRef<HTMLDivElement>(null)
 
 useEffect(() => {
+    // Check for password recovery tokens in URL and redirect to reset password page
+    const checkForRecoveryTokens = () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const queryParams = new URLSearchParams(window.location.search);
+      
+      // Check if we have recovery tokens (access_token and type=recovery)
+      const hasAccessToken = hashParams.get('access_token') || queryParams.get('access_token');
+      const isRecoveryType = hashParams.get('type') === 'recovery' || queryParams.get('type') === 'recovery';
+      
+      if (hasAccessToken && isRecoveryType) {
+        // Redirect to reset password page while preserving the tokens in the URL
+        navigate('/reset-password' + window.location.hash);
+        return true;
+      }
+      return false;
+    };
+
+    // Check for recovery tokens first
+    if (checkForRecoveryTokens()) {
+      return; // Don't load homepage data if redirecting
+    }
+
     // Load testimonials and FAQs from API
     const loadData = async () => {
       try {
