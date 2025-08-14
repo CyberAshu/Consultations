@@ -1,11 +1,13 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from supabase import Client
 from gotrue.errors import AuthApiError
 
 from app.api import deps
 from app.schemas.user import UserLogin, UserRegister, UserResponse
+from app.core.config import settings
+import httpx
 
 router = APIRouter()
 
@@ -26,7 +28,9 @@ def register(
                 "data": {
                     "full_name": user_in.full_name,
                     "role": user_in.role
-                }
+                },
+                # After clicking the confirmation link, send the user to a dedicated page
+                "email_redirect_to": f"{settings.FRONTEND_URL}/auth/confirm"
             }
         })
         
@@ -106,6 +110,72 @@ def login(
         raise HTTPException(
             status_code=500,
             detail=f"Login failed: {str(e)}"
+        )
+
+@router.post("/resend-confirmation")
+def resend_confirmation(
+    *, db: Client = Depends(deps.get_db), email: str = Body(..., embed=True)
+) -> Any:
+    """
+    Resend email confirmation for a user via Supabase Auth
+    """
+    try:
+        # Prefer the SDK method when available
+        if hasattr(db.auth, "resend"):
+            # https://supabase.com/docs/reference/python/auth-resend
+            db.auth.resend({
+                "type": "signup",
+                "email": email,
+                "options": {
+                    "email_redirect_to": f"{settings.FRONTEND_URL}/auth/confirm"
+                },
+            })
+        else:
+            # Fallback to GoTrue REST API for older supabase-py versions
+            # https://supabase.com/docs/reference/auth/auth-resend
+            url = f"{settings.SUPABASE_URL}/auth/v1/resend"
+            headers = {
+                "apikey": settings.SUPABASE_ANON_KEY,
+                "Authorization": f"Bearer {settings.SUPABASE_ANON_KEY}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "type": "signup",
+                "email": email,
+                # GoTrue REST expects 'redirect_to'
+                "redirect_to": f"{settings.FRONTEND_URL}/auth/confirm",
+            }
+            response = httpx.post(url, json=payload, headers=headers, timeout=10)
+            if response.status_code >= 400:
+                # Forward readable error if provided by GoTrue
+                raise HTTPException(status_code=400, detail=response.text)
+
+        return {"message": "Verification email sent if the account exists."}
+    except AuthApiError as e:
+        # Surface readable message to client
+        error_message = str(e)
+        if "over_email_send_rate_limit" in error_message:
+            # Extract the time remaining from the error message
+            import re
+            time_match = re.search(r'(\d+)\s+seconds?', error_message)
+            if time_match:
+                seconds = time_match.group(1)
+                error_message = f"Please wait {seconds} seconds before requesting another verification email."
+            else:
+                error_message = "Please wait a moment before requesting another verification email."
+        elif "already been registered" in error_message.lower():
+            error_message = "This email is already registered. Please check your inbox for the verification email."
+        elif "invalid email" in error_message.lower():
+            error_message = "Please enter a valid email address."
+        
+        raise HTTPException(
+            status_code=400,
+            detail=error_message
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not resend confirmation: {str(e)}"
         )
 
 @router.post("/logout")

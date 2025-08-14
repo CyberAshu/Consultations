@@ -149,7 +149,25 @@ export function BookingFlow() {
     console.log('RCIC object:', bookingData.rcic)
 
     const createdBooking = await bookingService.createBooking(bookingRequest)
-    
+
+    try {
+      // After booking is created, upload any files from intake form
+      const intake = bookingData.intakeForm || {}
+      const allFiles: any[] = [
+        ...(Array.isArray(intake.uploadedFiles) ? intake.uploadedFiles : []),
+        ...(Array.isArray(intake.optionalUploads) ? intake.optionalUploads : [])
+      ]
+
+      for (const f of allFiles) {
+        if (f?.file instanceof File) {
+          await bookingService.uploadBookingDocument(createdBooking.id, f.file)
+        }
+      }
+    } catch (uploadErr) {
+      console.error('Some files failed to upload:', uploadErr)
+      // Proceed even if uploads fail; optionally show a non-blocking alert
+    }
+
     // Update booking data with the created booking ID
     setBookingData((prev: any) => ({
       ...prev,

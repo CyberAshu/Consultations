@@ -109,6 +109,15 @@ class AuthService {
     }
   }
 
+  // Resend email confirmation
+  async resendConfirmation(email: string): Promise<{ message: string }> {
+    try {
+      return await apiPost<{ message: string }>('/auth/resend-confirmation', { email });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Check if user is authenticated
   isAuthenticated(): boolean {
     const token = localStorage.getItem('access_token');

@@ -48,6 +48,13 @@ useEffect(() => {
       return; // Don't load homepage data if redirecting
     }
 
+    // If the user arrives from email confirmation without a redirect (type=signup), route to confirmation page
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    if (hashParams.get('type') === 'signup') {
+      navigate('/auth/confirm' + window.location.hash);
+      return;
+    }
+
     // Load testimonials and FAQs from API
     const loadData = async () => {
       try {

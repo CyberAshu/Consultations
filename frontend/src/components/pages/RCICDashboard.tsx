@@ -218,10 +218,10 @@ export function RCICDashboard() {
       setBookings(filteredBookings)
       const clientIds = filteredBookings.map(b => b.client_id).filter((id, i, arr) => arr.indexOf(id) === i)
       await fetchClientNames(clientIds)
-    } catch (error) {
+      } catch (error) {
       console.error('Failed to fetch bookings:', error)
       setBookings([])
-    } finally {
+      } finally {
       if (showSpinner && !initialBookingsLoaded) {
         setLoading(false)
         setInitialBookingsLoaded(true)
@@ -266,7 +266,7 @@ export function RCICDashboard() {
     { id: 'sessions', label: 'My Sessions', icon: <Calendar className="h-4 w-4" /> },
     { id: 'intake', label: 'Intake Forms', icon: <FileText className="h-4 w-4" /> },
     { id: 'services', label: 'Services', icon: <Wrench className="h-4 w-4" /> },
-    { id: 'profile', label: 'Profile & Calendar', icon: <Settings className="h-4 w-4" /> },
+    { id: 'profile', label: 'Profile', icon: <Settings className="h-4 w-4" /> },
     { id: 'payments', label: 'Payments', icon: <DollarSign className="h-4 w-4" /> }
   ]
 
@@ -527,7 +527,7 @@ export function RCICDashboard() {
   const handleOpenInNewTab = (file: any) => {
     if (!file) return
     
-    const fileUrl = file.url || file.file_url || file.download_url
+    const fileUrl = file.url || file.file_url || file.download_url || file.file_path || file.uploadedFileUrl
     
     if (fileUrl) {
       // For images and PDFs, open in new tab
@@ -542,8 +542,18 @@ export function RCICDashboard() {
           alert('This file type cannot be opened in a new tab. Please download it to view.')
         }
       }
+    } else if (file.content || file.file_content || file.data) {
+      try {
+        const blob = new Blob([file.content || file.file_content || file.data], { 
+          type: file.type || 'application/octet-stream' 
+        })
+        const url = window.URL.createObjectURL(blob)
+        window.open(url, '_blank')
+      } catch (err) {
+        alert('Unable to open file preview. Please download the file to view.')
+      }
     } else {
-      alert('File URL not available. Please download the file to view.')
+      alert('File URL not available. This upload likely only saved metadata without a downloadable link.')
     }
   }
 
@@ -1032,30 +1042,43 @@ export function RCICDashboard() {
                           {hasDocuments && (
                             <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
                               <h4 className="font-medium text-green-900 mb-2">Uploaded Documents</h4>
-                              <div className="space-y-2">
-                                {booking.documents?.map((doc) => (
-                                  <div key={doc.id} className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4 text-green-600" />
-                                      <span className="text-green-800">{doc.file_name}</span>
-                                      <span className="text-green-600 text-xs">
-                                        ({(doc.file_size || 0) / 1024 / 1024 > 1 
-                                          ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
-                                          : `${Math.round((doc.file_size || 0) / 1024)} KB`
-                                        })
-                                      </span>
-                                    </div>
-                                    <div className="flex gap-1">
-                                      <Button size="sm" variant="outline" className="h-6 px-2 text-xs">
-                                        View
-                                      </Button>
-                                      <Button size="sm" variant="outline" className="h-6 px-2 text-xs">
-                                        Download
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
+                          <div className="space-y-2">
+                            {booking.documents?.map((doc) => (
+                              <div key={doc.id} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-green-600" />
+                                  <span className="text-green-800">{doc.file_name}</span>
+                                  <span className="text-green-600 text-xs">
+                                    ({(doc.file_size || 0) / 1024 / 1024 > 1 
+                                      ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
+                                      : `${Math.round((doc.file_size || 0) / 1024)} KB`
+                                    })
+                                  </span>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => handleViewDocument({
+                                    id: doc.id,
+                                    name: doc.file_name,
+                                    size: doc.file_size,
+                                    type: doc.file_type,
+                                    url: (doc as any).file_url || (doc as any).download_url || doc.file_path,
+                                    uploadedAt: doc.uploaded_at || doc.created_at
+                                  }, booking)}>
+                                    View
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => handleDownloadDocument({
+                                    id: doc.id,
+                                    name: doc.file_name,
+                                    size: doc.file_size,
+                                    type: doc.file_type,
+                                    url: (doc as any).file_url || (doc as any).download_url || doc.file_path
+                                  })}>
+                                    Download
+                                  </Button>
+                                </div>
                               </div>
+                            ))}
+                          </div>
                             </div>
                           )}
                           
@@ -1068,12 +1091,36 @@ export function RCICDashboard() {
                     className="w-full border rounded-md p-3 text-sm"
                     rows={3}
                     placeholder="Add internal session notes here..."
+                    value={bookings.find(b => b.id === booking.id)?.meeting_notes || ''}
+                    onChange={(e) => setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, meeting_notes: e.target.value } as any : b))}
                   />
                             <div className="mt-2 flex gap-2">
-                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={async () => {
+                                try {
+                                  const current = bookings.find(b => b.id === booking.id)
+                                  await bookingService.updateBooking(booking.id, { meeting_notes: (current as any)?.meeting_notes } as any)
+                                  alert('Notes saved')
+                                } catch (err: any) {
+                                  alert(err?.message || 'Failed to save notes')
+                                }
+                              }}>
                                 Save Notes
                               </Button>
-                              <Button size="sm" variant="outline">
+                              <Button size="sm" variant="outline" onClick={async () => {
+                                try {
+                                  const current = bookings.find(b => b.id === booking.id)
+                                  const notes = (current as any)?.meeting_notes || ''
+                                  if (!notes.trim()) { alert('Please enter some notes first'); return }
+                                  await fetch(`/api/v1/bookings/${booking.id}/send-notes`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}` },
+                                    body: JSON.stringify({ notes })
+                                  })
+                                  alert('Notes sent to client')
+                                } catch (err: any) {
+                                  alert(err?.message || 'Failed to send notes')
+                                }
+                              }}>
                                 Send to Client
                               </Button>
                 </div>
@@ -1097,7 +1144,7 @@ export function RCICDashboard() {
           </Card>
         )}
 
-        {/* Profile & Calendar Tab */}
+        {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
@@ -1148,7 +1195,7 @@ export function RCICDashboard() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
                       <input className="w-full border border-gray-300 p-2 rounded-md" value={profileForm.timezone || ''} onChange={(e) => handleProfileInputChange('timezone', e.target.value)} />
-                    </div>
+                  </div>
                     <div>
                        <label className="block text-sm font-medium text-gray-700 mb-1">RCIC Number</label>
                       <input className="w-full border border-gray-300 p-2 rounded-md bg-gray-100 text-gray-600" value={profileForm.rcic_number || ''} disabled readOnly />
@@ -1156,8 +1203,8 @@ export function RCICDashboard() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Calendly URL</label>
                       <input className="w-full border border-gray-300 p-2 rounded-md" value={profileForm.calendly_url || ''} onChange={(e) => handleProfileInputChange('calendly_url', e.target.value)} />
-                    </div>
                   </div>
+                </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image</label>
                     <div className="flex items-center gap-3">
@@ -1174,22 +1221,6 @@ export function RCICDashboard() {
                     {profileSaveMessage && <span className={profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>{profileSaveMessage}</span>}
                   </div>
                 </form>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Calendar Integration</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Calendly URL</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md"
-                      defaultValue="https://calendly.com/dr-sarah-chen"
-                    />
-                  </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">Update Calendar</Button>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -1586,7 +1617,7 @@ export function RCICDashboard() {
       {/* Document Modal */}
       {showDocumentModal && selectedDocument && selectedClient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-900">Document Details</h3>
               <Button variant="outline" onClick={closeDocumentModal} size="sm">
@@ -1617,7 +1648,7 @@ export function RCICDashboard() {
                     <img
                       src={selectedDocument.url || `data:${selectedDocument.type};base64,${selectedDocument.content}`}
                       alt={selectedDocument.name}
-                      className="max-w-full max-h-96 mx-auto rounded-lg shadow-md border border-gray-200"
+                      className="w-full h-auto max-h-[70vh] object-contain mx-auto rounded-lg shadow-md border border-gray-200"
                     />
                   ) : (
                     <div className="text-center py-8 text-gray-500">
@@ -1631,7 +1662,7 @@ export function RCICDashboard() {
                 ) : selectedDocument.type === 'application/pdf' ? (
                   <iframe
                     src={selectedDocument.url || `data:${selectedDocument.type};base64,${selectedDocument.content}`}
-                    className="w-full h-96 border border-gray-200 rounded-lg"
+                    className="w-full h-[70vh] border border-gray-200 rounded-lg"
                     title={selectedDocument.name}
                   />
                 ) : selectedDocument.type?.startsWith('text/') ? (

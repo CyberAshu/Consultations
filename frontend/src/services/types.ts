@@ -90,8 +90,10 @@ export interface Booking {
   duration_minutes: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   total_amount: number;
-  notes?: string;
-  meeting_link?: string;
+  notes?: string; // legacy
+  meeting_link?: string; // legacy
+  meeting_url?: string;
+  meeting_notes?: string;
   created_at: string;
   updated_at: string;
   documents?: BookingDocument[];

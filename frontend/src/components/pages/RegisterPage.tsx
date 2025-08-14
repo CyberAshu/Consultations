@@ -14,10 +14,12 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [info, setInfo] = useState('')
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setInfo('')
     if (password !== confirmPassword) {
       setError('Passwords do not match')
       return
@@ -26,7 +28,12 @@ export function RegisterPage() {
       setLoading(true)
       // Default role as client
       const response = await authService.register({ email, password, full_name: fullName, role: 'client' })
-      // Redirect based on role, but by default it's client
+      // If email confirmations are enabled, session will be null until user verifies
+      if (!response.session) {
+        setInfo('Account created. Please check your email to verify your account before signing in.')
+        return
+      }
+      // Redirect based on role when session exists
       switch (response.user.role) {
         case 'admin':
           navigate('/admin-dashboard')
@@ -72,6 +79,16 @@ export function RegisterPage() {
                     <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                     <div className="ml-3">
                       <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {info && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex">
+                    <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">{info}</p>
                     </div>
                   </div>
                 </div>
@@ -175,6 +192,29 @@ export function RegisterPage() {
                   </div>
                 )}
               </Button>
+
+              {info && (
+                <div className="mt-4 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setLoading(true)
+                        setError('')
+                        const res = await authService.resendConfirmation(email)
+                        setInfo(res?.message || 'Verification email sent.')
+                      } catch (e: any) {
+                        setError(e?.message || 'Failed to resend verification email')
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                    className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
+                  >
+                    Resend verification email
+                  </button>
+                </div>
+              )}
 
               <div className="text-center text-sm text-gray-600">
                 Already have an account?{' '}

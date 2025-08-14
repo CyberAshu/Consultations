@@ -53,12 +53,26 @@ export async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      let errorMessage: any = `HTTP ${response.status}: ${response.statusText}`;
       try {
         const errorData = await response.json();
-        errorMessage = errorData.detail || errorData.message || errorMessage;
+        const detail = (errorData && errorData.detail) ?? (errorData && errorData.message);
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail) && detail.length > 0) {
+          // FastAPI validation errors
+          const first = detail[0];
+          errorMessage = first?.msg || first?.message || JSON.stringify(first);
+        } else if (detail && typeof detail === 'object') {
+          errorMessage = detail.message || JSON.stringify(detail);
+        } else if (errorData && typeof errorData === 'object') {
+          errorMessage = errorData.message || JSON.stringify(errorData);
+        }
       } catch {
         // If we can't parse error response, use default message
+      }
+      if (typeof errorMessage !== 'string') {
+        errorMessage = JSON.stringify(errorMessage);
       }
       throw new ApiError(errorMessage, response.status, response);
     }

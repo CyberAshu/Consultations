@@ -83,7 +83,8 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
       size: file.size,
       type: file.type,
       uploadedAt: new Date().toISOString(),
-      isOptional
+      isOptional,
+      file
     }))
 
     if (isOptional) {

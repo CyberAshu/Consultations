@@ -1,11 +1,13 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from supabase import Client
+from pydantic import BaseModel
 
 from app.api import deps
 from app.crud import crud_booking
 from app.schemas.booking import BookingInDB, BookingCreate, BookingUpdate, BookingDocumentCreate
 from app.models.booking import BookingStatus, PaymentStatus
+from app.utils.email_service import EmailService
 
 router = APIRouter()
 
@@ -169,3 +171,62 @@ def upload_booking_document(
     
     document = crud_booking.create_booking_document(db=db, obj_in=document_data)
     return document
+
+
+class SendNotesRequest(BaseModel):
+    notes: str
+    subject: Optional[str] = None
+
+
+@router.post("/{booking_id}/send-notes")
+def send_booking_notes(
+    *,
+    db: Client = Depends(deps.get_db),
+    admin_db: Client = Depends(deps.get_admin_db),
+    booking_id: int,
+    payload: SendNotesRequest,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Send meeting notes to the booking's client via email.
+    Also stores notes in booking.meeting_notes if provided.
+    """
+    booking = crud_booking.get_booking(db=db, booking_id=booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    # Permissions: RCIC for this booking, the client, or admin
+    if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if current_user["role"] == "rcic":
+        # Ensure rcic owns this booking
+        consultant_resp = db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+        if not consultant_resp.data or booking["consultant_id"] != consultant_resp.data[0]["id"]:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # Fetch client email using admin privileges
+    client_resp = admin_db.auth.admin.get_user_by_id(booking["client_id"])  # type: ignore[attr-defined]
+    client_user = getattr(client_resp, "user", None)
+    client_email = getattr(client_user, "email", None)
+    if not client_email:
+        raise HTTPException(status_code=404, detail="Client email not found")
+
+    # Persist notes to booking
+    try:
+        crud_booking.update_booking(db=db, booking_id=booking_id, obj_in=BookingUpdate(meeting_notes=payload.notes))
+    except Exception:
+        # Non-fatal for email sending; continue
+        pass
+
+    # Compose and send email
+    subject = payload.subject or "Session Notes from your RCIC"
+    body = f"""
+        <p>Hello,</p>
+        <p>Your RCIC has shared notes from your recent session:</p>
+        <div style=\"padding:12px;border-left:4px solid #10b981;background:#f0fdf4;border-radius:6px;\">{payload.notes.replace('\n','<br/>')}</div>
+        <p style=\"margin-top:16px;\">You can reply to this email if you have any questions.</p>
+        <p>Best regards,<br/>Consultations Team</p>
+    """
+    EmailService.send_email(subject=subject, recipient=client_email, body=body)
+
+    return {"success": True}

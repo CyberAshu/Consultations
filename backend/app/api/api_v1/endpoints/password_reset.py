@@ -24,7 +24,7 @@ def request_password_reset(
         reset_response = db.auth.reset_password_email(
             email,
             {
-                "redirect_to": f"{settings.FRONTEND_URL or 'http://localhost:3000'}/reset-password"
+                "redirect_to": f"{settings.FRONTEND_URL}/reset-password"
             }
         )
         

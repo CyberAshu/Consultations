@@ -15,6 +15,7 @@ import { LoginPage } from './components/pages/LoginPage';
 import { RegisterPage } from './components/pages/RegisterPage';
 import { ForgotPassword } from './components/pages/ForgotPassword';
 import { ResetPassword } from './components/pages/ResetPassword';
+import { EmailConfirm } from './components/pages/EmailConfirm';
 import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
@@ -106,6 +107,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/confirm" element={<EmailConfirm />} />
           {/* Handle recovery URLs that might come with different paths */}
           <Route path="/auth/callback" element={<ResetPassword />} />
           

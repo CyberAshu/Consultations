@@ -12,11 +12,13 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [info, setInfo] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setInfo('')
 
     try {
       const response = await authService.login({ email, password })
@@ -36,8 +38,15 @@ export function LoginPage() {
         default:
           navigate('/')
       }
-    } catch (err) {
-      setError('Invalid email or password')
+    } catch (err: any) {
+      const message = err?.message || ''
+      // Show a clearer message when email isn't confirmed yet
+      if (message.toLowerCase().includes('email') && message.toLowerCase().includes('confirm')) {
+        setError('Please confirm your email to continue.')
+        setInfo('Didn\'t get the email? You can resend the verification link below.')
+      } else {
+        setError('Invalid email or password')
+      }
     } finally {
       setLoading(false)
     }
@@ -85,6 +94,16 @@ export function LoginPage() {
                     <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                     <div className="ml-3">
                       <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {info && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex">
+                    <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">{info}</p>
                     </div>
                   </div>
                 </div>
@@ -159,6 +178,28 @@ export function LoginPage() {
                   </div>
                 )}
               </Button>
+              {error && info && (
+                <div className="mt-4 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setLoading(true)
+                        setError('')
+                        const res = await authService.resendConfirmation(email)
+                        setInfo(res?.message || 'Verification email sent.')
+                      } catch (e: any) {
+                        setError(e?.message || 'Failed to resend verification email')
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Resend verification email
+                  </button>
+                </div>
+              )}
             </form>
             <div className="mt-4 text-center text-sm text-gray-700">
               Don’t have an account?{' '}
