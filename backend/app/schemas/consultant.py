@@ -41,7 +41,7 @@ class ConsultantReviewInDB(ConsultantReviewBase):
 # Consultant Schemas
 class ConsultantBase(BaseModel):
     name: str
-    rcic_number: str
+    rcic_number: Optional[str] = None
     location: Optional[str] = None
     timezone: Optional[str] = "America/Toronto"
     languages: Optional[List[str]] = []

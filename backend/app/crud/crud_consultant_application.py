@@ -1,19 +1,37 @@
 from typing import List, Optional, Dict, Any
 from supabase import Client
+from datetime import datetime
 from app.schemas.consultant_application import (
     ConsultantApplicationCreate,
-    ConsultantApplicationUpdate
+    ConsultantApplicationUpdate,
+    ConsultantApplicationInitialCreate
 )
 
 class CRUDConsultantApplication:
-    def create(self, db: Client, *, obj_in: ConsultantApplicationCreate) -> Dict[str, Any]:
+    def create(self, db: Client, *, obj_in: ConsultantApplicationCreate | ConsultantApplicationInitialCreate) -> Dict[str, Any]:
         """Create a new consultant application"""
         try:
             data = obj_in.dict()
+            
+            # Handle initial application creation (only Section 1)
+            if isinstance(obj_in, ConsultantApplicationInitialCreate):
+                # Set default values for required fields that are not in initial submission
+                data.update({
+                    'rcic_license_number': None,  # Will be filled later
+                    'practice_type': 'independent',  # Default value
+                    'confirm_licensed_rcic': False,  # Will be filled later
+                    'agree_terms_guidelines': False,  # Will be filled later
+                    'agree_compliance_irpa': False,  # Will be filled later
+                    'agree_no_outside_contact': False,  # Will be filled later
+                    'consent_session_reviews': False,  # Will be filled later
+                    'digital_signature_name': '',  # Will be filled later
+                    'submission_date': datetime.now().isoformat()
+                })
+            
             # Convert datetime objects to ISO strings for JSON serialization
-            if data.get('submission_date'):
+            if data.get('submission_date') and not isinstance(data['submission_date'], str):
                 data['submission_date'] = data['submission_date'].isoformat()
-            if data.get('date_of_birth'):
+            if data.get('date_of_birth') and not isinstance(data['date_of_birth'], str):
                 data['date_of_birth'] = data['date_of_birth'].isoformat()
             
             # Add default status if not provided
@@ -40,17 +58,41 @@ class CRUDConsultantApplication:
     def get(self, db: Client, id: int) -> Optional[Dict[str, Any]]:
         """Get a consultant application by ID"""
         response = db.table("consultant_applications").select("*").eq("id", id).execute()
-        return response.data[0] if response.data else None
+        if response.data:
+            app = response.data[0]
+            # Provide default values for new fields if they don't exist
+            for i in range(1, 8):
+                field_name = f"section_{i}_completed"
+                if field_name not in app or app[field_name] is None:
+                    app[field_name] = False
+            return app
+        return None
 
     def get_by_email(self, db: Client, email: str) -> Optional[Dict[str, Any]]:
         """Get a consultant application by email"""
         response = db.table("consultant_applications").select("*").eq("email", email).execute()
-        return response.data[0] if response.data else None
+        if response.data:
+            app = response.data[0]
+            # Provide default values for new fields if they don't exist
+            for i in range(1, 8):
+                field_name = f"section_{i}_completed"
+                if field_name not in app or app[field_name] is None:
+                    app[field_name] = False
+            return app
+        return None
 
     def get_by_rcic_number(self, db: Client, rcic_number: str) -> Optional[Dict[str, Any]]:
         """Get a consultant application by RCIC license number"""
         response = db.table("consultant_applications").select("*").eq("rcic_license_number", rcic_number).execute()
-        return response.data[0] if response.data else None
+        if response.data:
+            app = response.data[0]
+            # Provide default values for new fields if they don't exist
+            for i in range(1, 8):
+                field_name = f"section_{i}_completed"
+                if field_name not in app or app[field_name] is None:
+                    app[field_name] = False
+            return app
+        return None
 
     def get_multi(
         self, 
@@ -67,6 +109,13 @@ class CRUDConsultantApplication:
             query = query.eq("status", status)
             
         response = query.range(skip, skip + limit - 1).execute()
+        if response.data:
+            # Provide default values for new fields if they don't exist
+            for app in response.data:
+                for i in range(1, 8):
+                    field_name = f"section_{i}_completed"
+                    if field_name not in app or app[field_name] is None:
+                        app[field_name] = False
         return response.data if response.data else []
 
     def update(

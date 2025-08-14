@@ -42,7 +42,7 @@ def ensure_bucket_exists(db: Client, public: bool = True) -> None:
 @router.post("/profile-image")
 async def upload_profile_image(
     *,
-    db: Client = Depends(deps.get_db),
+    db: Client = Depends(deps.get_admin_db),
     current_user: dict = Depends(deps.get_current_active_user),
     file: UploadFile = File(...),
 ) -> Any:
@@ -74,31 +74,24 @@ async def upload_profile_image(
     
     try:
         # Upload to Supabase Storage
-        response = db.storage.from_(BUCKET_NAME).upload(
-            file_path, 
+        db.storage.from_(BUCKET_NAME).upload(
+            file_path,
             file_content,
-            file_options={"content-type": file.content_type}
+            file_options={"content-type": file.content_type},
         )
-        
-        if response.status_code not in [200, 201]:
-            raise HTTPException(status_code=500, detail="Failed to upload image")
-        
+
         # Get public URL
         public_url = db.storage.from_(BUCKET_NAME).get_public_url(file_path)
-        
-        return {
-            "url": public_url,
-            "filename": unique_filename,
-            "path": file_path
-        }
-        
+
+        return {"url": public_url, "filename": unique_filename, "path": file_path}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @router.post("/document")
 async def upload_document(
     *,
-    db: Client = Depends(deps.get_db),
+    db: Client = Depends(deps.get_admin_db),
     current_user: dict = Depends(deps.get_current_active_user),
     file: UploadFile = File(...),
 ) -> Any:
@@ -123,24 +116,21 @@ async def upload_document(
     
     try:
         # Upload to Supabase Storage
-        response = db.storage.from_(BUCKET_NAME).upload(
-            file_path, 
+        db.storage.from_(BUCKET_NAME).upload(
+            file_path,
             file_content,
-            file_options={"content-type": file.content_type}
+            file_options={"content-type": file.content_type},
         )
-        
-        if response.status_code not in [200, 201]:
-            raise HTTPException(status_code=500, detail="Failed to upload document")
-        
+
         # Get public URL
         public_url = db.storage.from_(BUCKET_NAME).get_public_url(file_path)
-        
+
         return {
             "url": public_url,
             "filename": file.filename,
             "original_name": file.filename,
-            "path": file_path
+            "path": file_path,
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")

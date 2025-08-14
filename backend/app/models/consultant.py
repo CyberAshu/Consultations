@@ -10,7 +10,7 @@ class Consultant(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, nullable=False)  # UUID string from Supabase
     name = Column(String, nullable=False)
-    rcic_number = Column(String, unique=True, index=True, nullable=False)
+    rcic_number = Column(String, unique=True, index=True, nullable=True)
     location = Column(String)
     timezone = Column(String, default="America/Toronto")
     languages = Column(JSON)  # Array of languages

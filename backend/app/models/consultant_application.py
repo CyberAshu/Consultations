@@ -17,7 +17,8 @@ class ConsultantApplication(Base):
     time_zone = Column(String)
     
     # Section 2: Licensing & Credentials
-    rcic_license_number = Column(String, unique=True, nullable=False)
+    # Allow NULL during initial submission; keep unique to prevent duplicates once provided
+    rcic_license_number = Column(String, unique=True, nullable=True)
     year_of_initial_licensing = Column(Integer)
     cicc_membership_status = Column(String)  # Active/Inactive/Suspended/Under Review
     cicc_register_screenshot_url = Column(String)  # Upload: Screenshot or PDF of CICC Public Register Page
@@ -60,6 +61,22 @@ class ConsultantApplication(Base):
     additional_documents = Column(JSON)  # Admin uploaded additional documents [{'filename': str, 'original_name': str, 'file_path': str, 'uploaded_by': str, 'uploaded_at': str}]
     reviewed_by = Column(String)  # Admin who reviewed
     reviewed_at = Column(DateTime(timezone=True))
+    
+    # New fields for section completion tracking
+    section_1_completed = Column(Boolean, default=False)  # Personal & Contact Information
+    section_2_completed = Column(Boolean, default=False)  # Licensing & Credentials
+    section_3_completed = Column(Boolean, default=False)  # Practice Details
+    section_4_completed = Column(Boolean, default=False)  # Areas of Expertise
+    section_5_completed = Column(Boolean, default=False)  # Languages
+    section_6_completed = Column(Boolean, default=False)  # Declarations & Agreements
+    section_7_completed = Column(Boolean, default=False)  # Signature & Submission
+    
+    # Admin action fields
+    sections_requested = Column(JSON)  # Array of section numbers requested by admin
+    sections_requested_at = Column(DateTime(timezone=True))
+    sections_requested_by = Column(String)  # Admin who requested sections
+    
+
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

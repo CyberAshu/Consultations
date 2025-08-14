@@ -6,7 +6,8 @@ from app.crud.crud_consultant_application import consultant_application
 from app.schemas.consultant_application import (
     ConsultantApplicationCreate,
     ConsultantApplicationUpdate,
-    ConsultantApplicationResponse
+    ConsultantApplicationResponse,
+    ConsultantApplicationInitialCreate
 )
 import json
 from datetime import date, datetime
@@ -18,8 +19,49 @@ from app.schemas.consultant_onboarding import ConsultantOnboardingCreate
 import secrets
 import string
 from app.services.storage_service import storage_service
+from app.core.config import settings
 
 router = APIRouter()
+
+@router.post("/section1", response_model=ConsultantApplicationResponse)
+async def create_initial_application(
+    # Section 1: Personal & Contact Information only
+    full_legal_name: str = Form(...),
+    preferred_display_name: Optional[str] = Form(None),
+    email: str = Form(...),
+    mobile_phone: Optional[str] = Form(None),
+    date_of_birth: Optional[str] = Form(None),
+    city_province: Optional[str] = Form(None),
+    time_zone: Optional[str] = Form(None),
+    
+    db: Client = Depends(deps.get_admin_db)
+):
+    """
+    Create initial application with only Section 1 (Personal & Contact Information)
+    """
+    # Check if application already exists
+    existing_application = consultant_application.get_by_email(db, email=email)
+    if existing_application:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application with this email already exists"
+        )
+    
+    # Create application data with only Section 1
+    application_data = ConsultantApplicationInitialCreate(
+        full_legal_name=full_legal_name,
+        preferred_display_name=preferred_display_name,
+        email=email,
+        mobile_phone=mobile_phone,
+        date_of_birth=date_of_birth,
+        city_province=city_province,
+        time_zone=time_zone,
+        section_1_completed=True
+    )
+    
+    # Create the application
+    result = consultant_application.create(db, obj_in=application_data)
+    return result
 
 @router.post("/", response_model=ConsultantApplicationResponse)
 async def create_consultant_application(
@@ -337,6 +379,37 @@ def _send_credentials_to_consultant(db: Client, db_application: Dict[str, Any]) 
         except Exception as create_error:
             create_error_str = str(create_error)
             print(f"Error creating user: {create_error_str}")
+            # If signups are disabled or restricted, send an admin invite instead
+            if "User not allowed" in create_error_str or "Signups not allowed" in create_error_str:
+                try:
+                    invite_resp = db.auth.admin.invite_user_by_email(user_email, user_metadata={
+                        "name": db_application.get('full_legal_name'),
+                        "role": "rcic"
+                    })
+                    # Optional: send an informational email
+                    EmailService.send_email(
+                        subject="You're invited to the RCIC Platform",
+                        recipient=user_email,
+                        body=f"""
+<html>
+<body>
+<p>Dear {db_application.get('full_legal_name')},</p>
+<p>Your application has been approved. We've sent you an invitation email to set your password and activate your account.</p>
+<p><strong>Next steps:</strong> Please check your inbox (and spam) for an email from our platform and follow the link to complete your account setup.</p>
+<p>Best regards,<br/>
+- Platform Team</p>
+</body>
+</html>
+"""
+                    )
+                    return {
+                        "success": True,
+                        "message": "Invite email sent via Supabase Admin",
+                        "temp_password": None
+                    }
+                except Exception as invite_error:
+                    print(f"Failed to send invite: {str(invite_error)}")
+                    # fallthrough to other branches
             
             if "already been registered" in create_error_str or "User already registered" in create_error_str:
                 print("User already exists, attempting to find and update existing user")
@@ -756,6 +829,296 @@ def delete_additional_document(
     )
     
     return {"message": "Document deleted successfully"}
+
+@router.put("/{application_id}/request-sections")
+def request_additional_sections(
+    application_id: int,
+    sections: List[int] = Form(...),
+    db: Client = Depends(deps.get_admin_db),
+    current_admin: dict = Depends(deps.get_current_admin_user)
+):
+    """
+    Request additional sections from applicant (Admin only)
+    """
+    # Check if application exists
+    db_application = consultant_application.get(db=db, id=application_id)
+    if not db_application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Consultant application not found"
+        )
+    
+    # Update application with requested sections
+    update_data = ConsultantApplicationUpdate(
+        sections_requested=sections,
+        sections_requested_at=datetime.now(),
+        sections_requested_by=current_admin.get('email', 'admin')
+    )
+    
+    updated_application = consultant_application.update(
+        db=db, db_obj=db_application, obj_in=update_data
+    )
+    
+    # Send email to applicant with link to complete additional sections
+    try:
+        email_service = EmailService()
+        applicant_email = db_application.get('email')
+        applicant_name = db_application.get('full_legal_name', 'Applicant')
+        
+        # Create the completion link
+        completion_url = f"{settings.FRONTEND_URL}/become-partner?email={applicant_email}&application_id={application_id}"
+        
+        subject = "Complete Your Partner Application - Additional Information Required"
+        
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">ImmigrationConnect</h1>
+                    <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Partner Application Update</p>
+                </div>
+                
+                <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #2d3748; margin-top: 0;">Hello {applicant_name},</h2>
+                    
+                    <p>Great news! We've reviewed your initial partner application and would like you to complete the remaining sections of your application.</p>
+                    
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
+                        <h3 style="margin-top: 0; color: #2d3748;">Next Steps:</h3>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Click the button below to access your application</li>
+                            <li>Complete the remaining sections (Licensing, Practice Details, Expertise, etc.)</li>
+                            <li>Upload required documents</li>
+                            <li>Review and submit your complete application</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{completion_url}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                            Complete Your Application
+                        </a>
+                    </div>
+                    
+                    <p style="color: #718096; font-size: 14px;">
+                        <strong>Note:</strong> This link is unique to your application. Please do not share it with others.
+                    </p>
+                    
+                    <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
+                    
+                    <p style="color: #718096; font-size: 14px; margin-bottom: 0;">
+                        If you have any questions or need assistance, please contact our support team.
+                    </p>
+                    
+                    <p style="color: #718096; font-size: 14px; margin-top: 10px;">
+                        Best regards,<br>
+                        The ImmigrationConnect Team
+                    </p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        email_sent = email_service.send_email(subject, applicant_email, body)
+        
+        if not email_sent:
+            print(f"Warning: Failed to send email to {applicant_email}")
+            
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        # Don't fail the request if email fails
+    
+    return updated_application
+
+@router.put("/{application_id}/complete-sections")
+async def complete_additional_sections(
+    application_id: int,
+    # Section 2: Licensing & Credentials
+    rcic_license_number: Optional[str] = Form(None),
+    year_of_initial_licensing: Optional[int] = Form(None),
+    cicc_membership_status: Optional[str] = Form(None),
+    cicc_register_screenshot: Optional[UploadFile] = File(None),
+    proof_of_good_standing: Optional[UploadFile] = File(None),
+    insurance_certificate: Optional[UploadFile] = File(None),
+    government_id: Optional[UploadFile] = File(None),
+    
+    # Section 3: Practice Details
+    practice_type: Optional[str] = Form(None),
+    business_firm_name: Optional[str] = Form(None),
+    website_linkedin: Optional[str] = Form(None),
+    canadian_business_registration: Optional[bool] = Form(None),
+    irb_authorization: Optional[bool] = Form(None),
+    taking_clients_private_practice: Optional[bool] = Form(None),
+    representing_clients_ircc_irb: Optional[bool] = Form(None),
+    
+    # Section 4: Areas of Expertise
+    areas_of_expertise: Optional[str] = Form(None),
+    other_expertise: Optional[str] = Form(None),
+    
+    # Section 5: Languages Spoken
+    primary_language: Optional[str] = Form(None),
+    other_languages: Optional[str] = Form(None),
+    multilingual_consultations: Optional[bool] = Form(None),
+    
+    # Section 6: Declarations & Agreements
+    confirm_licensed_rcic: Optional[bool] = Form(None),
+    agree_terms_guidelines: Optional[bool] = Form(None),
+    agree_compliance_irpa: Optional[bool] = Form(None),
+    agree_no_outside_contact: Optional[bool] = Form(None),
+    consent_session_reviews: Optional[bool] = Form(None),
+    
+    # Section 7: Signature & Submission
+    digital_signature_name: Optional[str] = Form(None),
+    
+    db: Client = Depends(deps.get_admin_db)
+):
+    """
+    Complete additional sections for an existing application
+    """
+    # Check if application exists
+    db_application = consultant_application.get(db=db, id=application_id)
+    if not db_application:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Consultant application not found"
+        )
+    
+    # Ensure bucket exists
+    storage_service.create_bucket_if_not_exists()
+    
+    # Handle file uploads
+    update_data = {}
+    
+    if rcic_license_number:
+        update_data["rcic_license_number"] = rcic_license_number
+        update_data["section_2_completed"] = True
+    
+    if year_of_initial_licensing:
+        update_data["year_of_initial_licensing"] = year_of_initial_licensing
+    
+    if cicc_membership_status:
+        update_data["cicc_membership_status"] = cicc_membership_status
+    
+    # Handle file uploads for Section 2
+    if cicc_register_screenshot:
+        cicc_register_screenshot_url = await storage_service.upload_file(
+            file=cicc_register_screenshot,
+            folder="applications", 
+            prefix=f"cicc_{db_application['email'].replace('@', '_').replace('.', '_')}"
+        )
+        update_data["cicc_register_screenshot_url"] = cicc_register_screenshot_url
+    
+    if proof_of_good_standing:
+        proof_of_good_standing_url = await storage_service.upload_file(
+            file=proof_of_good_standing,
+            folder="applications", 
+            prefix=f"good_standing_{db_application['email'].replace('@', '_').replace('.', '_')}"
+        )
+        update_data["proof_of_good_standing_url"] = proof_of_good_standing_url
+    
+    if insurance_certificate:
+        insurance_certificate_url = await storage_service.upload_file(
+            file=insurance_certificate,
+            folder="applications", 
+            prefix=f"insurance_{db_application['email'].replace('@', '_').replace('.', '_')}"
+        )
+        update_data["insurance_certificate_url"] = insurance_certificate_url
+    
+    if government_id:
+        government_id_url = await storage_service.upload_file(
+            file=government_id,
+            folder="applications", 
+            prefix=f"gov_id_{db_application['email'].replace('@', '_').replace('.', '_')}"
+        )
+        update_data["government_id_url"] = government_id_url
+    
+    # Section 3: Practice Details
+    if practice_type:
+        update_data["practice_type"] = practice_type
+    
+    if business_firm_name:
+        update_data["business_firm_name"] = business_firm_name
+    
+    if website_linkedin:
+        update_data["website_linkedin"] = website_linkedin
+    
+    if canadian_business_registration is not None:
+        update_data["canadian_business_registration"] = canadian_business_registration
+    
+    if irb_authorization is not None:
+        update_data["irb_authorization"] = irb_authorization
+    
+    if taking_clients_private_practice is not None:
+        update_data["taking_clients_private_practice"] = taking_clients_private_practice
+    
+    if representing_clients_ircc_irb is not None:
+        update_data["representing_clients_ircc_irb"] = representing_clients_ircc_irb
+    
+    # Section 4: Areas of Expertise
+    if areas_of_expertise:
+        update_data["areas_of_expertise"] = json.loads(areas_of_expertise) if isinstance(areas_of_expertise, str) else areas_of_expertise
+    
+    if other_expertise:
+        update_data["other_expertise"] = other_expertise
+    
+    # Section 5: Languages
+    if primary_language:
+        update_data["primary_language"] = primary_language
+    
+    if other_languages:
+        update_data["other_languages"] = json.loads(other_languages) if isinstance(other_languages, str) else other_languages
+    
+    if multilingual_consultations is not None:
+        update_data["multilingual_consultations"] = multilingual_consultations
+    
+    # Section 6: Declarations
+    if confirm_licensed_rcic is not None:
+        update_data["confirm_licensed_rcic"] = confirm_licensed_rcic
+    
+    if agree_terms_guidelines is not None:
+        update_data["agree_terms_guidelines"] = agree_terms_guidelines
+    
+    if agree_compliance_irpa is not None:
+        update_data["agree_compliance_irpa"] = agree_compliance_irpa
+    
+    if agree_no_outside_contact is not None:
+        update_data["agree_no_outside_contact"] = agree_no_outside_contact
+    
+    if consent_session_reviews is not None:
+        update_data["consent_session_reviews"] = consent_session_reviews
+    
+    # Section 7: Signature
+    if digital_signature_name:
+        update_data["digital_signature_name"] = digital_signature_name
+    
+    # Update application
+    print(f"DEBUG: Updating application {application_id} with data: {update_data}")
+    
+    # Force mark all sections as completed if we have data for them
+    if rcic_license_number:
+        update_data["section_2_completed"] = True
+    if practice_type:
+        update_data["section_3_completed"] = True
+    if areas_of_expertise:
+        update_data["section_4_completed"] = True
+    if primary_language:
+        update_data["section_5_completed"] = True
+    if confirm_licensed_rcic is not None:
+        update_data["section_6_completed"] = True
+    if digital_signature_name:
+        update_data["section_7_completed"] = True
+    
+    print(f"DEBUG: Final update data with section flags: {update_data}")
+    
+    update_obj = ConsultantApplicationUpdate(**update_data)
+    updated_application = consultant_application.update(
+        db=db, db_obj=db_application, obj_in=update_obj
+    )
+    
+    print(f"DEBUG: Updated application sections: {updated_application.get('section_1_completed')}, {updated_application.get('section_2_completed')}, {updated_application.get('section_3_completed')}, {updated_application.get('section_4_completed')}, {updated_application.get('section_5_completed')}, {updated_application.get('section_6_completed')}, {updated_application.get('section_7_completed')}")
+    
+    return updated_application
 
 @router.get("/documents/{file_path:path}")
 def get_document(file_path: str):

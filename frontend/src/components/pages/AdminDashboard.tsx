@@ -77,10 +77,21 @@ export function AdminDashboard() {
     navigate('/login')
   }
 
-  const handleViewDetails = (application: any) => {
+  const handleViewDetails = async (application: any) => {
+    // Open modal with a spinner state using the known data, then fetch fresh data
     setSelectedApplication(application)
     setAdminNotes(application.admin_notes || '')
     setShowApplicationModal(true)
+    try {
+      setLoading(true)
+      const fresh = await consultantApplicationService.getApplicationById(application.id)
+      setSelectedApplication(fresh)
+      setAdminNotes(fresh.admin_notes || '')
+    } catch (e) {
+      console.error('Failed to fetch latest application details', e)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCloseModal = () => {
@@ -175,6 +186,28 @@ export function AdminDashboard() {
       setError('Failed to upload document')
     } finally {
       setUploading(false)
+    }
+  }
+
+  // Handler for requesting additional sections
+  const handleRequestAdditionalSections = async (sections: number[]) => {
+    if (!selectedApplication) return
+    
+    try {
+      setLoading(true)
+      await consultantApplicationService.requestAdditionalSections(selectedApplication.id, sections)
+      
+      // Reload the application to get updated data
+      const updatedApplication = await consultantApplicationService.getApplicationById(selectedApplication.id)
+      setSelectedApplication(updatedApplication)
+      // Also reload the applications list
+      await loadConsultantApplications()
+      alert(`Additional sections have been requested from ${selectedApplication.full_legal_name || selectedApplication.email}. An email has been sent to ${selectedApplication.email} with a link to complete the remaining sections.`)
+    } catch (error) {
+      console.error('Error requesting additional sections:', error)
+      setError('Failed to request additional sections')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -746,6 +779,31 @@ export function AdminDashboard() {
                             <p className="text-gray-800 font-medium">{app.submittedAt || app.submitted_at || app.created_at || 'N/A'}</p>
                           </div>
                         </div>
+                        
+                        {/* Section Completion Status */}
+                        <div className="mt-4 pt-4 border-t border-gray-200/80">
+                          <p className="text-sm text-gray-500 mb-2">Section Completion:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {[1, 2, 3, 4, 5, 6, 7].map(sectionNum => {
+                              const isCompleted = app[`section_${sectionNum}_completed`] === true;
+                              return (
+                                <span
+                                  key={sectionNum}
+                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    isCompleted 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-gray-100 text-gray-600'
+                                  }`}
+                                >
+                                  {sectionNum}
+                                  {isCompleted && (
+                                    <Check className="h-3 w-3 ml-1" />
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                       
                       {/* Action Buttons */}
@@ -757,15 +815,44 @@ export function AdminDashboard() {
                             </Button>
                             {app.status === 'pending' && (
                               <>
-                                <Button 
-                                  size="sm" 
-                                  className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 w-full"
-                                  onClick={() => handleApproveApplication(app.id)}
-                                  disabled={loading}
-                                >
-                                  <Check className="h-4 w-4" />
-                                  {loading ? 'Approving...' : 'Approve'}
-                                </Button>
+                                {/* Request Additional Sections Button - Only show if only Section 1 is completed */}
+                                {app.section_1_completed === true && 
+                                 app.section_2_completed !== true && 
+                                 app.section_3_completed !== true && 
+                                 app.section_4_completed !== true && 
+                                 app.section_5_completed !== true && 
+                                 app.section_6_completed !== true && 
+                                 app.section_7_completed !== true && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center gap-2 w-full"
+                                    onClick={() => handleRequestAdditionalSections([2, 3, 4, 5, 6, 7])}
+                                    disabled={loading}
+                                  >
+                                    <Mail className="h-4 w-4" />
+                                    {loading ? 'Requesting...' : 'Request Sections'}
+                                  </Button>
+                                )}
+                                
+                                {/* Approve Profile Button - Only show if all sections are completed */}
+                                {app.section_1_completed === true && 
+                                 app.section_2_completed === true && 
+                                 app.section_3_completed === true && 
+                                 app.section_4_completed === true && 
+                                 app.section_5_completed === true && 
+                                 app.section_6_completed === true && 
+                                 app.section_7_completed === true && (
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 w-full"
+                                    onClick={() => handleApproveApplication(app.id)}
+                                    disabled={loading}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                    {loading ? 'Approving...' : 'Approve Profile'}
+                                  </Button>
+                                )}
+                                
                                 <Button 
                                   size="sm" 
                                   className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 w-full"
@@ -1396,14 +1483,42 @@ export function AdminDashboard() {
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   {selectedApplication.status === 'pending' && (
                     <>
-                      <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
-                        onClick={() => handleApproveApplication(selectedApplication.id)}
-                        disabled={loading}
-                      >
-                        <Check className="h-4 w-4" />
-                        {loading ? 'Approving...' : 'Approve Application'}
-                      </Button>
+                      {/* Request Additional Sections Button - Only show if only Section 1 is completed */}
+                      {selectedApplication.section_1_completed === true && 
+                       selectedApplication.section_2_completed !== true && 
+                       selectedApplication.section_3_completed !== true && 
+                       selectedApplication.section_4_completed !== true && 
+                       selectedApplication.section_5_completed !== true && 
+                       selectedApplication.section_6_completed !== true && 
+                       selectedApplication.section_7_completed !== true && (
+                        <Button 
+                          className="bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center gap-2"
+                          onClick={() => handleRequestAdditionalSections([2, 3, 4, 5, 6, 7])}
+                          disabled={loading}
+                        >
+                          <Mail className="h-4 w-4" />
+                          {loading ? 'Requesting...' : 'Request Additional Sections'}
+                        </Button>
+                      )}
+                      
+                                             {/* Approve Profile Button - Only show if all sections are completed */}
+                       {selectedApplication.section_1_completed === true && 
+                        selectedApplication.section_2_completed === true && 
+                        selectedApplication.section_3_completed === true && 
+                        selectedApplication.section_4_completed === true && 
+                        selectedApplication.section_5_completed === true && 
+                        selectedApplication.section_6_completed === true && 
+                        selectedApplication.section_7_completed === true && (
+                        <Button 
+                          className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
+                          onClick={() => handleApproveApplication(selectedApplication.id)}
+                          disabled={loading}
+                        >
+                          <Check className="h-4 w-4" />
+                          {loading ? 'Approving...' : 'Approve Profile'}
+                        </Button>
+                      )}
+                      
                       <Button 
                         className="bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
                         onClick={() => handleRejectApplication(selectedApplication.id)}

@@ -73,7 +73,7 @@ function App() {
               <Footer />
             </div>
           } />
-          <Route path="/become-consultant" element={
+          <Route path="/become-partner" element={
             <div>
               <Header />
               <main><BecomeConsultantPage /></main>

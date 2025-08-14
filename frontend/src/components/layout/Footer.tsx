@@ -98,7 +98,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">About Us</h3>
             <ul className="space-y-3">
               <li><Link to="/about" className="text-gray-600 hover:text-blue-600 transition-colors">Our Story</Link></li>
-              <li><Link to="/become-consultant" className="text-gray-600 hover:text-blue-600 transition-colors">Become a Consultant</Link></li>
+              <li><Link to="/become-partner" className="text-gray-600 hover:text-blue-600 transition-colors">Become a Partner</Link></li>
               <li><Link to="/blog" className="text-gray-600 hover:text-blue-600 transition-colors">Blog</Link></li>
             </ul>
           </div>

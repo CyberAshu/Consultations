@@ -306,6 +306,32 @@ export interface ConsultantApplication {
   status?: 'pending' | 'approved' | 'rejected';
   created_at?: string;
   updated_at?: string;
+  
+  // Admin fields
+  admin_notes?: string;
+  additional_documents?: Array<{
+    filename: string;
+    original_name: string;
+    file_path: string;
+    uploader_email?: string;
+    uploaded_by?: string; // for backward compatibility
+    uploaded_at?: string;
+    timestamp?: string;
+  }>;
+  
+  // Section completion tracking
+  section_1_completed?: boolean | null;
+  section_2_completed?: boolean | null;
+  section_3_completed?: boolean | null;
+  section_4_completed?: boolean | null;
+  section_5_completed?: boolean | null;
+  section_6_completed?: boolean | null;
+  section_7_completed?: boolean | null;
+  
+  // Admin action fields
+  sections_requested?: number[];
+  sections_requested_at?: string;
+  sections_requested_by?: string;
 }
 
 // Error Types

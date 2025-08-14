@@ -180,12 +180,12 @@ export function Header() {
             >
               Blog
             </Link>
-            <Link to="/become-consultant">
+            <Link to="/become-partner">
               <Button
                 variant="outline"
                 className="border-2 border-gray-600 text-gray-700 hover:bg-gray-600 font-semibold rounded-full px-6"
               >
-                Become a Consultant
+                Become a Partner
               </Button>
             </Link>
             
@@ -293,13 +293,13 @@ export function Header() {
               >
                 Blog
               </Link>
-              <Link to="/become-consultant">
+              <Link to="/become-partner">
                 <Button
                   variant="outline"
                   className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 rounded-full mt-4 font-semibold w-full"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Become a Consultant
+                  Become a Partner
                 </Button>
               </Link>
               

@@ -2,7 +2,12 @@ import { apiGet, apiPost, apiPut, apiDelete, apiPostFormData } from './api';
 import { ConsultantApplication } from './types';
 
 class ConsultantApplicationService {
-  // Create a new consultant application
+  // Create initial application with only Section 1
+  async createInitialApplication(applicationData: FormData): Promise<ConsultantApplication> {
+    return apiPostFormData<ConsultantApplication>('/consultant-applications/section1', applicationData);
+  }
+
+  // Create a complete consultant application
   async createApplication(applicationData: FormData): Promise<ConsultantApplication> {
     return apiPostFormData<ConsultantApplication>('/consultant-applications', applicationData);
   }
@@ -81,6 +86,18 @@ class ConsultantApplicationService {
   getDocumentUrl(filename: string): string {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     return `${baseUrl}/api/v1/consultant-applications/documents/${filename}`;
+  }
+
+  // Request additional sections from applicant (Admin only)
+  async requestAdditionalSections(applicationId: number, sections: number[]): Promise<ConsultantApplication> {
+    const formData = new FormData();
+    sections.forEach(section => formData.append('sections', section.toString()));
+    return apiPostFormData<ConsultantApplication>(`/consultant-applications/${applicationId}/request-sections`, formData, 'PUT');
+  }
+
+  // Complete additional sections for existing application
+  async completeAdditionalSections(applicationId: number, applicationData: FormData): Promise<ConsultantApplication> {
+    return apiPostFormData<ConsultantApplication>(`/consultant-applications/${applicationId}/complete-sections`, applicationData, 'PUT');
   }
 
   // Upload additional document (Admin only)
