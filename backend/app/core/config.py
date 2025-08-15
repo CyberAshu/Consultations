@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Immigration Consultations API"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
-    FRONTEND_URL: Optional[str] = "http://localhost:3000"
+    FRONTEND_URL: Optional[str]
     
     # Email (required for notifications)
     SMTP_TLS: bool
