@@ -77,3 +77,34 @@ def get_current_admin_user(
             detail="Not enough permissions. Admin access required."
         )
     return current_user
+
+def verify_token(token: str) -> dict:
+    """
+    Verify JWT token for real-time events (used with query parameters)
+    """
+    try:
+        # Get user from Supabase Auth using the JWT token
+        db = get_supabase()
+        user_response = db.auth.get_user(token)
+        
+        if not user_response.user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+        
+        user = user_response.user
+        return {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.user_metadata.get("full_name"),
+            "role": user.user_metadata.get("role", "client"),
+            "email_verified": user.email_confirmed_at is not None,
+            "is_active": True
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Could not validate token: {str(e)}",
+        )

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
+import { ToastContainer, useToasts } from '../ui/Toast'
 import { 
   Home, 
   Calendar, 
@@ -20,11 +21,15 @@ import {
   Plus,
   Loader,
   Trash2,
-  Eye
+  Eye,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { authService } from '../../services/authService'
 import { Booking, User } from '../../services/types'
+import { SessionDetailModal } from '../modals/SessionDetailModal'
+import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 
 export function ClientDashboard() {
   const navigate = useNavigate()
@@ -36,6 +41,8 @@ export function ClientDashboard() {
   const [uploading, setUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const [showSummaryModal, setShowSummaryModal] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<Booking | null>(null)
 
   const tabs = [
     { id: 'dashboard', label: 'Home / Dashboard', icon: <Home className="h-4 w-4" /> },
@@ -93,11 +100,18 @@ export function ClientDashboard() {
   const now = new Date()
   const upcomingSessions = bookings.filter(booking => {
     const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
-    return bookingDate > now && booking.status !== 'cancelled'
+    // Only show upcoming if:
+    // 1. Date is in the future
+    // 2. Status is not cancelled
+    // 3. Status is not completed
+    return bookingDate > now && booking.status !== 'cancelled' && booking.status !== 'completed'
   })
   
   const pastSessions = bookings.filter(booking => {
     const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+    // Show as past if:
+    // 1. Date has passed, OR
+    // 2. Status is completed (regardless of date)
     return bookingDate <= now || booking.status === 'completed'
   })
 
@@ -196,6 +210,175 @@ export function ClientDashboard() {
     })
   }
 
+  const handleViewSummary = (session: Booking) => {
+    setSelectedSession(session)
+    setShowSummaryModal(true)
+  }
+
+  const handleCloseSummary = () => {
+    setShowSummaryModal(false)
+    setSelectedSession(null)
+  }
+
+  // Handle booking actions
+  const handleJoinSession = (bookingId: number) => {
+    // TODO: Implement actual video call integration
+    alert(`Joining session for booking #${bookingId}`)
+    console.log('Join session clicked for booking:', bookingId)
+  }
+
+  const handleRescheduleBooking = async (bookingId: number) => {
+    const confirmed = window.confirm('Are you sure you want to reschedule this booking?')
+    if (confirmed) {
+      try {
+        await bookingService.updateBooking(bookingId, { status: 'rescheduled' })
+        // Refresh bookings
+        const updatedBookings = await bookingService.getBookings()
+        setBookings(updatedBookings)
+        toasts.success('Booking Rescheduled', 'Your booking has been rescheduled successfully.')
+      } catch (error: any) {
+        toasts.error('Reschedule Failed', error.message || 'Failed to reschedule booking')
+      }
+    }
+  }
+
+  const handleCancelBooking = async (bookingId: number) => {
+    const confirmed = window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')
+    if (confirmed) {
+      try {
+        await bookingService.updateBooking(bookingId, { status: 'cancelled' })
+        // Refresh bookings
+        const updatedBookings = await bookingService.getBookings()
+        setBookings(updatedBookings)
+        toasts.success('Booking Cancelled', 'Your booking has been cancelled successfully.')
+      } catch (error: any) {
+        toasts.error('Cancellation Failed', error.message || 'Failed to cancel booking')
+      }
+    }
+  }
+
+  const handleRebookSession = (originalBookingId: number) => {
+    // TODO: Implement rebooking with consultant
+    alert(`Rebooking session based on booking #${originalBookingId}`)
+    navigate('/consultants')
+  }
+
+  const handleViewDocument = async (doc: any) => {
+    try {
+      // Get document with download URL from the API
+      const response = await fetch(`/api/v1/bookings/${doc.booking_id}/documents/${doc.id}/download`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.download_url) {
+          window.open(data.download_url, '_blank')
+        } else {
+          toasts.error('View Failed', 'Document URL not available')
+        }
+      } else {
+        toasts.error('View Failed', 'Could not retrieve document URL')
+      }
+    } catch (error: any) {
+      toasts.error('View Failed', error.message || 'Failed to view document')
+    }
+  }
+
+  const handleDownloadDocument = async (doc: any) => {
+    try {
+      const response = await fetch(`/api/v1/bookings/${doc.booking_id}/documents/${doc.id}/download`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.download_url) {
+          const link = document.createElement('a')
+          link.href = data.download_url
+          link.download = data.file_name || doc.file_name || 'document'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          toasts.success('Download Started', 'Your document download has started.')
+        } else {
+          toasts.error('Download Failed', 'Document URL not available')
+        }
+      } else {
+        toasts.error('Download Failed', 'Could not retrieve document URL')
+      }
+    } catch (error: any) {
+      toasts.error('Download Failed', error.message || 'Failed to download document')
+    }
+  }
+
+  const handleDeleteDocument = async (doc: any) => {
+    const confirmed = window.confirm(`Are you sure you want to delete "${doc.file_name}"? This action cannot be undone.`)
+    if (confirmed) {
+      try {
+        // TODO: Implement document deletion API call
+        alert('Document deletion functionality will be implemented soon.')
+        console.log('Delete document:', doc)
+      } catch (error: any) {
+        toasts.error('Delete Failed', error.message || 'Failed to delete document')
+      }
+    }
+  }
+
+  // Initialize toast notifications
+  const toasts = useToasts()
+
+  // Handle booking status updates
+  const handleBookingUpdate = useCallback((bookingId: number, newStatus: string) => {
+    console.log(`📝 Booking ${bookingId} status updated to: ${newStatus}`)
+    
+    // Validate status before updating
+    const validStatuses: Booking['status'][] = ['pending', 'confirmed', 'completed', 'cancelled', 'delayed', 'rescheduled']
+    const typedStatus = validStatuses.includes(newStatus as Booking['status']) 
+      ? (newStatus as Booking['status']) 
+      : 'pending' // fallback to pending if invalid status
+    
+    // Find the booking that was updated
+    const updatedBooking = bookings.find(b => b.id === bookingId)
+    const oldStatus = updatedBooking?.status || 'pending'
+
+    // Update the bookings array
+    setBookings(prevBookings => 
+      prevBookings.map(booking => 
+        booking.id === bookingId 
+          ? { ...booking, status: typedStatus }
+          : booking
+      )
+    )
+
+    // Show toast notification
+    toasts.bookingStatusUpdate(bookingId, oldStatus, newStatus)
+  }, [bookings, toasts])
+
+  // Handle real-time connection errors
+  const handleRealtimeError = useCallback((error: string) => {
+    console.error('Real-time connection error:', error)
+    toasts.error('Connection Issue', error, {
+      action: {
+        label: 'Retry',
+        onClick: () => window.location.reload()
+      }
+    })
+  }, [toasts])
+
+  // Set up real-time updates for booking status changes
+  const { isConnected, connectionType, reconnect } = useRealtimeBookingUpdates(bookings, {
+    onBookingUpdate: handleBookingUpdate,
+    onError: handleRealtimeError,
+    enabled: true, // ✅ ENABLED: Real-time booking status updates are now active
+    fallbackToPolling: true,
+    pollingInterval: 30000 // Poll every 30 seconds as fallback
+  })
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex items-center justify-center">
@@ -234,6 +417,25 @@ export function ClientDashboard() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {/* Connection Status Indicator */}
+                <div 
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                    isConnected 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                  title={`Real-time updates: ${isConnected ? 'Connected' : 'Connecting...'} (${connectionType || 'none'})`}
+                >
+                  {isConnected ? (
+                    <Wifi className="h-3 w-3" />
+                  ) : (
+                    <WifiOff className="h-3 w-3 animate-pulse" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {isConnected ? 'Live' : 'Sync...'}
+                  </span>
+                </div>
+                
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -242,6 +444,7 @@ export function ClientDashboard() {
                   <Bell className="h-4 w-4" />
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">2</span>
                 </Button>
+                
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
@@ -342,16 +545,30 @@ export function ClientDashboard() {
                           </Badge>
                         </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-shrink-0">
+                    <Button 
+                      size="sm" 
+                      className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
+                      onClick={() => handleJoinSession(session.id)}
+                    >
                       <Video className="h-4 w-4 mr-1" />
                       <span className="hidden sm:inline">Join Session</span>
                       <span className="sm:hidden">Join</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-shrink-0">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-shrink-0"
+                      onClick={() => handleRescheduleBooking(session.id)}
+                    >
                       <span className="hidden sm:inline">Reschedule</span>
                       <span className="sm:hidden">Reschedule</span>
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-shrink-0">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-shrink-0"
+                      onClick={() => handleCancelBooking(session.id)}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -439,9 +656,28 @@ export function ClientDashboard() {
                           </Badge>
                         </div>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0">Join</Button>
-                        <Button size="sm" variant="outline" className="flex-1 min-w-0">Reschedule</Button>
-                        <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1 min-w-0">Cancel</Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0"
+                          onClick={() => handleJoinSession(session.id)}
+                        >
+                          Join
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 min-w-0"
+                          onClick={() => handleRescheduleBooking(session.id)}
+                        >
+                          Reschedule
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-red-600 hover:bg-red-700 flex-1 min-w-0"
+                          onClick={() => handleCancelBooking(session.id)}
+                        >
+                          Cancel
+                        </Button>
                       </div>
                     </div>
                     )
@@ -476,9 +712,27 @@ export function ClientDashboard() {
                             </td>
                           <td className="p-3">
                             <div className="flex flex-wrap gap-1">
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Join</Button>
-                              <Button size="sm" variant="outline">Reschedule</Button>
-                              <Button size="sm" className="bg-red-600 hover:bg-red-700">Cancel</Button>
+                              <Button 
+                                size="sm" 
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => handleJoinSession(session.id)}
+                              >
+                                Join
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleRescheduleBooking(session.id)}
+                              >
+                                Reschedule
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                className="bg-red-600 hover:bg-red-700"
+                                onClick={() => handleCancelBooking(session.id)}
+                              >
+                                Cancel
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -511,8 +765,21 @@ export function ClientDashboard() {
                           </Badge>
                         </div>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" className="flex-1 min-w-0">View Summary</Button>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1 min-w-0">Rebook</Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-1 min-w-0"
+                          onClick={() => handleViewSummary(session)}
+                        >
+                          View Summary
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-green-600 hover:bg-green-700 flex-1 min-w-0"
+                          onClick={() => handleRebookSession(session.id)}
+                        >
+                          Rebook
+                        </Button>
                       </div>
                     </div>
                     )
@@ -547,8 +814,20 @@ export function ClientDashboard() {
                             </td>
                           <td className="p-3">
                             <div className="flex flex-wrap gap-1">
-                              <Button size="sm" variant="outline">View Summary</Button>
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700">Rebook</Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleViewSummary(session)}
+                              >
+                                View Summary
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleRebookSession(session.id)}
+                              >
+                                Rebook
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -689,15 +968,27 @@ export function ClientDashboard() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleViewDocument(doc)}
+                            >
                               <Eye className="h-4 w-4 mr-1" />
                               View
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleDownloadDocument(doc)}
+                            >
                               <Download className="h-4 w-4 mr-1" />
                               Download
                             </Button>
-                            <Button size="sm" className="bg-red-600 hover:bg-red-700">
+                            <Button 
+                              size="sm" 
+                              className="bg-red-600 hover:bg-red-700"
+                              onClick={() => handleDeleteDocument(doc)}
+                            >
                               <Trash2 className="h-4 w-4 mr-1" />
                               Delete
                             </Button>
@@ -853,6 +1144,31 @@ export function ClientDashboard() {
         )}
 
       </div>
+      
+      {/* Session Detail Modal */}
+      <SessionDetailModal
+        show={showSummaryModal}
+        booking={selectedSession}
+        clientName={currentUser?.full_name || currentUser?.email || 'Client'}
+        onClose={handleCloseSummary}
+        onStatusChange={() => {}} // Clients can't change status
+        onDownloadDocument={async (file) => {
+          if (file.url || file.download_url) {
+            const link = document.createElement('a')
+            link.href = file.url || file.download_url
+            link.download = file.name || file.file_name || 'document'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+          }
+        }}
+        updatingStatus={null}
+        onNotesUpdate={() => {}} // Clients can't update notes
+        isClientView={true} // Add this prop to indicate client view
+      />
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts.toasts} onRemoveToast={toasts.removeToast} />
     </div>
   )
 }

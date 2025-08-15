@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
-import { Calendar, Clock, User, FileText, Settings, DollarSign, LogOut, ArrowLeft, Bell, Award, Wrench, Plus, Trash2, Edit2, X } from 'lucide-react'
+import { ToastContainer, useToasts } from '../ui/Toast'
+import { Calendar, Clock, User, FileText, Settings, DollarSign, LogOut, ArrowLeft, Bell, Award, Wrench, Plus, Trash2, Edit2, X, Wifi, WifiOff } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { consultantService } from '../../services/consultantService'
 import { useAuth } from '../../hooks/useAuth'
 import { Booking, Consultant, ConsultantServiceInDB } from '../../services/types'
 import { Input } from '../ui/Input'
+import { SessionDetailModal } from '../modals/SessionDetailModal'
+import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
@@ -41,6 +44,10 @@ export function RCICDashboard() {
   // Client names mapping
   const [clientNames, setClientNames] = useState<{[key: string]: string}>({})
   
+  // Document management
+  const [bookingDocuments, setBookingDocuments] = useState<{[key: number]: any[]}>({})
+  const [documentLoading, setDocumentLoading] = useState<{[key: number]: boolean}>({})
+  
   // Modal states
   const [showIntakeModal, setShowIntakeModal] = useState(false)
   const [showDocumentModal, setShowDocumentModal] = useState(false)
@@ -50,6 +57,9 @@ export function RCICDashboard() {
   // Status update states
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null)
   const [statusUpdateError, setStatusUpdateError] = useState<string | null>(null)
+  // Session detail modal states
+  const [showSessionDetailModal, setShowSessionDetailModal] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<any>(null)
   // Profile save state
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null)
@@ -208,6 +218,26 @@ export function RCICDashboard() {
     fetchConsultantDetails();
   }, [user]);
 
+  // Add this function to fetch documents for each booking
+  const fetchBookingDocuments = async (bookingId: number) => {
+    try {
+      setDocumentLoading(prev => ({...prev, [bookingId]: true}))
+      console.log(`🔥 Fetching documents for booking ${bookingId}...`)
+      const response = await bookingService.getBookingDocuments(bookingId)
+      console.log(`📄 Documents for booking ${bookingId}:`, response)
+      
+      setBookingDocuments(prev => ({
+        ...prev, 
+        [bookingId]: response.documents || []
+      }))
+    } catch (error) {
+      console.error(`❌ Failed to fetch documents for booking ${bookingId}:`, error)
+      setBookingDocuments(prev => ({...prev, [bookingId]: []}))
+    } finally {
+      setDocumentLoading(prev => ({...prev, [bookingId]: false}))
+    }
+  }
+
   // Centralized bookings fetcher with optional spinner
   const didFetchRef = useRef(false)
   const fetchBookings = async (showSpinner: boolean) => {
@@ -218,6 +248,16 @@ export function RCICDashboard() {
       setBookings(filteredBookings)
       const clientIds = filteredBookings.map(b => b.client_id).filter((id, i, arr) => arr.indexOf(id) === i)
       await fetchClientNames(clientIds)
+      
+      // 🔥 FETCH DOCUMENTS FOR EACH BOOKING
+      console.log('📄 Fetching documents for all bookings...')
+      for (const booking of filteredBookings) {
+        // Don't await - fetch in parallel to not slow down the UI
+        fetchBookingDocuments(booking.id).catch(err => {
+          console.warn(`Failed to fetch documents for booking ${booking.id}:`, err)
+        })
+      }
+      
       } catch (error) {
       console.error('Failed to fetch bookings:', error)
       setBookings([])
@@ -264,7 +304,6 @@ export function RCICDashboard() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <User className="h-4 w-4" /> },
     { id: 'sessions', label: 'My Sessions', icon: <Calendar className="h-4 w-4" /> },
-    { id: 'intake', label: 'Intake Forms', icon: <FileText className="h-4 w-4" /> },
     { id: 'services', label: 'Services', icon: <Wrench className="h-4 w-4" /> },
     { id: 'profile', label: 'Profile', icon: <Settings className="h-4 w-4" /> },
     { id: 'payments', label: 'Payments', icon: <DollarSign className="h-4 w-4" /> }
@@ -465,48 +504,92 @@ export function RCICDashboard() {
     }
     
     try {
-      // If we have a direct URL, use it for download
+      // If this is a booking document (has booking_id and document id), use the API
+      if (file.booking_id && (file.id || file.document_id)) {
+        const documentId = file.id || file.document_id
+        const downloadData = await bookingService.getDocumentDownloadUrl(file.booking_id, documentId)
+        
+        if (downloadData.download_url) {
+          // Force download by fetching the file and creating a blob
+          const response = await fetch(downloadData.download_url)
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = downloadData.file_name || file.name || 'document'
+          // DON'T set target='_blank' for downloads
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+          return
+        }
+      }
+      
+      // If we have a direct URL, fetch it and force download
       if (file.url || file.file_url || file.download_url) {
-        const link = document.createElement('a')
-        link.href = file.url || file.file_url || file.download_url
-        link.download = file.name || file.file_name
-        link.target = '_blank'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        alert(`Download started: ${file.name || file.file_name}`)
-        return
+        try {
+          const fileUrl = file.url || file.file_url || file.download_url
+          const response = await fetch(fileUrl)
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = file.name || file.file_name || 'document'
+          // DON'T set target='_blank' for downloads
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+          return
+        } catch (fetchError) {
+          console.warn('Failed to fetch file for download, trying direct link:', fetchError)
+          // Fallback to direct link with download attribute
+          const link = document.createElement('a')
+          link.href = file.url || file.file_url || file.download_url
+          link.download = file.name || file.file_name || 'document'
+          // DON'T set target='_blank' for downloads
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          return
+        }
       }
       
       // If we have file content, create blob for download
       if (file.content || file.file_content || file.data) {
-        const blob = new Blob([file.content || file.file_content || file.data], { 
-          type: file.type || file.file_type || 'application/octet-stream' 
-        })
+        const content = file.content || file.file_content || file.data
+        let blob
+        
+        // Handle base64 content
+        if (typeof content === 'string' && content.includes('base64')) {
+          const base64Data = content.split(',')[1] || content
+          const byteCharacters = atob(base64Data)
+          const byteNumbers = new Array(byteCharacters.length)
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+          }
+          const byteArray = new Uint8Array(byteNumbers)
+          blob = new Blob([byteArray], { type: file.type || file.file_type || 'application/octet-stream' })
+        } else {
+          blob = new Blob([content], { type: file.type || file.file_type || 'application/octet-stream' })
+        }
+        
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = file.name || file.file_name
+        link.download = file.name || file.file_name || 'document'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
-        
-        alert(`Download started: ${file.name || file.file_name}`)
         return
       }
       
-      // Fallback: try to fetch the file from the file path
-      if (file.file_path) {
-        // This would typically involve an API call to get the file
-        alert(`File download not available. Please contact support.`)
-        return
-      }
-      
-      alert('No download method available for this file')
-    } catch (error) {
+      alert('File is not accessible. It may need to be re-uploaded.')
+    } catch (error: any) {
       console.error('Download failed:', error)
-      alert(`Download failed for ${file.name || file.file_name}. Please try again.`)
+      alert(`Download failed: ${error.message || 'Please try again or contact support.'}`)
     }
   }
 
@@ -557,7 +640,7 @@ export function RCICDashboard() {
     }
   }
 
-  const handleStatusChange = async (bookingId: number, newStatus: 'pending' | 'confirmed' | 'completed' | 'cancelled') => {
+  const handleStatusChange = async (bookingId: number, newStatus: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'delayed' | 'rescheduled') => {
     try {
       setUpdatingStatus(bookingId)
       setStatusUpdateError(null)
@@ -571,6 +654,103 @@ export function RCICDashboard() {
       setUpdatingStatus(null)
     }
   }
+
+  // Get status badge styling
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'confirmed':
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-800'
+      case 'completed':
+        return 'bg-green-100 text-green-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
+      case 'delayed':
+        return 'bg-orange-100 text-orange-800'
+      case 'rescheduled':
+        return 'bg-purple-100 text-purple-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  // Handle session detail modal
+  const handleViewSessionDetail = (booking: Booking) => {
+    // 🔥 KEY FIX: Add fetched documents to booking object
+    const bookingWithDocuments = {
+      ...booking,
+      documents: bookingDocuments[booking.id] || []
+    }
+    
+    setSelectedSession(bookingWithDocuments)
+    setShowSessionDetailModal(true)
+  }
+
+  const closeSessionDetailModal = () => {
+    setShowSessionDetailModal(false)
+    setSelectedSession(null)
+  }
+
+  // Initialize toast notifications
+  const toasts = useToasts()
+
+  // Handle booking status updates from real-time events
+  const handleBookingUpdate = useCallback((bookingId: number, newStatus: string) => {
+    console.log(`📝 RCIC Dashboard - Booking ${bookingId} status updated to: ${newStatus}`)
+    
+    // Validate status before updating
+    const validStatuses: Booking['status'][] = ['pending', 'confirmed', 'completed', 'cancelled', 'delayed', 'rescheduled']
+    const typedStatus = validStatuses.includes(newStatus as Booking['status']) 
+      ? (newStatus as Booking['status']) 
+      : 'pending' // fallback to pending if invalid status
+    
+    // Find the booking that was updated
+    const updatedBooking = bookings.find(b => b.id === bookingId)
+    const oldStatus = updatedBooking?.status || 'pending'
+
+    // Update the bookings array
+    setBookings(prevBookings => 
+      prevBookings.map(booking => 
+        booking.id === bookingId 
+          ? { ...booking, status: typedStatus }
+          : booking
+      )
+    )
+
+    // Show toast notification for RCIC
+    toasts.bookingStatusUpdate(bookingId, oldStatus, newStatus)
+  }, [bookings, toasts])
+
+  // Handle real-time connection errors
+  const handleRealtimeError = useCallback((error: string) => {
+    console.error('RCIC Dashboard - Real-time connection error:', error)
+    toasts.error('Connection Issue', error, {
+      action: {
+        label: 'Retry',
+        onClick: () => window.location.reload()
+      }
+    })
+  }, [toasts])
+
+  // Set up real-time updates for booking status changes
+  const { isConnected, connectionType, reconnect } = useRealtimeBookingUpdates(bookings, {
+    onBookingUpdate: handleBookingUpdate,
+    onError: handleRealtimeError,
+    enabled: true, // ✅ ENABLED: Real-time booking status updates for RCICs
+    fallbackToPolling: true,
+    pollingInterval: 30000 // Poll every 30 seconds as fallback
+  })
+
+  // Debug connection status changes
+  useEffect(() => {
+    console.log('🔌 Connection status changed:', {
+      isConnected,
+      connectionType,
+      bookingsCount: bookings.length
+    })
+  }, [isConnected, connectionType, bookings.length])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50/30 to-cyan-50/30">
@@ -602,6 +782,25 @@ export function RCICDashboard() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {/* Connection Status Indicator */}
+                <div 
+                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                    isConnected 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                  title={`Real-time updates: ${isConnected ? 'Connected' : 'Connecting...'} (${connectionType || 'none'})`}
+                >
+                  {isConnected ? (
+                    <Wifi className="h-3 w-3" />
+                  ) : (
+                    <WifiOff className="h-3 w-3 animate-pulse" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {isConnected ? 'Live' : 'Sync...'}
+                  </span>
+                </div>
+                
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
@@ -704,9 +903,9 @@ export function RCICDashboard() {
                   </Button>
                   <Button 
                     className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                    onClick={() => setActiveTab('intake')}
+                    onClick={() => setActiveTab('sessions')}
                   >
-                    <FileText className="h-4 w-4" /> View All Intake Forms
+                    <FileText className="h-4 w-4" /> View All Sessions
                   </Button>
                   <Button 
                     className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
@@ -726,423 +925,175 @@ export function RCICDashboard() {
             <CardContent className="p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">My Sessions</h2>
               
-              {/* Mobile Card View */}
-              <div className="block lg:hidden space-y-4">
-                {allSessions.map((session) => (
-                  <div key={session.id} className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-xl p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{session.client}</h4>
-                        <p className="text-sm text-gray-600">{session.service}</p>
-                        <p className="text-sm text-gray-500">{session.date} at {session.time}</p>
-                      </div>
-                      <Badge
-                        className={
-                          session.status === 'upcoming' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-green-100 text-green-800'
-                        }
-                      >
-                        {session.status}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {session.status === 'upcoming' ? (
-                        <>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1 min-w-0" onClick={() => handleStatusChange(session.id, 'completed')} disabled={updatingStatus === session.id}>
-                            {updatingStatus === session.id ? 'Updating...' : 'Mark Complete'}
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1 min-w-0" onClick={() => handleStatusChange(session.id, 'confirmed')} disabled={updatingStatus === session.id}>
-                            {updatingStatus === session.id ? 'Updating...' : 'Confirm'}
-                          </Button>
-                          <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1 min-w-0" onClick={() => handleStatusChange(session.id, 'cancelled')} disabled={updatingStatus === session.id}>
-                            {updatingStatus === session.id ? 'Updating...' : 'Cancel'}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 w-full" onClick={() => handleStatusChange(session.id, 'confirmed')} disabled={updatingStatus === session.id}>
-                          {updatingStatus === session.id ? 'Updating...' : 'Reopen (Confirm)'}
-                        </Button>
-                      )}
-                    </div>
-                    {statusUpdateError && <div className="text-xs text-red-600">{statusUpdateError}</div>}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Desktop Table View */}
-              <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 text-gray-700 whitespace-nowrap">Client Name</th>
-                      <th className="text-left p-3 text-gray-700 whitespace-nowrap">Date & Time</th>
-                      <th className="text-left p-3 text-gray-700 whitespace-nowrap">Service Type</th>
-                      <th className="text-left p-3 text-gray-700 whitespace-nowrap">Status</th>
-                      <th className="text-left p-3 text-gray-700 whitespace-nowrap">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allSessions.map((session) => (
-                      <tr key={session.id} className="border-b">
-                        <td className="p-3">{session.client}</td>
-                        <td className="p-3">{session.date} {session.time}</td>
-                        <td className="p-3">{session.service}</td>
-                        <td className="p-3">
-                          <Badge
-                            className={
-                              session.status === 'upcoming' 
-                                ? 'bg-blue-100 text-blue-800' 
-                                : 'bg-green-100 text-green-800'
-                            }
-                          >
-                            {session.status}
-                          </Badge>
-                        </td>
-                        <td className="p-3">
-                          <div className="flex flex-wrap gap-1">
-                            {session.status === 'upcoming' ? (
+              {!initialBookingsLoaded ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
+                  <p className="text-gray-500">Loading sessions...</p>
+                </div>
+              ) : bookings.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p>No sessions found</p>
+                  <p className="text-sm">Client sessions will appear here once they book appointments</p>
+                </div>
+              ) : (
+                <>
+                  {/* Mobile Card View */}
+                  <div className="block lg:hidden space-y-4">
+                    {bookings.map((booking) => {
+                      const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                      return (
+                        <div key={booking.id} className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{clientName}</h4>
+                              <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                              <p className="text-sm text-gray-500">
+                                {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleDateString()} at {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake Form</Badge>}
+                                {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
+                                  <Badge className="bg-green-100 text-green-800 text-xs">
+                                    {bookingDocuments[booking.id].length} Docs
+                                  </Badge>
+                                )}
+                                {documentLoading[booking.id] && <Badge className="bg-gray-100 text-gray-600 text-xs">Loading docs...</Badge>}
+                                {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
+                              </div>
+                            </div>
+                            <Badge className={getStatusBadge(booking.status)}>
+                              {booking.status}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                            {booking.status === 'pending' ? (
                               <>
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange(session.id, 'completed')} disabled={updatingStatus === session.id}>
-                                  {updatingStatus === session.id ? 'Updating...' : 'Mark Complete'}
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Confirm'}
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => handleStatusChange(session.id, 'confirmed')} disabled={updatingStatus === session.id}>
-                                  {updatingStatus === session.id ? 'Updating...' : 'Confirm'}
+                                <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'cancelled')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Cancel'}
                                 </Button>
-                                <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => handleStatusChange(session.id, 'cancelled')} disabled={updatingStatus === session.id}>
-                                  {updatingStatus === session.id ? 'Updating...' : 'Cancel'}
+                              </>
+                            ) : booking.status === 'confirmed' ? (
+                              <>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'completed')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Complete'}
+                                </Button>
+                                <Button size="sm" className="bg-orange-600 hover:bg-orange-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'delayed')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Delayed'}
                                 </Button>
                               </>
                             ) : (
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange(session.id, 'confirmed')} disabled={updatingStatus === session.id}>
-                                {updatingStatus === session.id ? 'Updating...' : 'Reopen (Confirm)'}
+                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 w-full" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
+                                {updatingStatus === booking.id ? 'Updating...' : 'Reopen'}
                               </Button>
                             )}
                           </div>
                           {statusUpdateError && <div className="text-xs text-red-600">{statusUpdateError}</div>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Intake Forms Tab */}
-        {activeTab === 'intake' && (
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Intake Forms & Documents</h2>
-              
-              {!initialBookingsLoaded ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-                  <p className="text-gray-500">Loading client data...</p>
-                </div>
-              ) : bookings.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p>No client bookings found</p>
-                  <p className="text-sm">Client intake forms and documents will appear here once they book sessions</p>
-                </div>
-              ) : (
-              <div className="space-y-4">
-                  {bookings
-                    .filter(booking => booking.intake_form_data || (booking.documents && booking.documents.length > 0))
-                    .map((booking) => {
-                      const hasIntakeForm = booking.intake_form_data
-                      const hasDocuments = booking.documents && booking.documents.length > 0
-                      const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
-                      const isToday = bookingDate.toDateString() === new Date().toDateString()
-                      const isYesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString() === bookingDate.toDateString()
-                      
-                      let timeAgo = ''
-                      if (isToday) {
-                        timeAgo = 'Today'
-                      } else if (isYesterday) {
-                        timeAgo = 'Yesterday'
-                      } else {
-                        timeAgo = bookingDate.toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })
-                      }
-
-                      return (
-                        <div key={booking.id} className="border border-gray-200/50 rounded-xl p-4 bg-gradient-to-r from-white to-gray-50/50 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <h3 className="font-medium text-gray-900">
-                                {clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`} - {booking.service_type || `Service #${booking.service_id}`}
-                              </h3>
-                              <p className="text-sm text-gray-500">Session: {timeAgo}</p>
-                              <p className="text-sm text-gray-600">Status: {booking.status}</p>
-                  </div>
-                            <div className="flex gap-2">
-                              {hasDocuments && (
-                                <Button size="sm" variant="outline">
-                                  <FileText className="h-4 w-4 mr-1" />
-                                  Documents ({booking.documents?.length || 0})
-                                </Button>
-                              )}
-                              {hasIntakeForm && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleViewIntakeForm(booking.intake_form_data, booking)}
-                                >
-                                  <FileText className="h-4 w-4 mr-1" />
-                                  View Intake Form
-                                </Button>
-                              )}
-                  </div>
-                </div>
-                          
-                          {/* Intake Form Data */}
-                          {hasIntakeForm && (
-                            <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                              <h4 className="font-medium text-blue-900 mb-2">Intake Form Data</h4>
-                              <div className="text-sm text-blue-800 space-y-3">
-                                {/* Form Completion Status */}
-                                {booking.intake_form_data.completed !== undefined && (
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium">Status:</span>
-                                    <Badge className={booking.intake_form_data.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                                      {booking.intake_form_data.completed ? 'Completed' : 'In Progress'}
-                                    </Badge>
-                  </div>
-                                )}
-
-                                {/* Form Method */}
-                                {booking.intake_form_data.method && (
-                                  <div>
-                                    <span className="font-medium">Form Method:</span>
-                                    <span className="ml-2 capitalize">{booking.intake_form_data.method}</span>
-                  </div>
-                                )}
-
-                                {/* Required Files */}
-                                {booking.intake_form_data.uploadedFiles && booking.intake_form_data.uploadedFiles.length > 0 && (
-                                  <div>
-                                    <span className="font-medium text-green-700">Required Documents ({booking.intake_form_data.uploadedFiles.length}):</span>
-                                    <div className="mt-2 space-y-2">
-                                      {booking.intake_form_data.uploadedFiles.map((file: any) => (
-                                        <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-green-600" />
-                                            <div>
-                                              <p className="font-medium text-green-800">{file.name}</p>
-                                              <p className="text-xs text-green-600">
-                                                {file.size > 1024 * 1024 
-                                                  ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-                                                  : `${Math.round(file.size / 1024)} KB`
-                                                } • {file.type} • {new Date(file.uploadedAt).toLocaleDateString()}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <div className="flex gap-1">
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline" 
-                                              className="h-6 px-2 text-xs"
-                                              onClick={() => handleViewDocument(file, booking)}
-                                            >
-                                              View
-                                            </Button>
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline" 
-                                              className="h-6 px-2 text-xs"
-                                              onClick={() => handleDownloadDocument(file)}
-                                            >
-                                              Download
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Optional Files */}
-                                {booking.intake_form_data.optionalUploads && booking.intake_form_data.optionalUploads.length > 0 && (
-                                  <div>
-                                    <span className="font-medium text-blue-700">Additional Documents ({booking.intake_form_data.optionalUploads.length}):</span>
-                                    <div className="mt-2 space-y-2">
-                                      {booking.intake_form_data.optionalUploads.map((file: any) => (
-                                        <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded border border-blue-200">
-                                          <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-blue-600" />
-                                            <div>
-                                              <p className="font-medium text-blue-800">{file.name}</p>
-                                              <p className="text-xs text-blue-600">
-                                                {file.size > 1024 * 1024 
-                                                  ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-                                                  : `${Math.round(file.size / 1024)} KB`
-                                                } • {file.type} • {new Date(file.uploadedAt).toLocaleDateString()}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <div className="flex gap-1">
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline" 
-                                              className="h-6 px-2 text-xs"
-                                              onClick={() => handleViewDocument(file, booking)}
-                                            >
-                                              View
-                                            </Button>
-                                            <Button 
-                                              size="sm" 
-                                              variant="outline" 
-                                              className="h-6 px-2 text-xs"
-                                              onClick={() => handleDownloadDocument(file)}
-                                            >
-                                              Download
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Other Form Fields */}
-                                {Object.entries(booking.intake_form_data).map(([key, value]) => {
-                                  // Skip already displayed fields
-                                  if (['method', 'completed', 'uploadedFiles', 'optionalUploads'].includes(key)) {
-                                    return null
-                                  }
-                                  
-                                  // Skip empty values
-                                  if (!value || (Array.isArray(value) && value.length === 0)) {
-                                    return null
-                                  }
-
-                                  return (
-                                    <div key={key}>
-                                      <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                                      <span className="ml-2">
-                                        {typeof value === 'string' ? value : 
-                                         typeof value === 'number' ? value :
-                                         Array.isArray(value) ? value.join(', ') :
-                                         JSON.stringify(value)}
-                                      </span>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Documents List */}
-                          {hasDocuments && (
-                            <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                              <h4 className="font-medium text-green-900 mb-2">Uploaded Documents</h4>
-                          <div className="space-y-2">
-                            {booking.documents?.map((doc) => (
-                              <div key={doc.id} className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-green-600" />
-                                  <span className="text-green-800">{doc.file_name}</span>
-                                  <span className="text-green-600 text-xs">
-                                    ({(doc.file_size || 0) / 1024 / 1024 > 1 
-                                      ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
-                                      : `${Math.round((doc.file_size || 0) / 1024)} KB`
-                                    })
-                                  </span>
-                                </div>
-                                <div className="flex gap-1">
-                                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => handleViewDocument({
-                                    id: doc.id,
-                                    name: doc.file_name,
-                                    size: doc.file_size,
-                                    type: doc.file_type,
-                                    url: (doc as any).file_url || (doc as any).download_url || doc.file_path,
-                                    uploadedAt: doc.uploaded_at || doc.created_at
-                                  }, booking)}>
-                                    View
-                                  </Button>
-                                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => handleDownloadDocument({
-                                    id: doc.id,
-                                    name: doc.file_name,
-                                    size: doc.file_size,
-                                    type: doc.file_type,
-                                    url: (doc as any).file_url || (doc as any).download_url || doc.file_path
-                                  })}>
-                                    Download
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                            </div>
-                          )}
-                          
-                          {/* Internal Notes Section */}
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Internal Session Notes
-                            </label>
-                  <textarea 
-                    className="w-full border rounded-md p-3 text-sm"
-                    rows={3}
-                    placeholder="Add internal session notes here..."
-                    value={bookings.find(b => b.id === booking.id)?.meeting_notes || ''}
-                    onChange={(e) => setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, meeting_notes: e.target.value } as any : b))}
-                  />
-                            <div className="mt-2 flex gap-2">
-                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={async () => {
-                                try {
-                                  const current = bookings.find(b => b.id === booking.id)
-                                  await bookingService.updateBooking(booking.id, { meeting_notes: (current as any)?.meeting_notes } as any)
-                                  alert('Notes saved')
-                                } catch (err: any) {
-                                  alert(err?.message || 'Failed to save notes')
-                                }
-                              }}>
-                                Save Notes
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={async () => {
-                                try {
-                                  const current = bookings.find(b => b.id === booking.id)
-                                  const notes = (current as any)?.meeting_notes || ''
-                                  if (!notes.trim()) { alert('Please enter some notes first'); return }
-                                  await fetch(`/api/v1/bookings/${booking.id}/send-notes`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}` },
-                                    body: JSON.stringify({ notes })
-                                  })
-                                  alert('Notes sent to client')
-                                } catch (err: any) {
-                                  alert(err?.message || 'Failed to send notes')
-                                }
-                              }}>
-                                Send to Client
-                              </Button>
-                </div>
-              </div>
                         </div>
                       )
                     })}
-                  
-                  {/* Show message if no bookings have intake forms or documents */}
-                  {bookings.length > 0 && 
-                   !bookings.some(booking => booking.intake_form_data || (booking.documents && booking.documents.length > 0)) && (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                      <p>No intake forms or documents submitted yet</p>
-                      <p className="text-sm">Client data will appear here once they complete intake forms or upload documents</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+              
+                  {/* Desktop Table View */}
+                  <div className="hidden lg:block overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Client Name</th>
+                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Date & Time</th>
+                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Service Type</th>
+                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Status</th>
+                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Info</th>
+                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bookings.map((booking) => {
+                          const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                          return (
+                            <tr key={booking.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => handleViewSessionDetail(booking)}>
+                              <td className="p-3">{clientName}</td>
+                              <td className="p-3">
+                                {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleDateString()} at {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                              </td>
+                              <td className="p-3">{booking.service_type || `Service #${booking.service_id}`}</td>
+                              <td className="p-3">
+                                <Badge className={getStatusBadge(booking.status)}>
+                                  {booking.status}
+                                </Badge>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                  {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake</Badge>}
+                                  {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
+                                    <Badge className="bg-green-100 text-green-800 text-xs">
+                                      {bookingDocuments[booking.id].length} Docs
+                                    </Badge>
+                                  )}
+                                  {documentLoading[booking.id] && <Badge className="bg-gray-100 text-gray-600 text-xs">Loading docs...</Badge>}
+                                  {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
+                                </div>
+                              </td>
+                              <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex flex-wrap gap-1">
+                                  {booking.status === 'pending' ? (
+                                    <>
+                                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
+                                        {updatingStatus === booking.id ? 'Updating...' : 'Confirm'}
+                                      </Button>
+                                      <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => handleStatusChange(booking.id, 'cancelled')} disabled={updatingStatus === booking.id}>
+                                        {updatingStatus === booking.id ? 'Updating...' : 'Cancel'}
+                                      </Button>
+                                    </>
+                                  ) : booking.status === 'confirmed' ? (
+                                    <>
+                                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange(booking.id, 'completed')} disabled={updatingStatus === booking.id}>
+                                        {updatingStatus === booking.id ? 'Updating...' : 'Complete'}
+                                      </Button>
+                                      <Button size="sm" className="bg-orange-600 hover:bg-orange-700" onClick={() => handleStatusChange(booking.id, 'delayed')} disabled={updatingStatus === booking.id}>
+                                        {updatingStatus === booking.id ? 'Updating...' : 'Delayed'}
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
+                                      {updatingStatus === booking.id ? 'Updating...' : 'Reopen'}
+                                    </Button>
+                                  )}
+                                </div>
+                                {statusUpdateError && <div className="text-xs text-red-600">{statusUpdateError}</div>}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
         )}
+
+        {/* Session Detail Modal */}
+        {showSessionDetailModal && selectedSession && (
+          <SessionDetailModal
+            show={showSessionDetailModal}
+            booking={selectedSession}
+            clientName={clientNames[selectedSession.client_id] || `Client ${selectedSession.client_id.slice(0, 8)}...${selectedSession.client_id.slice(-4)}`}
+            onClose={closeSessionDetailModal}
+            onStatusChange={handleStatusChange}
+            onViewDocument={handleViewDocument}
+            onDownloadDocument={handleDownloadDocument}
+            updatingStatus={updatingStatus}
+            onNotesUpdate={(bookingId, notes) => {
+              setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, meeting_notes: notes } as any : b))
+            }}
+          />
+        )}
+
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
@@ -1691,6 +1642,9 @@ export function RCICDashboard() {
           </div>
         </div>
       )}
+      
+      {/* Toast Notifications Container */}
+      <ToastContainer toasts={toasts.toasts} onRemoveToast={toasts.removeToast} />
     </div>
   )
 }

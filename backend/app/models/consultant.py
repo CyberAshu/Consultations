@@ -32,6 +32,7 @@ class Consultant(Base):
     reviews = relationship("ConsultantReview", back_populates="consultant", cascade="all, delete-orphan")
     bookings = relationship("Booking", back_populates="consultant")
     payments = relationship("Payment", back_populates="consultant")
+    session_notes = relationship("SessionNote", back_populates="consultant")
 
 class ConsultantService(Base):
     __tablename__ = "consultant_services"

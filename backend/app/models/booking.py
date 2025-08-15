@@ -11,6 +11,7 @@ class BookingStatus(str, enum.Enum):
     completed = "completed"
     cancelled = "cancelled"
     rescheduled = "rescheduled"
+    delayed = "delayed"
 
 class PaymentStatus(str, enum.Enum):
     pending = "pending"
@@ -53,6 +54,7 @@ class Booking(Base):
     service = relationship("ConsultantService", back_populates="bookings")
     documents = relationship("BookingDocument", back_populates="booking", cascade="all, delete-orphan")
     payment = relationship("Payment", back_populates="booking", uselist=False)
+    session_notes = relationship("SessionNote", back_populates="booking", cascade="all, delete-orphan")
 
 class BookingDocument(Base):
     __tablename__ = "booking_documents"

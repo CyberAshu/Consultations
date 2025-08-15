@@ -88,12 +88,16 @@ export interface Booking {
   booking_date?: string; // backend field
   service_id?: number; // backend field
   duration_minutes: number;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'delayed' | 'rescheduled';
   total_amount: number;
   notes?: string; // legacy
   meeting_link?: string; // legacy
   meeting_url?: string;
   meeting_notes?: string;
+  // Payment related fields
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_method?: string;
+  payment_intent_id?: string;
   created_at: string;
   updated_at: string;
   documents?: BookingDocument[];
@@ -109,6 +113,41 @@ export interface BookingDocument {
   file_type?: string;
   uploaded_at: string;
   created_at?: string; // Add this field for compatibility
+}
+
+// Session Notes Types
+export interface SessionNote {
+  id: number;
+  booking_id: number;
+  consultant_id: number;
+  client_id: string;
+  content: string;
+  note_type: string;
+  is_shared_with_client: boolean;
+  shared_at?: string;
+  created_at: string;
+  updated_at?: string;
+  consultant_name?: string;
+  consultant_rcic_number?: string;
+  time_ago?: string;
+}
+
+export interface CreateSessionNoteRequest {
+  content: string;
+  note_type?: string;
+  is_shared_with_client?: boolean;
+}
+
+export interface UpdateSessionNoteRequest {
+  content?: string;
+  note_type?: string;
+  is_shared_with_client?: boolean;
+}
+
+export interface ShareNotesRequest {
+  note_ids: number[];
+  send_email?: boolean;
+  email_subject?: string;
 }
 
 export interface CreateBookingRequest {

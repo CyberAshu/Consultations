@@ -25,6 +25,19 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
   const [formComplete, setFormComplete] = useState(false)
   const [optionalUploads, setOptionalUploads] = useState<any[]>([])
+  
+  // Form data states
+  const [formData, setFormData] = useState({
+    immigrationStatus: '',
+    immigrationGoal: '',
+    specificQuestions: '',
+    previousApplications: {
+      expressEntry: false,
+      studyPermit: false,
+      workPermit: false,
+      visitorVisa: false
+    }
+  })
 
   useEffect(() => {
     onDataChange({
@@ -32,10 +45,11 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
         method: formMethod,
         completed: formComplete,
         uploadedFiles: uploadedFiles,
-        optionalUploads: optionalUploads
+        optionalUploads: optionalUploads,
+        formData: formData // 🔥 Add form data
       }
     })
-  }, [formMethod, formComplete, uploadedFiles, optionalUploads, onDataChange])
+  }, [formMethod, formComplete, uploadedFiles, optionalUploads, formData, onDataChange])
 
   // Required documents based on service type
   const getRequiredDocuments = (serviceType: string) => {
@@ -220,7 +234,11 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Current Immigration Status
                   </label>
-                  <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formData.immigrationStatus}
+                    onChange={(e) => setFormData(prev => ({...prev, immigrationStatus: e.target.value}))}
+                  >
                     <option value="">Select status</option>
                     <option value="visitor">Visitor</option>
                     <option value="student">International Student</option>
@@ -235,7 +253,11 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Primary Immigration Goal
                   </label>
-                  <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select 
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formData.immigrationGoal}
+                    onChange={(e) => setFormData(prev => ({...prev, immigrationGoal: e.target.value}))}
+                  >
                     <option value="">Select goal</option>
                     <option value="express-entry">Express Entry (PR)</option>
                     <option value="pnp">Provincial Nominee Program</option>
@@ -255,6 +277,8 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
                   rows={4}
                   placeholder="Please describe your specific questions or what you'd like to discuss during the consultation..."
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData.specificQuestions}
+                  onChange={(e) => setFormData(prev => ({...prev, specificQuestions: e.target.value}))}
                 />
               </div>
 
@@ -264,19 +288,63 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
                 </label>
                 <div className="space-y-2">
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="text-blue-600" />
+                    <input 
+                      type="checkbox" 
+                      className="text-blue-600"
+                      checked={formData.previousApplications.expressEntry}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev, 
+                        previousApplications: {
+                          ...prev.previousApplications, 
+                          expressEntry: e.target.checked
+                        }
+                      }))}
+                    />
                     <span className="text-sm">Express Entry profile submitted</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="text-blue-600" />
+                    <input 
+                      type="checkbox" 
+                      className="text-blue-600"
+                      checked={formData.previousApplications.studyPermit}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev, 
+                        previousApplications: {
+                          ...prev.previousApplications, 
+                          studyPermit: e.target.checked
+                        }
+                      }))}
+                    />
                     <span className="text-sm">Previous study permit applications</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="text-blue-600" />
+                    <input 
+                      type="checkbox" 
+                      className="text-blue-600"
+                      checked={formData.previousApplications.workPermit}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev, 
+                        previousApplications: {
+                          ...prev.previousApplications, 
+                          workPermit: e.target.checked
+                        }
+                      }))}
+                    />
                     <span className="text-sm">Previous work permit applications</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" className="text-blue-600" />
+                    <input 
+                      type="checkbox" 
+                      className="text-blue-600"
+                      checked={formData.previousApplications.visitorVisa}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev, 
+                        previousApplications: {
+                          ...prev.previousApplications, 
+                          visitorVisa: e.target.checked
+                        }
+                      }))}
+                    />
                     <span className="text-sm">Previous visitor visa applications</span>
                   </label>
                 </div>

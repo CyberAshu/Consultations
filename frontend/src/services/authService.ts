@@ -156,6 +156,11 @@ class AuthService {
     return localStorage.getItem('access_token');
   }
 
+  // Alias for getAccessToken (for compatibility)
+  getToken(): string | null {
+    return this.getAccessToken();
+  }
+
   // Clear authentication data
   clearAuthData(): void {
     localStorage.removeItem('access_token');

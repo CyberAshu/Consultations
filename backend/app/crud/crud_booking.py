@@ -3,15 +3,16 @@ from supabase import Client
 from app.schemas.booking import BookingCreate, BookingUpdate, BookingDocumentCreate
 
 def get_booking(db: Client, booking_id: int) -> Optional[Dict]:
-    response = db.table("bookings").select("*, documents:booking_documents(*)").eq("id", booking_id).execute()
+    # Use wildcard but ensure updated_at is included by selecting all fields including it specifically
+    response = db.table("bookings").select("*, updated_at, documents:booking_documents(*)").eq("id", booking_id).execute()
     return response.data[0] if response.data else None
 
 def get_bookings_by_client(db: Client, client_id: str) -> List[Dict]:
-    response = db.table("bookings").select("*, documents:booking_documents(*)").eq("client_id", client_id).execute()
+    response = db.table("bookings").select("*, updated_at, documents:booking_documents(*)").eq("client_id", client_id).execute()
     return response.data
 
 def get_bookings_by_consultant(db: Client, consultant_id: int) -> List[Dict]:
-    response = db.table("bookings").select("*, documents:booking_documents(*)").eq("consultant_id", consultant_id).execute()
+    response = db.table("bookings").select("*, updated_at, documents:booking_documents(*)").eq("consultant_id", consultant_id).execute()
     return response.data
 
 def create_booking(db: Client, *, obj_in: BookingCreate) -> Dict:
@@ -29,7 +30,13 @@ def create_booking(db: Client, *, obj_in: BookingCreate) -> Dict:
     return get_booking(db, booking_id)
 
 def update_booking(db: Client, *, booking_id: int, obj_in: BookingUpdate) -> Dict:
-    response = db.table("bookings").update(obj_in.dict(exclude_unset=True)).eq("id", booking_id).execute()
+    from datetime import datetime, timezone
+    
+    update_data = obj_in.dict(exclude_unset=True)
+    # Always set updated_at timestamp for tracking changes
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    response = db.table("bookings").update(update_data).eq("id", booking_id).execute()
     return response.data[0]
 
 def create_booking_document(db: Client, *, obj_in: BookingDocumentCreate) -> Dict:

@@ -141,7 +141,7 @@ def get_consultant_availability(
     return {"date": date, "slots": slots}
 
 @router.post("/{booking_id}/documents")
-def upload_booking_document(
+async def upload_booking_document(
     *,
     db: Client = Depends(deps.get_db),
     booking_id: int,
@@ -151,6 +151,8 @@ def upload_booking_document(
     """
     Upload document for booking.
     """
+    from app.services.storage_service import storage_service
+    
     booking = crud_booking.get_booking(db=db, booking_id=booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -159,18 +161,156 @@ def upload_booking_document(
     if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
-    # Here you would implement file upload logic to cloud storage
-    # For now, we'll create a document record with mock data
-    document_data = BookingDocumentCreate(
-        booking_id=booking_id,
-        file_name=file.filename,
-        file_path=f"/uploads/{booking_id}/{file.filename}",
-        file_size=file.size,
-        file_type=file.content_type
-    )
+    # Upload file to Supabase Storage
+    try:
+        file_path = await storage_service.upload_file(
+            file=file,
+            folder=f"bookings/{booking_id}",
+            prefix="doc"
+        )
+        
+        # Create database record with storage path
+        document_data = BookingDocumentCreate(
+            booking_id=booking_id,
+            file_name=file.filename or "document",
+            file_path=file_path,
+            file_size=len(await file.read()) if hasattr(file, 'read') else None,
+            file_type=file.content_type
+        )
+        
+        document = crud_booking.create_booking_document(db=db, obj_in=document_data)
+        return {
+            "id": document["id"],
+            "booking_id": document["booking_id"],
+            "file_name": document["file_name"],
+            "file_path": document["file_path"],
+            "file_size": document["file_size"],
+            "file_type": document["file_type"],
+            "uploaded_at": document["uploaded_at"],
+            "message": "File uploaded successfully"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload document: {str(e)}"
+        )
+
+@router.get("/{booking_id}/documents")
+def get_booking_documents(
+    *,
+    db: Client = Depends(deps.get_db),
+    booking_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get all documents for a booking (for RCIC panel viewing).
+    """
+    from app.services.storage_service import storage_service
     
-    document = crud_booking.create_booking_document(db=db, obj_in=document_data)
-    return document
+    booking = crud_booking.get_booking(db=db, booking_id=booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check permissions - only RCIC, client, or admin can view documents
+    if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    if current_user["role"] == "rcic":
+        # Ensure RCIC owns this booking
+        consultant_response = db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+        if not consultant_response.data or booking["consultant_id"] != consultant_response.data[0]["id"]:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Get all documents for this booking
+    documents_with_urls = []
+    if booking.get("documents"):
+        for doc in booking["documents"]:
+            try:
+                # Generate signed URL for document access
+                signed_url = storage_service.get_file_url(doc["file_path"], expires_in=3600)  # 1 hour expiry
+                documents_with_urls.append({
+                    "id": doc["id"],
+                    "booking_id": doc["booking_id"],
+                    "file_name": doc["file_name"],
+                    "file_type": doc["file_type"],
+                    "file_size": doc["file_size"],
+                    "uploaded_at": doc["uploaded_at"],
+                    "download_url": signed_url
+                })
+            except Exception as e:
+                print(f"Error generating URL for document {doc['id']}: {e}")
+                # Include document info but without URL if generation fails
+                documents_with_urls.append({
+                    "id": doc["id"],
+                    "booking_id": doc["booking_id"],
+                    "file_name": doc["file_name"],
+                    "file_type": doc["file_type"],
+                    "file_size": doc["file_size"],
+                    "uploaded_at": doc["uploaded_at"],
+                    "download_url": None,
+                    "error": f"Cannot access file: {str(e)}"
+                })
+    
+    return {
+        "booking_id": booking_id,
+        "documents": documents_with_urls,
+        "total_documents": len(documents_with_urls)
+    }
+
+@router.get("/{booking_id}/documents/{document_id}/download")
+def download_booking_document(
+    *,
+    db: Client = Depends(deps.get_db),
+    booking_id: int,
+    document_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get download URL for a specific document.
+    """
+    from app.services.storage_service import storage_service
+    
+    booking = crud_booking.get_booking(db=db, booking_id=booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check permissions
+    if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    if current_user["role"] == "rcic":
+        consultant_response = db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+        if not consultant_response.data or booking["consultant_id"] != consultant_response.data[0]["id"]:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Find the specific document
+    document = None
+    if booking.get("documents"):
+        for doc in booking["documents"]:
+            if doc["id"] == document_id:
+                document = doc
+                break
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    try:
+        # Generate signed URL for download (longer expiry for downloads)
+        signed_url = storage_service.get_file_url(document["file_path"], expires_in=3600)
+        return {
+            "document_id": document_id,
+            "file_name": document["file_name"],
+            "file_type": document["file_type"],
+            "file_size": document["file_size"],
+            "download_url": signed_url,
+            "expires_in": 3600
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate download URL: {str(e)}"
+        )
 
 
 class SendNotesRequest(BaseModel):
