@@ -21,7 +21,7 @@ interface IntakeFormStepProps {
 }
 
 export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFormStepProps) {
-  const [formMethod, setFormMethod] = useState('embedded')
+  const formMethod = 'embedded' // Always use embedded form only
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
   const [formComplete, setFormComplete] = useState(false)
   const [optionalUploads, setOptionalUploads] = useState<any[]>([])
@@ -125,6 +125,21 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
   }
 
   const handleFormComplete = () => {
+    // Validate required fields before marking as complete
+    if (!formData.immigrationStatus) {
+      alert('Please select your current immigration status')
+      return
+    }
+    if (!formData.immigrationGoal) {
+      alert('Please select your primary immigration goal')
+      return
+    }
+    if (!formData.specificQuestions?.trim()) {
+      alert('Please describe your specific questions or concerns')
+      return
+    }
+    
+    // All validations passed, mark form as complete
     setFormComplete(true)
   }
 
@@ -161,69 +176,26 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
         </CardContent>
       </Card>
 
-      {/* Form Method Selection */}
+      {/* Form Method Selection - Simplified to only Quick Form */}
       <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
         <CardContent className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose Intake Method</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Intake Form</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label 
-              className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
-                formMethod === 'embedded' 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="radio"
-                name="form-method"
-                value="embedded"
-                checked={formMethod === 'embedded'}
-                onChange={(e) => setFormMethod(e.target.value)}
-                className="sr-only"
-              />
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-blue-600 mt-1" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Quick Form</h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Fill out a simplified intake form right here
-                  </p>
-                </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <FileText className="h-5 w-5 text-blue-600 mt-1" />
+              <div>
+                <h4 className="font-medium text-gray-900 mb-1">Quick Form</h4>
+                <p className="text-sm text-gray-600">
+                  Fill out a simplified intake form to help your RCIC prepare for your consultation.
+                </p>
               </div>
-            </label>
-
-            <label 
-              className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
-                formMethod === 'external' 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input
-                type="radio"
-                name="form-method"
-                value="external"
-                checked={formMethod === 'external'}
-                onChange={(e) => setFormMethod(e.target.value)}
-                className="sr-only"
-              />
-              <div className="flex items-start gap-3">
-                <ExternalLink className="h-5 w-5 text-blue-600 mt-1" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Detailed Form (Tally/Typeform)</h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Complete a comprehensive intake form externally
-                  </p>
-                </div>
-              </div>
-            </label>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {formMethod === 'embedded' ? (
-        /* Quick Embedded Form */
+      {/* Quick Embedded Form - Always Show */}
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
           <CardContent className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Intake Form</h3>
@@ -353,60 +325,27 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
               <Button
                 type="button"
                 onClick={handleFormComplete}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className={`w-full transition-all ${formComplete 
+                  ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-300' 
+                  : 'bg-green-600 hover:bg-green-700'
+                }`}
+                disabled={formComplete}
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Complete Form
+                {formComplete ? 'Form Completed ✓' : 'Complete Form'}
               </Button>
+              
+              {formComplete && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Form completed successfully! You can now proceed to the next step.</span>
+                  </div>
+                </div>
+              )}
             </form>
           </CardContent>
         </Card>
-      ) : (
-        /* External Form Integration */
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-          <CardContent className="p-6 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ExternalLink className="h-8 w-8 text-blue-600" />
-            </div>
-            
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              External Intake Form
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Complete our comprehensive intake form using Tally or Typeform for a more detailed assessment.
-            </p>
-
-            {/* Mock External Form */}
-            <div className="bg-gray-100 rounded-lg p-8 border-2 border-dashed border-gray-300 mb-6">
-              <div className="text-center space-y-3">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto" />
-                <p className="text-gray-500">Tally/Typeform Integration</p>
-                <p className="text-sm text-gray-400">
-                  In production, this would embed the actual form widget
-                </p>
-                <Button 
-                  onClick={handleFormComplete}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Mock: Complete External Form
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-left">
-                  <p className="font-medium text-blue-900">Comprehensive Assessment</p>
-                  <p className="text-blue-700">
-                    The external form includes detailed questions about your background, education, work experience, and immigration history.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Required Documents Upload */}
       <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">

@@ -8,7 +8,9 @@ import {
   CheckCircle, 
   Award,
   MessageSquare,
-  Globe
+  Globe,
+  Plus,
+  Minus
 } from 'lucide-react'
 
 interface SelectRCICStepProps {
@@ -26,6 +28,7 @@ export function SelectRCICStep({
 }: SelectRCICStepProps) {
   const [selectedRCIC, setSelectedRCIC] = useState<any>(null)
   const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedAddons, setSelectedAddons] = useState<any[]>([])
   const [rcics, setRCICs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -103,13 +106,53 @@ export function SelectRCICStep({
     }
   }, [prefilledRCIC, prefilledService, rcics])
 
+  // Available addons
+  const availableAddons = [
+    {
+      id: 'follow-up',
+      name: 'Follow-Up Session',
+      description: 'Schedule additional 30-minute sessions within 2 weeks of your initial consultation for continued support',
+      price: 80,
+      type: 'ADDON'
+    },
+    {
+      id: 'session-extension',
+      name: 'Session Extension',
+      description: 'Extend your current session by 15 minutes when offered live by your RCIC consultant',
+      price: 30,
+      type: 'ADDON'
+    },
+    {
+      id: 'session-summary',
+      name: 'Session Summary',
+      description: 'Receive a detailed written summary of your consultation session via email',
+      price: 25,
+      type: 'ADDON'
+    },
+    {
+      id: 'multi-session-bundle',
+      name: 'Multi-Session Bundle',
+      description: 'Save with bundled packages including 3 sessions and comprehensive planning tools',
+      price: 200,
+      type: 'ADDON'
+    }
+  ]
+
+  // Calculate total amount including addons
+  const calculateTotal = () => {
+    const basePrice = selectedService?.price || 0
+    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0)
+    return basePrice + addonsTotal
+  }
+
   useEffect(() => {
     onDataChange({
       rcic: selectedRCIC,
       service: selectedService,
-      totalAmount: selectedService?.price || 0
+      addons: selectedAddons,
+      totalAmount: calculateTotal()
     })
-  }, [selectedRCIC, selectedService, onDataChange])
+  }, [selectedRCIC, selectedService, selectedAddons, onDataChange])
 
   const handleRCICSelect = (rcic: any) => {
     setSelectedRCIC(rcic)
@@ -118,6 +161,17 @@ export function SelectRCICStep({
 
   const handleServiceSelect = (service: any) => {
     setSelectedService(service)
+  }
+
+  const handleAddonToggle = (addon: any) => {
+    setSelectedAddons(prev => {
+      const isSelected = prev.find(a => a.id === addon.id)
+      if (isSelected) {
+        return prev.filter(a => a.id !== addon.id)
+      } else {
+        return [...prev, addon]
+      }
+    })
   }
 
   return (
@@ -303,6 +357,64 @@ export function SelectRCICStep({
         </div>
       )}
 
+      {/* Addons Selection */}
+      {selectedRCIC && selectedService && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Enhance Your Experience (Optional)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableAddons.map((addon) => {
+              const isSelected = selectedAddons.find(a => a.id === addon.id)
+              return (
+                <Card 
+                  key={addon.id}
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                    isSelected
+                      ? 'ring-2 ring-orange-500 bg-orange-50/50' 
+                      : 'bg-white/80 backdrop-blur-sm border-gray-200/50 hover:border-orange-200'
+                  }`}
+                  onClick={() => handleAddonToggle(addon)}
+                >
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-gray-900 text-base">{addon.name}</h4>
+                          <Badge className="bg-orange-100 text-orange-800 text-xs">
+                            {addon.type}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                          {addon.description}
+                        </p>
+                      </div>
+                      <div className="ml-4 text-right">
+                        <div className="text-lg font-bold text-orange-600 mb-2">+${addon.price} CAD</div>
+                        <div className="flex items-center gap-1">
+                          {isSelected ? (
+                            <><Minus className="h-4 w-4 text-orange-600" /><span className="text-sm text-orange-600">Remove</span></>
+                          ) : (
+                            <><Plus className="h-4 w-4 text-gray-600" /><span className="text-sm text-gray-600">Add</span></>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="flex items-center gap-2 text-orange-600 text-sm font-medium">
+                        <CheckCircle className="h-4 w-4" />
+                        Added to your booking
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Selection Summary */}
       {selectedRCIC && selectedService && (
         <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200/50">
@@ -321,9 +433,25 @@ export function SelectRCICStep({
                 <span className="font-medium text-gray-700">Duration:</span>
                 <span className="text-gray-900">{selectedService?.duration || 'N/A'}</span>
               </div>
+              
+              {/* Show base service price */}
               <div className="flex justify-between items-center pt-2 border-t border-green-200">
-                <span className="font-semibold text-gray-900">Total:</span>
-                <span className="font-bold text-green-600 text-lg">${selectedService?.price || 0} CAD</span>
+                <span className="font-medium text-gray-700">Base Service:</span>
+                <span className="text-gray-900">${selectedService?.price || 0} CAD</span>
+              </div>
+              
+              {/* Show selected addons */}
+              {selectedAddons.map((addon) => (
+                <div key={addon.id} className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">{addon.name}:</span>
+                  <span className="text-orange-600">+${addon.price} CAD</span>
+                </div>
+              ))}
+              
+              {/* Show total */}
+              <div className="flex justify-between items-center pt-2 border-t border-green-300">
+                <span className="font-semibold text-gray-900">Total Amount:</span>
+                <span className="font-bold text-green-600 text-xl">${calculateTotal()} CAD</span>
               </div>
             </div>
           </CardContent>

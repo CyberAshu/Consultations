@@ -15,7 +15,8 @@ import {
   DollarSign,
   Move,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Plus
 } from 'lucide-react'
 
 interface FloatingBookingSummaryProps {
@@ -112,7 +113,7 @@ export function FloatingBookingSummary({
           >
             <Receipt className="h-4 w-4 text-blue-600" />
             <span className="text-xs font-semibold text-blue-600">
-              ${bookingData.totalAmount || 0}
+              ${bookingData.totalAmount || 0} CAD
             </span>
           </Button>
         </CardContent>
@@ -263,6 +264,24 @@ export function FloatingBookingSummary({
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Addons Info */}
+          {bookingData.addons && bookingData.addons.length > 0 && (
+            <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Plus className="h-4 w-4 text-orange-600" />
+                <span className="text-sm font-medium text-orange-900">Add-ons ({bookingData.addons.length})</span>
+              </div>
+              <div className="space-y-1">
+                {bookingData.addons.map((addon: any) => (
+                  <div key={addon.id} className="flex justify-between items-center text-xs">
+                    <span className="text-orange-700">{addon.name}</span>
+                    <span className="font-medium text-orange-800">+${addon.price}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}

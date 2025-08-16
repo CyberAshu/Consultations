@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../ui/Card'
 import { Button } from '../shared/Button'
 import { Badge } from '../ui/Badge'
+import { consultantService } from '../../services'
 import {
   Star,
   MapPin,
@@ -41,6 +42,7 @@ interface Consultant {
   profileImage?: string
   calendlyUrl?: string
   services: {
+    id: number
     name: string
     duration: string
     price: string
@@ -58,143 +60,83 @@ interface Consultant {
 
 export function ConsultantProfilePage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'reviews'>('overview')
+  const [consultant, setConsultant] = useState<any>(null)
+  const [services, setServices] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock data - replace with actual API call
-  const consultants: Consultant[] = [
-    {
-      id: 1,
-      name: "Dr. Sarah Chen",
-      rcicNumber: "R123456",
-      location: "Toronto, ON",
-      timezone: "EST (UTC-5)",
-      languages: ["English", "Mandarin", "Cantonese"],
-      specialties: ["Express Entry", "Study Permits", "Work Permits", "Family Sponsorship"],
-      rating: 4.9,
-      reviewCount: 127,
-      priceRange: "$60 - $250",
-      bio: "Experienced RCIC with 8+ years helping international students and skilled workers navigate Canadian immigration. Dr. Chen specializes in Express Entry applications and has successfully guided over 2,000 clients through their immigration journey. She holds a PhD in International Relations and is fluent in English, Mandarin, and Cantonese. Sarah is known for her patient approach and detailed explanations, making complex immigration processes easy to understand.",
-      availability: "Available today",
-      experience: "8+ years",
-      successRate: "96%",
-      calendlyUrl: "https://calendly.com/dr-sarah-chen",
-      services: [
-        {
-          name: "30-Minute Consultation",
-          duration: "30 min",
-          price: "$60 CAD",
-          description: "Quick guidance and general questions"
-        },
-        {
-          name: "45-Minute Consultation", 
-          duration: "45 min",
-          price: "$85 CAD",
-          description: "Detailed discussion and strategy planning"
-        },
-        {
-          name: "File Review",
-          duration: "60 min",
-          price: "$200 CAD",
-          description: "Complete document analysis with preparation"
-        },
-        {
-          name: "File Review + Summary",
-          duration: "60 min + written summary",
-          price: "$250 CAD",
-          description: "File review with detailed written follow-up"
+  // Load consultant data and services
+  useEffect(() => {
+    const loadConsultantData = async () => {
+      if (!id) return
+      
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Load consultant profile
+        const consultantData = await consultantService.getConsultantById(parseInt(id))
+        setConsultant(consultantData)
+        
+        // Load consultant services
+        try {
+          const servicesData = await consultantService.getConsultantServices(parseInt(id))
+          setServices(servicesData)
+        } catch (servicesError) {
+          console.warn('Could not load services:', servicesError)
+          setServices([])
         }
-      ],
-      reviews: [
-        {
-          id: 1,
-          clientName: "Deepika K.",
-          rating: 5,
-          comment: "Dr. Chen was incredibly helpful with my study permit application. Her detailed explanation of the process and document requirements made everything clear. Highly recommend!",
-          date: "2024-12-15",
-          outcome: "Study Permit Approved"
-        },
-        {
-          id: 2,
-          clientName: "Michael L.",
-          rating: 5,
-          comment: "Excellent service! Sarah guided me through Express Entry and I received my ITA within 3 months. Her expertise in the system is outstanding.",
-          date: "2024-12-10",
-          outcome: "Express Entry ITA Received"
-        },
-        {
-          id: 3,
-          clientName: "Jennifer W.",
-          rating: 4,
-          comment: "Very knowledgeable and patient. The file review session helped me identify issues before submission. Professional and thorough.",
-          date: "2024-12-05"
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "Ahmed Hassan",
-      rcicNumber: "R234567",
-      location: "Vancouver, BC",
-      timezone: "PST (UTC-8)",
-      languages: ["English", "Arabic", "French"],
-      specialties: ["Family Sponsorship", "Refugee Claims", "Appeals", "Humanitarian Cases"],
-      rating: 4.8,
-      reviewCount: 89,
-      priceRange: "$75 - $300",
-      bio: "Ahmed Hassan is a dedicated immigration consultant with 12+ years of experience specializing in family reunification and humanitarian cases. He has successfully handled over 1,500 family sponsorship applications and is particularly skilled in complex refugee protection claims. Ahmed's compassionate approach and deep understanding of immigration law make him a trusted advisor for families seeking to reunite in Canada.",
-      availability: "Available tomorrow",
-      experience: "12+ years",
-      successRate: "94%",
-      calendlyUrl: "https://calendly.com/ahmed-hassan-rcic",
-      services: [
-        {
-          name: "30-Minute Consultation",
-          duration: "30 min",
-          price: "$75 CAD",
-          description: "Family sponsorship guidance"
-        },
-        {
-          name: "60-Minute Consultation",
-          duration: "60 min",
-          price: "$120 CAD",
-          description: "Complex case analysis"
-        },
-        {
-          name: "File Review",
-          duration: "90 min",
-          price: "$250 CAD",
-          description: "Comprehensive application review"
-        },
-        {
-          name: "Appeal Consultation",
-          duration: "60 min",
-          price: "$300 CAD",
-          description: "Appeal strategy and preparation"
-        }
-      ],
-      reviews: [
-        {
-          id: 4,
-          clientName: "Fatima A.",
-          rating: 5,
-          comment: "Ahmed helped reunite my family after years of separation. His expertise in family sponsorship is unmatched. Forever grateful!",
-          date: "2024-12-12",
-          outcome: "Family Reunification Successful"
-        },
-        {
-          id: 5,
-          clientName: "David M.",
-          rating: 5,
-          comment: "Professional and caring approach. Ahmed guided us through a complex sponsorship case with patience and expertise.",
-          date: "2024-11-28",
-          outcome: "Sponsorship Approved"
-        }
-      ]
+        
+      } catch (err) {
+        console.error('Failed to load consultant:', err)
+        setError('Failed to load consultant profile. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
 
-  const consultant = consultants.find(c => c.id === parseInt(id || ''))
+    loadConsultantData()
+  }, [id])
 
+  // Navigation handlers
+  const handleBookService = (service: any) => {
+    window.open(`/book?rcic=${id}&service=${service.id}`, '_blank')
+  }
+
+  const handleBookGeneral = () => {
+    window.open(`/book?rcic=${id}`, '_blank')
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading consultant profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Profile</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link to="/consultants">
+            <Button>Back to Consultants</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Not found state
   if (!consultant) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
@@ -234,7 +176,7 @@ export function ConsultantProfilePage() {
                   {/* Profile Image */}
                   <div className="relative">
                     <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-4xl font-bold">
-                      {consultant.name.split(' ').map(n => n[0]).join('')}
+                      {consultant.name.split(' ').map((n: string) => n[0]).join('')}
                     </div>
                     {consultant.availability === "Available today" && (
                       <div className="absolute -bottom-2 -right-2 bg-green-500 text-white text-sm font-medium px-3 py-1 rounded-full">
@@ -288,7 +230,7 @@ export function ConsultantProfilePage() {
                     <div className="mb-6">
                       <h3 className="text-sm font-semibold text-gray-700 mb-2">SPECIALTIES</h3>
                       <div className="flex flex-wrap gap-2">
-                        {consultant.specialties.map((specialty) => (
+                        {consultant.specialties.map((specialty: string) => (
                           <Badge 
                             key={specialty} 
                             variant="secondary" 
@@ -342,28 +284,40 @@ export function ConsultantProfilePage() {
               {activeTab === 'services' && (
                 <div className="space-y-4">
                   <h2 className="text-2xl font-bold text-gray-900">Services & Pricing</h2>
-                  {consultant.services.map((service, index) => (
-                    <Card key={index} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.name}</h3>
-                            <p className="text-gray-600 mb-3">{service.description}</p>
-                            <div className="flex items-center text-sm text-gray-500">
-                              <Clock className="h-4 w-4 mr-1" />
-                              <span>{service.duration}</span>
+                  {services.length > 0 ? (
+                    services.map((service) => (
+                      <Card key={service.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.name}</h3>
+                              <p className="text-gray-600 mb-3">{service.description}</p>
+                              <div className="flex items-center text-sm text-gray-500">
+                                <Clock className="h-4 w-4 mr-1" />
+                                <span>{service.duration_minutes ? `${service.duration_minutes} minutes` : 'Contact for details'}</span>
+                              </div>
+                            </div>
+                            <div className="text-right ml-6">
+                              <div className="text-2xl font-bold text-blue-600 mb-2">${service.price} CAD</div>
+                              <Button 
+                                size="sm" 
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => handleBookService(service)}
+                              >
+                                Book Now
+                              </Button>
                             </div>
                           </div>
-                          <div className="text-right ml-6">
-                            <div className="text-2xl font-bold text-blue-600 mb-2">{service.price}</div>
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                              Book Now
-                            </Button>
-                          </div>
-                        </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <Card>
+                      <CardContent className="p-8 text-center">
+                        <p className="text-gray-500">No services available at the moment. Please contact the consultant directly.</p>
                       </CardContent>
                     </Card>
-                  ))}
+                  )}
                 </div>
               )}
 
@@ -376,7 +330,7 @@ export function ConsultantProfilePage() {
                     </div>
                   </div>
                   
-                  {consultant.reviews.map((review) => (
+                  {consultant.reviews.map((review: any) => (
                     <Card key={review.id}>
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
@@ -433,7 +387,10 @@ export function ConsultantProfilePage() {
                   </div>
                 </div>
 
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 mb-3">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 mb-3"
+                  onClick={handleBookGeneral}
+                >
                   <Calendar className="h-4 w-4 mr-2" />
                   Book Now
                 </Button>

@@ -227,7 +227,27 @@ export function BookingFlow() {
       case 1: return bookingData.rcic && bookingData.service
       case 2: return bookingData.timeSlot
       case 3: return bookingData.payment
-      case 4: return bookingData.intakeForm
+      case 4: {
+        // Check if intake form exists and is marked as completed
+        const intakeForm = bookingData.intakeForm
+        if (!intakeForm) return false
+        
+        // Must have completed the form
+        if (!intakeForm.completed) return false
+        
+        // Must have filled basic form data
+        const formData = intakeForm.formData
+        if (!formData) return false
+        
+        // Check if required fields are filled
+        const hasRequiredData = (
+          formData.immigrationStatus && 
+          formData.immigrationGoal && 
+          formData.specificQuestions?.trim()
+        )
+        
+        return hasRequiredData
+      }
       default: return false
     }
   }

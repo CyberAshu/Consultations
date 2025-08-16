@@ -13,6 +13,7 @@ import {
   X,
   User,
   MessageCircle,
+  Clock,
 } from 'lucide-react'
 
 export function ConsultantsPage() {
@@ -23,7 +24,9 @@ export function ConsultantsPage() {
   const [selectedSpecialty, setSelectedSpecialty] = useState("")
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [activeModalTab, setActiveModalTab] = useState<'bio' | 'reviews'>('bio')
+  const [activeModalTab, setActiveModalTab] = useState<'bio' | 'services' | 'reviews'>('bio')
+  const [consultantServices, setConsultantServices] = useState<any[]>([])
+  const [servicesLoading, setServicesLoading] = useState(false)
   const [consultants, setConsultants] = useState<Consultant[]>([])
   const [loading, setLoading] = useState(true)
   const [initialLoaded, setInitialLoaded] = useState(false)
@@ -86,6 +89,29 @@ export function ConsultantsPage() {
   const uniqueLanguages = Array.from(new Set(allConsultants.flatMap(c => c.languages || []))).sort()
   const uniqueProvinces = Array.from(new Set(allConsultants.map(c => c.location?.split(", ")[1]).filter(Boolean))).sort()
   const uniqueSpecialties = Array.from(new Set(allConsultants.flatMap(c => c.specialties || []))).sort()
+
+  // Load services for selected consultant
+  const loadConsultantServices = async (consultantId: number) => {
+    try {
+      setServicesLoading(true)
+      const services = await consultantService.getConsultantServices(consultantId)
+      setConsultantServices(services)
+    } catch (error) {
+      console.warn('Could not load services:', error)
+      setConsultantServices([])
+    } finally {
+      setServicesLoading(false)
+    }
+  }
+
+  // Handle modal open and load services
+  const handleViewProfile = (consultant: Consultant) => {
+    setSelectedConsultant(consultant)
+    setIsModalOpen(true)
+    setActiveModalTab('bio') // Reset to bio tab
+    setConsultantServices([]) // Clear previous services
+    loadConsultantServices(consultant.id)
+  }
 
   // Filter consultants (filtering is now done server-side via API)
   const filteredConsultants = consultants
@@ -327,10 +353,7 @@ export function ConsultantsPage() {
                     {/* View Profile Button */}
                     <Button 
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors duration-200"
-                      onClick={() => {
-                        setSelectedConsultant(consultant)
-                        setIsModalOpen(true)
-                      }}
+                      onClick={() => handleViewProfile(consultant)}
                     >
                       View Profile
                     </Button>
@@ -423,6 +446,7 @@ export function ConsultantsPage() {
                 <nav className="-mb-px flex space-x-8">
                   {[
                     { id: 'bio', label: 'Description / Bio', icon: User },
+                    { id: 'services', label: 'Services & Pricing', icon: DollarSign },
                     { id: 'reviews', label: 'Reviews', icon: MessageCircle }
                   ].map((tab) => (
                     <button
@@ -486,6 +510,74 @@ export function ConsultantsPage() {
                         </div>
                       )}
                     </div>
+                  </div>
+                )}
+
+                {activeModalTab === 'services' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-light text-gray-900">Services & Pricing</h3>
+                      <div className="text-sm text-gray-500">
+                        {consultantServices.length} service{consultantServices.length !== 1 ? 's' : ''} available
+                      </div>
+                    </div>
+                    
+                    {servicesLoading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="animate-pulse">
+                            <div className="bg-white border border-gray-200 rounded-lg p-6">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                                  <div className="h-3 bg-gray-300 rounded w-full mb-2"></div>
+                                  <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                                </div>
+                                <div className="ml-6">
+                                  <div className="h-6 bg-gray-300 rounded w-16 mb-2"></div>
+                                  <div className="h-8 bg-gray-300 rounded w-20"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : consultantServices.length > 0 ? (
+                      <div className="space-y-4">
+                        {consultantServices.map((service) => (
+                          <div key={service.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="text-lg font-semibold text-gray-900 mb-2">{service.name}</h4>
+                                <p className="text-gray-600 mb-3">{service.description}</p>
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <Clock className="h-4 w-4 mr-1" />
+                                  <span>{service.duration_minutes ? `${service.duration_minutes} minutes` : 'Contact for details'}</span>
+                                </div>
+                              </div>
+                              <div className="text-right ml-6">
+                                <div className="text-2xl font-bold text-blue-600 mb-2">${service.price} CAD</div>
+                                <Button 
+                                  size="sm" 
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => navigate(`/book?rcic=${selectedConsultant.id}&service=${service.id}`)}
+                                >
+                                  Book Now
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500">No services available at the moment</p>
+                        <p className="text-sm text-gray-400 mt-2">
+                          Please contact the consultant directly for service options.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
