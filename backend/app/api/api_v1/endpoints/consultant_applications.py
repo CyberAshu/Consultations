@@ -379,14 +379,17 @@ def _send_credentials_to_consultant(db: Client, db_application: Dict[str, Any]) 
         except Exception as create_error:
             create_error_str = str(create_error)
             print(f"Error creating user: {create_error_str}")
-            # If signups are disabled or restricted, send an admin invite instead
-            if "User not allowed" in create_error_str or "Signups not allowed" in create_error_str:
+            # If signups are disabled or restricted, try different approaches
+            if "User not allowed" in create_error_str or "Signups not allowed" in create_error_str or "signup is disabled" in create_error_str.lower():
+                print(f"User creation blocked by auth policy, trying invite method...")
+                
+                # Try the invite method with correct API format
                 try:
-                    invite_resp = db.auth.admin.invite_user_by_email(user_email, user_metadata={
-                        "name": db_application.get('full_legal_name'),
-                        "role": "rcic"
-                    })
-                    # Optional: send an informational email
+                    # Method 1: Try simple invite without metadata first
+                    invite_resp = db.auth.admin.invite_user_by_email(user_email)
+                    print(f"Successfully sent basic invite to {user_email}")
+                    
+                    # Send informational email since we can't include metadata in the invite
                     EmailService.send_email(
                         subject="You're invited to the RCIC Platform",
                         recipient=user_email,
@@ -394,22 +397,94 @@ def _send_credentials_to_consultant(db: Client, db_application: Dict[str, Any]) 
 <html>
 <body>
 <p>Dear {db_application.get('full_legal_name')},</p>
-<p>Your application has been approved. We've sent you an invitation email to set your password and activate your account.</p>
-<p><strong>Next steps:</strong> Please check your inbox (and spam) for an email from our platform and follow the link to complete your account setup.</p>
+<p>Your application has been approved! We've sent you an invitation email to create your account and set your password.</p>
+<p><strong>Next steps:</strong></p>
+<ul>
+<li>Check your inbox (and spam folder) for an email from our platform</li>
+<li>Click the invitation link to set your password</li>
+<li>Complete your account setup</li>
+<li>Access your RCIC dashboard</li></ul>
+<p><strong>Important:</strong> Your account will be set up with RCIC permissions once you complete the invitation process.</p>
 <p>Best regards,<br/>
-- Platform Team</p>
+The Platform Team</p>
 </body>
 </html>
 """
                     )
+                    
                     return {
                         "success": True,
-                        "message": "Invite email sent via Supabase Admin",
+                        "message": "Invitation email sent successfully. User will receive invite link to set password.",
                         "temp_password": None
                     }
+                    
                 except Exception as invite_error:
-                    print(f"Failed to send invite: {str(invite_error)}")
-                    # fallthrough to other branches
+                    invite_error_str = str(invite_error)
+                    print(f"Failed to send invite: {invite_error_str}")
+                    
+                    # Method 2: Try with redirect URL if simple invite fails
+                    try:
+                        from app.core.config import settings
+                        redirect_url = f"{settings.FRONTEND_URL}/auth/callback" if settings.FRONTEND_URL else None
+                        
+                        if redirect_url:
+                            invite_resp = db.auth.admin.invite_user_by_email(
+                                user_email,
+                                {"redirect_to": redirect_url}
+                            )
+                            print(f"Successfully sent invite with redirect to {user_email}")
+                            
+                            EmailService.send_email(
+                                subject="RCIC Platform Invitation",
+                                recipient=user_email,
+                                body=f"""
+<html>
+<body>
+<p>Dear {db_application.get('full_legal_name')},</p>
+<p>Welcome to the RCIC Platform! Your application has been approved.</p>
+<p>Please check your email for an invitation link to complete your account setup.</p>
+<p>Best regards,<br/>The Platform Team</p>
+</body>
+</html>
+"""
+                            )
+                            
+                            return {
+                                "success": True,
+                                "message": "Invitation sent with redirect URL",
+                                "temp_password": None
+                            }
+                    except Exception as redirect_error:
+                        print(f"Redirect invite also failed: {str(redirect_error)}")
+                    
+                    # Method 3: Manual fallback - send email with instructions
+                    print("All invite methods failed, falling back to manual email notification")
+                    EmailService.send_email(
+                        subject="RCIC Platform - Manual Account Setup Required",
+                        recipient=user_email,
+                        body=f"""
+<html>
+<body>
+<p>Dear {db_application.get('full_legal_name')},</p>
+<p>Your RCIC application has been approved! However, we encountered a technical issue with the automatic account creation.</p>
+<p><strong>Next Steps:</strong></p>
+<ol>
+<li>Visit our platform at: {settings.FRONTEND_URL if settings.FRONTEND_URL else '[Platform URL]'}</li>
+<li>Click "Sign Up" and register with this email: {user_email}</li>
+<li>Once registered, contact our support team to activate your RCIC permissions</li>
+</ol>
+<p>We apologize for this inconvenience and will have your account set up shortly.</p>
+<p>Best regards,<br/>The Platform Team</p>
+</body>
+</html>
+"""
+                    )
+                    
+                    return {
+                        "success": True,
+                        "message": "Manual setup instructions sent. User needs to register manually and contact support for RCIC role assignment.",
+                        "temp_password": "[Manual setup required]"
+                    }
             
             if "already been registered" in create_error_str or "User already registered" in create_error_str:
                 print("User already exists, attempting to find and update existing user")
