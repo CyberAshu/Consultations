@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from supabase import Client
 from datetime import datetime
+import json
 from app.schemas.consultant_application import (
     ConsultantApplicationCreate,
     ConsultantApplicationUpdate,
@@ -8,6 +9,26 @@ from app.schemas.consultant_application import (
 )
 
 class CRUDConsultantApplication:
+    def _process_json_fields(self, app: Dict[str, Any]) -> Dict[str, Any]:
+        """Process JSON fields to ensure they are properly parsed"""
+        json_fields = ['admin_notes', 'additional_documents', 'areas_of_expertise', 'other_languages', 'sections_requested']
+        
+        for field in json_fields:
+            if field in app and app[field] is not None:
+                if isinstance(app[field], str):
+                    try:
+                        app[field] = json.loads(app[field])
+                    except (json.JSONDecodeError, ValueError):
+                        # If parsing fails, leave as is or set default
+                        if field in ['admin_notes', 'additional_documents', 'areas_of_expertise', 'other_languages', 'sections_requested']:
+                            app[field] = []
+                        
+        # Ensure admin_notes is a list if it exists
+        if 'admin_notes' in app and app['admin_notes'] is not None:
+            if not isinstance(app['admin_notes'], list):
+                app['admin_notes'] = []
+                
+        return app
     def create(self, db: Client, *, obj_in: ConsultantApplicationCreate | ConsultantApplicationInitialCreate) -> Dict[str, Any]:
         """Create a new consultant application"""
         try:
@@ -60,6 +81,8 @@ class CRUDConsultantApplication:
         response = db.table("consultant_applications").select("*").eq("id", id).execute()
         if response.data:
             app = response.data[0]
+            # Process JSON fields
+            app = self._process_json_fields(app)
             # Provide default values for new fields if they don't exist
             for i in range(1, 8):
                 field_name = f"section_{i}_completed"
@@ -73,6 +96,8 @@ class CRUDConsultantApplication:
         response = db.table("consultant_applications").select("*").eq("email", email).execute()
         if response.data:
             app = response.data[0]
+            # Process JSON fields
+            app = self._process_json_fields(app)
             # Provide default values for new fields if they don't exist
             for i in range(1, 8):
                 field_name = f"section_{i}_completed"
@@ -86,6 +111,8 @@ class CRUDConsultantApplication:
         response = db.table("consultant_applications").select("*").eq("rcic_license_number", rcic_number).execute()
         if response.data:
             app = response.data[0]
+            # Process JSON fields
+            app = self._process_json_fields(app)
             # Provide default values for new fields if they don't exist
             for i in range(1, 8):
                 field_name = f"section_{i}_completed"
@@ -110,12 +137,15 @@ class CRUDConsultantApplication:
             
         response = query.range(skip, skip + limit - 1).execute()
         if response.data:
-            # Provide default values for new fields if they don't exist
-            for app in response.data:
-                for i in range(1, 8):
-                    field_name = f"section_{i}_completed"
-                    if field_name not in app or app[field_name] is None:
-                        app[field_name] = False
+            # Process JSON fields and provide default values for new fields if they don't exist
+            for i, app in enumerate(response.data):
+                # Process JSON fields
+                response.data[i] = self._process_json_fields(app)
+                # Provide default values for section completion fields
+                for j in range(1, 8):
+                    field_name = f"section_{j}_completed"
+                    if field_name not in response.data[i] or response.data[i][field_name] is None:
+                        response.data[i][field_name] = False
         return response.data if response.data else []
 
     def update(
@@ -138,7 +168,13 @@ class CRUDConsultantApplication:
                 update_dict[key] = value.isoformat()
         
         response = db.table("consultant_applications").update(update_dict).eq("id", db_obj["id"]).execute()
-        return response.data[0] if response.data else {}
+        
+        if response.data:
+            updated_app = response.data[0]
+            # Process JSON fields
+            updated_app = self._process_json_fields(updated_app)
+            return updated_app
+        return {}
 
     def approve(self, db: Client, *, db_obj: Dict[str, Any]) -> Dict[str, Any]:
         """Approve a consultant application"""

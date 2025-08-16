@@ -761,7 +761,7 @@ def update_admin_notes(
     current_admin: dict = Depends(deps.get_current_admin_user)
 ):
     """
-    Update admin notes for an application (Admin only)
+    Add a new admin note with timestamp for an application (Admin only)
     """
     # Check if application exists
     db_application = consultant_application.get(db=db, id=application_id)
@@ -771,9 +771,22 @@ def update_admin_notes(
             detail="Consultant application not found"
         )
     
+    # Get existing notes or initialize empty list
+    existing_notes = db_application.get('admin_notes', []) or []
+    
+    # Create new note with timestamp
+    new_note = {
+        'text': admin_notes,
+        'timestamp': datetime.now().isoformat(),
+        'author': current_admin.get('email', 'admin')
+    }
+    
+    # Append new note to existing notes
+    updated_notes = existing_notes + [new_note]
+    
     # Update admin notes
     update_data = ConsultantApplicationUpdate(
-        admin_notes=admin_notes,
+        admin_notes=updated_notes,
         reviewed_by=current_admin.get('email', 'admin'),
         reviewed_at=datetime.now()
     )

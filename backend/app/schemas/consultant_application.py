@@ -88,7 +88,7 @@ class ConsultantApplicationInitialCreate(BaseModel):
 class ConsultantApplicationUpdate(BaseModel):
     # Admin fields
     status: Optional[str] = None
-    admin_notes: Optional[str] = None
+    admin_notes: Optional[List[dict]] = None  # [{'text': str, 'timestamp': str, 'author': str}]
     additional_documents: Optional[List[dict]] = None  # [{'filename': str, 'original_name': str, 'file_path': str, 'uploaded_by': str, 'uploaded_at': str}]
     reviewed_by: Optional[str] = None
     reviewed_at: Optional[datetime] = None
@@ -158,7 +158,7 @@ class ConsultantApplicationUpdate(BaseModel):
 class ConsultantApplicationInDB(ConsultantApplicationBase):
     id: int
     # Admin fields
-    admin_notes: Optional[str] = None
+    admin_notes: Optional[List[dict]] = None  # [{'text': str, 'timestamp': str, 'author': str}]
     additional_documents: Optional[List[dict]] = None
     reviewed_by: Optional[str] = None
     reviewed_at: Optional[datetime] = None
