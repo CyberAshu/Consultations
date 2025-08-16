@@ -41,6 +41,7 @@ export function AdminDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [adminNotes, setAdminNotes] = useState('')
+  const [newNote, setNewNote] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadConsultantApplications = async () => {
@@ -80,13 +81,12 @@ export function AdminDashboard() {
   const handleViewDetails = async (application: any) => {
     // Open modal with a spinner state using the known data, then fetch fresh data
     setSelectedApplication(application)
-    setAdminNotes(application.admin_notes || '')
+    setNewNote('')  // Reset new note input
     setShowApplicationModal(true)
     try {
       setLoading(true)
       const fresh = await consultantApplicationService.getApplicationById(application.id)
       setSelectedApplication(fresh)
-      setAdminNotes(fresh.admin_notes || '')
     } catch (e) {
       console.error('Failed to fetch latest application details', e)
     } finally {
@@ -211,20 +211,22 @@ export function AdminDashboard() {
     }
   }
 
-  // Handler for saving admin notes
-  const handleSaveAdminNotes = async () => {
-    if (!selectedApplication) return
+  // Handler for adding a new admin note
+  const handleAddAdminNote = async () => {
+    if (!selectedApplication || !newNote.trim()) return
     
     try {
       setLoading(true)
-      await consultantApplicationService.updateAdminNotes(selectedApplication.id, adminNotes)
+      const updatedApplication = await consultantApplicationService.updateAdminNotes(selectedApplication.id, newNote.trim())
       // Update the selected application
-      setSelectedApplication({ ...selectedApplication, admin_notes: adminNotes })
+      setSelectedApplication(updatedApplication)
+      // Clear the new note input
+      setNewNote('')
       // Also reload the applications list
       await loadConsultantApplications()
     } catch (error) {
-      console.error('Error saving admin notes:', error)
-      setError('Failed to save admin notes')
+      console.error('Error adding admin note:', error)
+      setError('Failed to add admin note')
     } finally {
       setLoading(false)
     }
@@ -1447,29 +1449,53 @@ export function AdminDashboard() {
                       <FileText className="h-5 w-5" />
                       Admin Notes
                     </h3>
-                    <textarea 
-                      className="w-full border border-gray-300 rounded-md p-3 text-sm min-h-[100px]"
-                      placeholder="Add internal notes about this application..."
-                      value={adminNotes}
-                      onChange={(e) => setAdminNotes(e.target.value)}
-                    />
-                    <div className="mt-3 flex gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={handleSaveAdminNotes}
-                        disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        {loading ? 'Saving...' : 'Save Notes'}
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setAdminNotes(selectedApplication.admin_notes || '')}
-                      >
-                        Reset
-                      </Button>
+                    
+                    {/* Existing Notes Display */}
+                    <div className="mb-4 max-h-60 overflow-y-auto">
+                      {selectedApplication.admin_notes && Array.isArray(selectedApplication.admin_notes) && selectedApplication.admin_notes.length > 0 ? (
+                        <div className="space-y-3">
+                          {selectedApplication.admin_notes.map((note: any, index: number) => (
+                            <div key={index} className="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-gray-600">
+                                  By {note.author} at {new Date(note.timestamp).toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 bg-white p-3 rounded border text-center">No admin notes yet</p>
+                      )}
+                    </div>
+                    
+                    {/* Add New Note */}
+                    <div className="border-t border-blue-200 pt-4">
+                      <textarea 
+                        className="w-full border border-gray-300 rounded-md p-3 text-sm min-h-[80px]"
+                        placeholder="Add a new internal note about this application..."
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                      />
+                      <div className="mt-3 flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={handleAddAdminNote}
+                          disabled={loading || !newNote.trim()}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          {loading ? 'Adding...' : 'Add Note'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setNewNote('')}
+                        >
+                          Clear
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

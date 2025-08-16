@@ -128,7 +128,7 @@ class ConsultantApplicationService {
     }>(`/consultant-applications/${applicationId}/additional-documents`, formData);
   }
 
-  // Update admin notes (Admin only)
+  // Add admin note with timestamp (Admin only)
   async updateAdminNotes(applicationId: number, adminNotes: string): Promise<ConsultantApplication> {
     const formData = new FormData();
     formData.append('admin_notes', adminNotes);

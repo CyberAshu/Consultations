@@ -347,7 +347,11 @@ export interface ConsultantApplication {
   updated_at?: string;
   
   // Admin fields
-  admin_notes?: string;
+  admin_notes?: Array<{
+    text: string;
+    timestamp: string;
+    author: string;
+  }>;
   additional_documents?: Array<{
     filename: string;
     original_name: string;
