@@ -48,26 +48,37 @@ class StorageService:
             The file path in storage
         """
         try:
+            print(f"🔍 StorageService: Starting upload for file: {file.filename}")
+            print(f"🔍 StorageService: File content type: {file.content_type}")
+            print(f"🔍 StorageService: Upload folder: {folder}, prefix: {prefix}")
+            
+            # Ensure bucket exists before uploading
+            if not self.create_bucket_if_not_exists():
+                print(f"⚠️ StorageService: Warning - Bucket creation/check failed, continuing anyway")
+            
             # Validate file type
             if not self._validate_file_type(file):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"File type not allowed. Allowed types: PDF, JPG, JPEG, PNG, DOC, DOCX"
-                )
+                error_msg = f"File type not allowed. Allowed types: PDF, JPG, JPEG, PNG, DOC, DOCX"
+                print(f"❌ StorageService: {error_msg}")
+                raise HTTPException(status_code=400, detail=error_msg)
             
             # Validate file size (10MB limit)
             file_content = await file.read()
-            if len(file_content) > 10 * 1024 * 1024:  # 10MB
-                raise HTTPException(
-                    status_code=400,
-                    detail="File size too large. Maximum size is 10MB"
-                )
+            file_size = len(file_content)
+            print(f"🔍 StorageService: File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
+            
+            if file_size > 10 * 1024 * 1024:  # 10MB
+                error_msg = "File size too large. Maximum size is 10MB"
+                print(f"❌ StorageService: {error_msg}")
+                raise HTTPException(status_code=400, detail=error_msg)
             
             # Generate unique filename
             unique_filename = self._generate_unique_filename(file.filename or "document", prefix)
             file_path = f"{folder}/{unique_filename}"
+            print(f"🔍 StorageService: Generated file path: {file_path}")
             
             # Upload to Supabase Storage
+            print(f"🔄 StorageService: Uploading to bucket '{self.bucket_name}'...")
             response = self.supabase.storage.from_(self.bucket_name).upload(
                 path=file_path,
                 file=file_content,
@@ -76,15 +87,27 @@ class StorageService:
                 }
             )
             
-            if response.status_code not in [200, 201]:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to upload file: {response.json()}"
-                )
+            print(f"🔍 StorageService: Upload response status: {getattr(response, 'status_code', 'Unknown')}")
+            print(f"🔍 StorageService: Upload response: {response}")
             
+            # Check if upload was successful
+            status_code = getattr(response, 'status_code', None)
+            if status_code and status_code not in [200, 201]:
+                error_detail = f"Failed to upload file: {response}"
+                print(f"❌ StorageService: {error_detail}")
+                raise HTTPException(status_code=500, detail=error_detail)
+            
+            # For some Supabase SDK versions, success is indicated differently
+            if hasattr(response, 'error') and response.error:
+                error_detail = f"Upload failed with error: {response.error}"
+                print(f"❌ StorageService: {error_detail}")
+                raise HTTPException(status_code=500, detail=error_detail)
+            
+            print(f"✅ StorageService: File uploaded successfully to: {file_path}")
             return file_path
             
         except Exception as e:
+            print(f"❌ StorageService: Exception during upload: {type(e).__name__}: {str(e)}")
             if isinstance(e, HTTPException):
                 raise e
             raise HTTPException(

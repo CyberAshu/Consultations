@@ -28,6 +28,7 @@ export function BookingFlow() {
   const [searchParams] = useSearchParams()
   const [currentStep, setCurrentStep] = useState(1)
   const [showFloatingSummary, setShowFloatingSummary] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
   const [bookingData, setBookingData] = useState<any>({
     rcic: null,
     service: null,
@@ -89,7 +90,10 @@ export function BookingFlow() {
   const handleNext = async () => {
     if (currentStep === 4) {
       // Create actual booking when moving from step 4 to 5
+      if (isCompleting) return // Prevent duplicate submissions
+      
       try {
+        setIsCompleting(true)
         await createActualBooking()
         setCurrentStep(currentStep + 1)
       } catch (error) {
@@ -99,6 +103,8 @@ export function BookingFlow() {
           errorMessage = error.message
         }
         alert(`Booking Error: ${errorMessage}`)
+      } finally {
+        setIsCompleting(false)
       }
     } else if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
@@ -158,13 +164,44 @@ export function BookingFlow() {
         ...(Array.isArray(intake.optionalUploads) ? intake.optionalUploads : [])
       ]
 
+      console.log('🔍 BookingFlow: Starting file upload process...')
+      console.log('🔍 BookingFlow: Total files to upload:', allFiles.length)
+      console.log('🔍 BookingFlow: intake object structure:', intake)
+      console.log('🔍 BookingFlow: uploadedFiles array:', intake.uploadedFiles)
+      console.log('🔍 BookingFlow: optionalUploads array:', intake.optionalUploads)
+      console.log('🔍 BookingFlow: allFiles array:', allFiles)
+      
       for (const f of allFiles) {
-        if (f?.file instanceof File) {
-          await bookingService.uploadBookingDocument(createdBooking.id, f.file)
+        console.log('🔍 BookingFlow: Processing file:', {
+          id: f.id,
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          hasFile: !!f.file,
+          fileType: f.file ? f.file.constructor.name : 'No file',
+          isFileInstance: f.file instanceof File,
+          fileObject: f.file,
+          entireFileObject: f
+        })
+        
+        // Fix: Check if f.file exists and is a File instance
+        if (f && f.file && f.file instanceof File) {
+          console.log('✅ BookingFlow: Uploading file:', f.name)
+          try {
+            const uploadResult = await bookingService.uploadBookingDocument(createdBooking.id, f.file)
+            console.log('✅ BookingFlow: File uploaded successfully:', uploadResult)
+          } catch (fileUploadError) {
+            console.error('❌ BookingFlow: Failed to upload file:', f.name, fileUploadError)
+            // Continue with other files even if one fails
+          }
+        } else {
+          console.warn('⚠️ BookingFlow: Skipping invalid file object:', f)
         }
       }
+      
+      console.log('✅ BookingFlow: File upload process completed')
     } catch (uploadErr) {
-      console.error('Some files failed to upload:', uploadErr)
+      console.error('❌ BookingFlow: File upload process failed:', uploadErr)
       // Proceed even if uploads fail; optionally show a non-blocking alert
     }
 
@@ -323,11 +360,15 @@ export function BookingFlow() {
                 </div>
                 <Button
                   onClick={handleNext}
-                  disabled={!canProceed()}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  disabled={!canProceed() || isCompleting}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {currentStep === 4 ? 'Complete Booking' : 'Next Step'}
-                  <ArrowRight className="h-4 w-4" />
+                  {currentStep === 4 ? (isCompleting ? 'Completing...' : 'Complete Booking') : 'Next Step'}
+                  {isCompleting ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <ArrowRight className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>

@@ -97,9 +97,12 @@ export function useRealtimeBookingUpdates(
 
   // Polling fallback function
   const startPolling = useCallback(async () => {
-    if (!enabled || !bookings.length) return
+    if (!enabled || !bookings.length) {
+      console.log(`❌ Polling not started: enabled=${enabled}, bookings.length=${bookings.length}`)
+      return
+    }
 
-    console.log('🔄 Starting polling for booking updates...')
+    console.log(`🔄 Starting polling for ${bookings.length} booking updates...`)
     setConnectionType('polling')
     setIsConnected(true)
 
@@ -110,7 +113,12 @@ export function useRealtimeBookingUpdates(
 
         // Poll each booking individually
         for (const booking of bookings) {
-          const response = await fetch(`/api/v1/events/booking-status/${booking.id}`, {
+          // Use the same URL pattern as the API service
+          const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+          const url = `${API_BASE_URL}/events/booking-status/${booking.id}`;
+          console.log(`🔍 Polling booking ${booking.id} at: ${url}`);
+          
+          const response = await fetch(url, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -118,13 +126,20 @@ export function useRealtimeBookingUpdates(
           })
 
           if (response.ok) {
-            const data = await response.json()
-            
-            // Check if status changed since last known status
-            if (data.status !== booking.status) {
-              console.log(`📝 Status update detected: Booking ${booking.id} changed from ${booking.status} to ${data.status}`)
-              onBookingUpdate?.(booking.id, data.status)
+            try {
+              const data = await response.json()
+              
+              // Check if status changed since last known status
+              if (data.status !== booking.status) {
+                console.log(`📝 Status update detected: Booking ${booking.id} changed from ${booking.status} to ${data.status}`)
+                onBookingUpdate?.(booking.id, data.status)
+              }
+            } catch (parseError) {
+              console.error(`❌ Failed to parse response for booking ${booking.id}:`, parseError)
+              console.error('❌ Response was not valid JSON. Response status:', response.status)
             }
+          } else {
+            console.error(`❌ Polling failed for booking ${booking.id}: ${response.status} ${response.statusText}`)
           }
         }
       } catch (error) {
@@ -157,7 +172,8 @@ export function useRealtimeBookingUpdates(
       console.log('🔑 Token available, attempting SSE connection...')
       // Note: EventSource doesn't support custom headers directly
       // We need to pass the token as a query parameter or use a different approach
-      const sseUrl = `/api/v1/events/booking-updates?token=${encodeURIComponent(token)}`
+      const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const sseUrl = `${API_BASE_URL}/events/booking-updates?token=${encodeURIComponent(token)}`
       console.log('🌐 SSE URL:', sseUrl)
       const eventSource = new EventSource(sseUrl)
       
@@ -206,7 +222,10 @@ export function useRealtimeBookingUpdates(
         if (fallbackToPolling) {
           console.log('🔄 Falling back to polling...')
           cleanup()
-          setTimeout(startPolling, 1000) // Wait 1 second before starting polling
+          setTimeout(() => {
+            console.log('🗓️ Timeout completed, calling startPolling...')
+            startPolling()
+          }, 1000) // Wait 1 second before starting polling
         } else {
           onError?.('Real-time connection lost')
         }
@@ -220,6 +239,7 @@ export function useRealtimeBookingUpdates(
       // Fallback to polling if SSE setup fails
       if (fallbackToPolling) {
         console.log('🔄 SSE failed, falling back to polling...')
+        console.log('🗓️ Immediately calling startPolling...')
         startPolling()
       } else {
         onError?.('Failed to establish real-time connection')
@@ -276,15 +296,22 @@ export function useBookingStatusPolling(
         const token = authService.getToken()
         if (!token) return
 
-        const response = await fetch(`/api/v1/events/booking-status/${bookingId}`, {
+        const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+        const response = await fetch(`${API_BASE_URL}/events/booking-status/${bookingId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         })
 
         if (response.ok) {
-          const data = await response.json()
-          onStatusUpdate(data.status)
+          try {
+            const data = await response.json()
+            onStatusUpdate(data.status)
+          } catch (parseError) {
+            console.error(`❌ Failed to parse status response for booking ${bookingId}:`, parseError)
+          }
+        } else {
+          console.error(`❌ Status polling failed for booking ${bookingId}: ${response.status} ${response.statusText}`)
         }
       } catch (error) {
         console.error('Polling error:', error)

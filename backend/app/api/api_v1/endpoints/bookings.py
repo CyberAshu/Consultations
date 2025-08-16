@@ -153,33 +153,55 @@ async def upload_booking_document(
     """
     from app.services.storage_service import storage_service
     
+    print(f"🔍 BookingAPI: Document upload request for booking {booking_id}")
+    print(f"🔍 BookingAPI: File: {file.filename}, Size: {file.size}, Type: {file.content_type}")
+    print(f"🔍 BookingAPI: User: {current_user['id']} ({current_user['role']})")
+    
     booking = crud_booking.get_booking(db=db, booking_id=booking_id)
     if not booking:
+        print(f"❌ BookingAPI: Booking {booking_id} not found")
         raise HTTPException(status_code=404, detail="Booking not found")
     
     # Check permissions
     if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
+        print(f"❌ BookingAPI: Permission denied - client {current_user['id']} cannot access booking for client {booking['client_id']}")
         raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    print(f"✅ BookingAPI: Permission check passed")
     
     # Upload file to Supabase Storage
     try:
+        print(f"🔄 BookingAPI: Starting file upload to storage...")
         file_path = await storage_service.upload_file(
             file=file,
             folder=f"bookings/{booking_id}",
             prefix="doc"
         )
+        print(f"✅ BookingAPI: File uploaded to storage at: {file_path}")
         
+        # Note: file.read() has already been called in storage_service.upload_file()
+        # We need to get the file size differently or calculate it before upload
+        file_content = await file.read() if hasattr(file, 'read') else b''
+        file_size = len(file_content) if file_content else file.size
+        
+        # Reset file position for any subsequent reads
+        if hasattr(file, 'seek'):
+            await file.seek(0)
+            
+        print(f"🔍 BookingAPI: Creating database record...")
         # Create database record with storage path
         document_data = BookingDocumentCreate(
             booking_id=booking_id,
             file_name=file.filename or "document",
             file_path=file_path,
-            file_size=len(await file.read()) if hasattr(file, 'read') else None,
+            file_size=file_size,
             file_type=file.content_type
         )
         
         document = crud_booking.create_booking_document(db=db, obj_in=document_data)
-        return {
+        print(f"✅ BookingAPI: Database record created with ID: {document['id']}")
+        
+        result = {
             "id": document["id"],
             "booking_id": document["booking_id"],
             "file_name": document["file_name"],
@@ -189,8 +211,13 @@ async def upload_booking_document(
             "uploaded_at": document["uploaded_at"],
             "message": "File uploaded successfully"
         }
+        print(f"✅ BookingAPI: Document upload completed successfully")
+        return result
         
     except Exception as e:
+        print(f"❌ BookingAPI: Document upload failed: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"❌ BookingAPI: Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to upload document: {str(e)}"

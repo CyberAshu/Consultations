@@ -457,7 +457,46 @@ export function RCICDashboard() {
       return
     }
     
-    setSelectedIntakeData(intakeData)
+    // Debug logging to understand the data structure
+    console.log('🔍 Raw intake data:', intakeData)
+    console.log('🔍 Intake data type:', typeof intakeData)
+    console.log('🔍 Intake data keys:', Object.keys(intakeData))
+    console.log('🔍 Intake data JSON string:', JSON.stringify(intakeData, null, 2))
+    
+    // Check if data is already parsed object or needs parsing
+    let parsedIntakeData = intakeData
+    
+    if (typeof intakeData === 'string') {
+      try {
+        parsedIntakeData = JSON.parse(intakeData)
+        console.log('✅ Parsed intake data from string:', parsedIntakeData)
+      } catch (error) {
+        console.error('❌ Failed to parse intake form JSON:', error)
+        console.log('Raw string data:', intakeData)
+      }
+    } else if (typeof intakeData === 'object' && intakeData !== null) {
+      // Check if this object has nested JSON strings that need parsing
+      console.log('🔍 Processing object intake data...')
+      Object.keys(intakeData).forEach(key => {
+        const value = intakeData[key]
+        console.log(`🔍 Field '${key}':`, typeof value, value)
+        
+        // If value is a string that looks like JSON, try to parse it
+        if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))  ) {
+          try {
+            const parsed = JSON.parse(value)
+            console.log(`🔧 Parsed nested JSON for '${key}':`, parsed)
+            parsedIntakeData[key] = parsed
+          } catch (e) {
+            console.log(`⚠️ Could not parse '${key}' as JSON:`, e)
+          }
+        }
+      })
+      
+      console.log('✅ Final processed intake data:', parsedIntakeData)
+    }
+    
+    setSelectedIntakeData(parsedIntakeData)
     setSelectedClient(clientInfo)
     setShowIntakeModal(true)
   }
@@ -641,6 +680,9 @@ export function RCICDashboard() {
   }
 
   const handleStatusChange = async (bookingId: number, newStatus: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'delayed' | 'rescheduled') => {
+    // Prevent duplicate submissions
+    if (updatingStatus === bookingId) return
+    
     try {
       setUpdatingStatus(bookingId)
       setStatusUpdateError(null)
@@ -1548,14 +1590,45 @@ export function RCICDashboard() {
                   return null
                 }
 
+                // Helper function to render complex objects properly
+                const renderValue = (val: any): React.ReactNode => {
+                  if (typeof val === 'string') {
+                    return val
+                  }
+                  if (typeof val === 'number') {
+                    return val.toString()
+                  }
+                  if (typeof val === 'boolean') {
+                    return val ? 'Yes' : 'No'
+                  }
+                  if (Array.isArray(val)) {
+                    return val.join(', ')
+                  }
+                  if (typeof val === 'object' && val !== null) {
+                    // For objects like previousApplications, render as a structured list
+                    return (
+                      <div className="space-y-1">
+                        {Object.entries(val).map(([subKey, subValue]) => (
+                          <div key={subKey} className="flex justify-between items-center">
+                            <span className="font-medium capitalize text-sm">
+                              {subKey.replace(/([A-Z])/g, ' $1').trim()}:
+                            </span>
+                            <span className="text-sm ml-2">
+                              {typeof subValue === 'boolean' ? (subValue ? 'Yes' : 'No') : String(subValue)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  }
+                  return String(val)
+                }
+
                 return (
                   <div key={key} className="bg-gray-50 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-2 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</h4>
                     <div className="text-sm text-gray-700">
-                      {typeof value === 'string' ? value : 
-                       typeof value === 'number' ? value :
-                       Array.isArray(value) ? value.join(', ') :
-                       JSON.stringify(value, null, 2)}
+                      {renderValue(value)}
                     </div>
                   </div>
                 )

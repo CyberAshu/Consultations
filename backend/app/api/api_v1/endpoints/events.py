@@ -122,15 +122,14 @@ async def stream_booking_updates(
     Works for both clients and RCICs.
     """
     # Handle authentication via query parameter for EventSource
-    if token:
-        try:
-            from app.api.deps import verify_token
-            current_user = verify_token(token)
-        except Exception as e:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    else:
-        # Fallback to standard dependency
-        current_user = Depends(deps.get_current_active_user)
+    if not token:
+        raise HTTPException(status_code=401, detail="Token is required for SSE connection")
+    
+    try:
+        from app.api.deps import verify_token
+        current_user = verify_token(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
     
     # Support both clients and RCICs
     if current_user["role"] not in ["client", "rcic"]:
@@ -141,7 +140,7 @@ async def stream_booking_updates(
     
     return StreamingResponse(
         get_booking_updates(user_id, user_role, db),
-        media_type="text/plain",
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",

@@ -11,7 +11,7 @@ router = APIRouter()
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-BUCKET_NAME = "consultant-files"
+BUCKET_NAME = "consultant-documents"
 
 def ensure_bucket_exists(db: Client, public: bool = True) -> None:
     """

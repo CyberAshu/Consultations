@@ -61,7 +61,67 @@ export function SessionDetailModal({
 
   if (!show || !booking) return null
 
-  const hasIntakeForm = booking.intake_form_data
+  // Parse intake form data if it's a string (JSON)
+  let parsedIntakeData = booking.intake_form_data
+  if (typeof booking.intake_form_data === 'string') {
+    try {
+      parsedIntakeData = JSON.parse(booking.intake_form_data)
+      console.log('✅ SessionDetailModal: Parsed intake data:', parsedIntakeData)
+    } catch (error) {
+      console.error('❌ SessionDetailModal: Failed to parse intake form JSON:', error)
+      console.log('Raw string data:', booking.intake_form_data)
+    }
+  }
+
+  // 🔥 ADDITIONAL NESTED JSON PARSING
+  // Some fields might still be JSON strings even after initial parsing
+  if (parsedIntakeData && typeof parsedIntakeData === 'object') {
+    console.log('🔍 SessionDetailModal: Checking for nested JSON strings...')
+    
+    // Function to recursively parse nested JSON strings
+    const parseNestedJson = (obj: any, path = ''): any => {
+      if (typeof obj === 'string' && (obj.startsWith('{') || obj.startsWith('['))) {
+        try {
+          const parsed = JSON.parse(obj)
+          console.log(`🔧 SessionDetailModal: Parsed nested JSON at '${path}':`, parsed)
+          return parseNestedJson(parsed, path) // Recursively parse in case there are more nested strings
+        } catch (e) {
+          console.log(`⚠️ SessionDetailModal: Could not parse '${path}' as JSON:`, e)
+          return obj
+        }
+      } else if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) {
+        // Process nested objects
+        const processed = { ...obj }
+        Object.keys(processed).forEach(key => {
+          const newPath = path ? `${path}.${key}` : key
+          processed[key] = parseNestedJson(processed[key], newPath)
+        })
+        return processed
+      } else if (Array.isArray(obj)) {
+        // Process arrays
+        return obj.map((item, index) => parseNestedJson(item, `${path}[${index}]`))
+      }
+      return obj
+    }
+    
+    // Apply recursive parsing
+    Object.keys(parsedIntakeData).forEach(key => {
+      parsedIntakeData[key] = parseNestedJson(parsedIntakeData[key], key)
+    })
+    
+    console.log('✅ SessionDetailModal: Final processed intake data:', parsedIntakeData)
+    
+    // 🔥 SPECIFIC DEBUGGING FOR FORM DATA
+    if (parsedIntakeData.formData) {
+      console.log('🔍 SessionDetailModal: formData contents:', parsedIntakeData.formData)
+      if (parsedIntakeData.formData.previousApplications) {
+        console.log('🔍 SessionDetailModal: previousApplications:', parsedIntakeData.formData.previousApplications)
+        console.log('🔍 SessionDetailModal: previousApplications type:', typeof parsedIntakeData.formData.previousApplications)
+      }
+    }
+  }
+
+  const hasIntakeForm = parsedIntakeData
   const hasDocuments = booking.documents && booking.documents.length > 0
   const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
 
@@ -136,9 +196,37 @@ export function SessionDetailModal({
   const handleOpenInNewTab = (file: any) => {
     if (!file) return
     
+    // 🔍 DEBUG: Log the file object to see what's available
+    console.log('🔍 SessionDetailModal: handleOpenInNewTab file object:', file)
+    console.log('🔍 SessionDetailModal: All file properties:', Object.keys(file))
+    console.log('🔍 SessionDetailModal: Full file object stringified:', JSON.stringify(file, null, 2))
+    console.log('🔍 SessionDetailModal: Available file properties:', {
+      // URLs
+      url: file.url,
+      file_url: file.file_url,
+      download_url: file.download_url,
+      file_path: file.file_path,
+      uploadedFileUrl: file.uploadedFileUrl,
+      src: file.src,
+      dataUrl: file.dataUrl,
+      fileUrl: file.fileUrl,
+      // Content
+      content: file.content ? 'Present' : 'Not present',
+      file_content: file.file_content ? 'Present' : 'Not present', 
+      data: file.data ? 'Present' : 'Not present',
+      base64Content: file.base64Content ? 'Present' : 'Not present',
+      base64: file.base64 ? 'Present' : 'Not present',
+      fileData: file.fileData ? 'Present' : 'Not present',
+      result: file.result ? 'Present' : 'Not present',
+      // Other potential fields
+      blob: file.blob ? 'Present' : 'Not present',
+      arrayBuffer: file.arrayBuffer ? 'Present' : 'Not present'
+    })
+    
     const fileUrl = file.url || file.file_url || file.download_url || file.file_path || file.uploadedFileUrl
     
     if (fileUrl) {
+      console.log('✅ SessionDetailModal: Found file URL:', fileUrl)
       if (file.type?.startsWith('image/') || file.type === 'application/pdf') {
         window.open(fileUrl, '_blank')
       } else {
@@ -148,18 +236,27 @@ export function SessionDetailModal({
           alert('This file type cannot be opened in a new tab. Please download it to view.')
         }
       }
-    } else if (file.content || file.file_content || file.data) {
+    } else if (file.content || file.file_content || file.data || file.base64Content) {
+      console.log('✅ SessionDetailModal: Found file content, creating blob...')
       try {
-        const blob = new Blob([file.content || file.file_content || file.data], { 
+        const content = file.content || file.file_content || file.data || file.base64Content
+        const blob = new Blob([content], { 
           type: file.type || 'application/octet-stream' 
         })
         const url = window.URL.createObjectURL(blob)
         window.open(url, '_blank')
       } catch (err) {
+        console.error('❌ SessionDetailModal: Failed to create blob:', err)
         alert('Unable to open file preview. Please download the file to view.')
       }
     } else {
-      alert('File URL not available. This upload likely only saved metadata without a downloadable link.')
+      console.warn('⚠️ SessionDetailModal: No URL or content found for file')
+      // Check if this is an intake form file with only metadata
+      if (file.id && file.name && file.size && file.type && !file.url && !file.content) {
+        alert(`File "${file.name}" appears to be an intake form upload that only saved metadata.\n\nThis can happen when:\n• File upload was interrupted\n• File storage service was unavailable\n• File was uploaded but not properly stored\n\nPlease ask the client to re-upload this document.`)
+      } else {
+        alert('File URL not available. This upload likely only saved metadata without a downloadable link.')
+      }
     }
   }
 
@@ -276,85 +373,123 @@ export function SessionDetailModal({
           </div>
           
           {/* Additional Client Details from Intake Form */}
-          {hasIntakeForm && (
-            <div className="mt-4 pt-4 border-t border-blue-200">
-              <h4 className="text-md font-medium text-blue-900 mb-3">Personal Details</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {booking.intake_form_data.fullName && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Full Name</p>
-                    <p className="text-gray-900">{booking.intake_form_data.fullName}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.email && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Email</p>
-                    <p className="text-gray-900">{booking.intake_form_data.email}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.phone && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Phone</p>
-                    <p className="text-gray-900">{booking.intake_form_data.phone}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.dateOfBirth && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Date of Birth</p>
-                    <p className="text-gray-900">{new Date(booking.intake_form_data.dateOfBirth).toLocaleDateString()}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.nationality && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Nationality</p>
-                    <p className="text-gray-900">{booking.intake_form_data.nationality}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.currentCountry && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Current Country</p>
-                    <p className="text-gray-900">{booking.intake_form_data.currentCountry}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.maritalStatus && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Marital Status</p>
-                    <p className="text-gray-900">{booking.intake_form_data.maritalStatus}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.englishProficiency && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">English Proficiency</p>
-                    <p className="text-gray-900">{booking.intake_form_data.englishProficiency}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.educationLevel && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Education Level</p>
-                    <p className="text-gray-900">{booking.intake_form_data.educationLevel}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.workExperience && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Work Experience</p>
-                    <p className="text-gray-900">{booking.intake_form_data.workExperience} years</p>
-                  </div>
-                )}
-                {booking.intake_form_data.currentJob && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Current Job</p>
-                    <p className="text-gray-900">{booking.intake_form_data.currentJob}</p>
-                  </div>
-                )}
-                {booking.intake_form_data.immigrationGoal && (
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <p className="text-sm font-medium text-gray-700">Immigration Goal</p>
-                    <p className="text-gray-900">{booking.intake_form_data.immigrationGoal}</p>
-                  </div>
-                )}
+          {hasIntakeForm && (() => {
+            // Helper function to get field value from either root or formData
+            const getField = (fieldName: string) => {
+              return parsedIntakeData[fieldName] || parsedIntakeData.formData?.[fieldName]
+            }
+            
+            return (
+              <div className="mt-4 pt-4 border-t border-blue-200">
+                <h4 className="text-md font-medium text-blue-900 mb-3">Personal Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getField('fullName') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Full Name</p>
+                      <p className="text-gray-900">{getField('fullName')}</p>
+                    </div>
+                  )}
+                  {getField('email') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Email</p>
+                      <p className="text-gray-900">{getField('email')}</p>
+                    </div>
+                  )}
+                  {getField('phone') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Phone</p>
+                      <p className="text-gray-900">{getField('phone')}</p>
+                    </div>
+                  )}
+                  {getField('dateOfBirth') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Date of Birth</p>
+                      <p className="text-gray-900">{new Date(getField('dateOfBirth')).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  {getField('nationality') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Nationality</p>
+                      <p className="text-gray-900">{getField('nationality')}</p>
+                    </div>
+                  )}
+                  {getField('currentCountry') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Current Country</p>
+                      <p className="text-gray-900">{getField('currentCountry')}</p>
+                    </div>
+                  )}
+                  {getField('maritalStatus') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Marital Status</p>
+                      <p className="text-gray-900">{getField('maritalStatus')}</p>
+                    </div>
+                  )}
+                  {getField('englishProficiency') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">English Proficiency</p>
+                      <p className="text-gray-900">{getField('englishProficiency')}</p>
+                    </div>
+                  )}
+                  {getField('educationLevel') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Education Level</p>
+                      <p className="text-gray-900">{getField('educationLevel')}</p>
+                    </div>
+                  )}
+                  {getField('workExperience') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Work Experience</p>
+                      <p className="text-gray-900">{getField('workExperience')} years</p>
+                    </div>
+                  )}
+                  {getField('currentJob') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Current Job</p>
+                      <p className="text-gray-900">{getField('currentJob')}</p>
+                    </div>
+                  )}
+                  {getField('immigrationGoal') && (
+                    <div className="md:col-span-2 lg:col-span-3">
+                      <p className="text-sm font-medium text-gray-700">Immigration Goal</p>
+                      <p className="text-gray-900">{getField('immigrationGoal')}</p>
+                    </div>
+                  )}
+                  {getField('immigrationStatus') && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Immigration Status</p>
+                      <p className="text-gray-900">{getField('immigrationStatus')}</p>
+                    </div>
+                  )}
+                  {getField('specificQuestions') && (
+                    <div className="md:col-span-2 lg:col-span-3">
+                      <p className="text-sm font-medium text-gray-700">Specific Questions</p>
+                      <p className="text-gray-900">{getField('specificQuestions')}</p>
+                    </div>
+                  )}
+                  {getField('previousApplications') && (
+                    <div className="md:col-span-2 lg:col-span-3">
+                      <p className="text-sm font-medium text-gray-700">Previous Applications</p>
+                      <div className="text-gray-900 grid grid-cols-2 gap-2 mt-1">
+                        {Object.entries(getField('previousApplications') as any).map(([key, value]) => (
+                          <div key={key} className="flex justify-between items-center text-sm">
+                            <span className="font-medium capitalize">
+                              {key.replace(/([A-Z])/g, ' $1').trim()}:
+                            </span>
+                            <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                              value ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {value ? 'Yes' : 'No'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
 
         {/* Session Overview */}
@@ -456,11 +591,18 @@ export function SessionDetailModal({
               <>
                 <Button 
                   size="sm" 
-                  className="bg-green-600 hover:bg-green-700" 
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50" 
                   onClick={() => onStatusChange(booking.id, 'completed')} 
                   disabled={updatingStatus === booking.id}
                 >
-                  {updatingStatus === booking.id ? 'Updating...' : 'Mark Complete'}
+                  {updatingStatus === booking.id ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Completing...
+                    </span>
+                  ) : (
+                    'Mark Complete'
+                  )}
                 </Button>
                 <Button 
                   size="sm" 
@@ -498,20 +640,30 @@ export function SessionDetailModal({
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <h3 className="text-lg font-semibold text-blue-900 mb-3">Intake Form Data</h3>
               <div className="space-y-3">
-                {booking.intake_form_data.completed !== undefined && (
+                {parsedIntakeData.completed !== undefined && (
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Status:</span>
-                    <Badge className={booking.intake_form_data.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                      {booking.intake_form_data.completed ? 'Completed' : 'In Progress'}
+                    <Badge className={parsedIntakeData.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                      {parsedIntakeData.completed ? 'Completed' : 'In Progress'}
                     </Badge>
                   </div>
                 )}
                 
-                {booking.intake_form_data.uploadedFiles && booking.intake_form_data.uploadedFiles.length > 0 && (
+                {parsedIntakeData.uploadedFiles && parsedIntakeData.uploadedFiles.length > 0 && (
                   <div>
-                    <span className="font-medium text-green-700">Required Documents ({booking.intake_form_data.uploadedFiles.length}):</span>
+                    <span className="font-medium text-green-700">Required Documents ({parsedIntakeData.uploadedFiles.length}):</span>
                     <div className="mt-2 space-y-2">
-                      {booking.intake_form_data.uploadedFiles.map((file: any) => (
+                    {parsedIntakeData.uploadedFiles.map((file: any) => {
+                      // Enhanced file object for intake form files
+                      const enhancedFile = {
+                        ...file,
+                        // Note: intake form files don't have URLs initially
+                        // They need to be retrieved from the booking documents API
+                        needsUrlGeneration: true,
+                        source: 'intake_form'
+                      }
+                      
+                      return (
                         <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-green-600" />
@@ -522,6 +674,9 @@ export function SessionDetailModal({
                                   ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
                                   : `${Math.round(file.size / 1024)} KB`
                                 }
+                                {!file.url && !file.content && (
+                                  <span className="ml-2 text-amber-600">(Metadata only)</span>
+                                )}
                               </p>
                             </div>
                           </div>
@@ -530,7 +685,7 @@ export function SessionDetailModal({
                               size="sm" 
                               variant="outline" 
                               className="h-6 px-2 text-xs"
-                              onClick={() => handleViewDocumentInternal(file)}
+                              onClick={() => handleViewDocumentInternal(enhancedFile)}
                             >
                               View
                             </Button>
@@ -538,33 +693,71 @@ export function SessionDetailModal({
                               size="sm" 
                               variant="outline" 
                               className="h-6 px-2 text-xs"
-                              onClick={() => onDownloadDocument(file)}
+                              onClick={() => onDownloadDocument(enhancedFile)}
                             >
                               Download
                             </Button>
                           </div>
                         </div>
-                      ))}
+                      )
+                    })}
                     </div>
                   </div>
                 )}
 
-                {/* Other form fields */}
-                {Object.entries(booking.intake_form_data).map(([key, value]) => {
-                  if (['method', 'completed', 'uploadedFiles', 'optionalUploads'].includes(key)) {
+                {/* Other form fields - exclude formData since it's already shown in Personal Details */}
+                {Object.entries(parsedIntakeData).map(([key, value]) => {
+                  // Skip fields that are already shown elsewhere or are structural
+                  if (['method', 'completed', 'uploadedFiles', 'optionalUploads', 'formData'].includes(key)) {
                     return null
                   }
                   if (!value || (Array.isArray(value) && value.length === 0)) {
                     return null
                   }
+
+                  // Helper function to render complex objects properly
+                  const renderValue = (val: any): React.ReactNode => {
+                    if (typeof val === 'string') {
+                      return val
+                    }
+                    if (typeof val === 'number') {
+                      return val.toString()
+                    }
+                    if (typeof val === 'boolean') {
+                      return val ? 'Yes' : 'No'
+                    }
+                    if (Array.isArray(val)) {
+                      return val.join(', ')
+                    }
+                    if (typeof val === 'object' && val !== null) {
+                      // For objects, render as a nicely formatted list
+                      return (
+                        <div className="ml-4 mt-1 bg-white rounded p-2 border">
+                          {Object.entries(val).map(([subKey, subValue]) => (
+                            <div key={subKey} className="flex justify-between items-center text-xs mb-1 last:mb-0">
+                              <span className="font-medium capitalize text-gray-700">
+                                {subKey.replace(/([A-Z])/g, ' $1').trim()}:
+                              </span>
+                              <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                                typeof subValue === 'boolean' 
+                                  ? (subValue ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600')
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {typeof subValue === 'boolean' ? (subValue ? 'Yes' : 'No') : String(subValue)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    }
+                    return String(val)
+                  }
+
                   return (
                     <div key={key}>
                       <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
                       <span className="ml-2">
-                        {typeof value === 'string' ? value : 
-                         typeof value === 'number' ? value :
-                         Array.isArray(value) ? value.join(', ') :
-                         JSON.stringify(value)}
+                        {renderValue(value)}
                       </span>
                     </div>
                   )
