@@ -325,20 +325,51 @@ export function RCICDashboard() {
       status: booking.status === 'confirmed' ? 'upcoming' : booking.status
     }))
 
-  // All sessions from real booking data
-  const allSessions = bookings.map(booking => ({
-    id: booking.id,
-    client: clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`,
-    date: new Date(booking.booking_date || booking.scheduled_date || '').toDateString() === today ? 'Today' : 
-          new Date(booking.booking_date || booking.scheduled_date || '').toLocaleDateString(),
-    time: new Date(booking.booking_date || booking.scheduled_date || '').toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit', 
-      hour12: true 
-    }),
-    service: booking.service_type || `Service #${booking.service_id}`,
-    status: booking.status === 'confirmed' ? 'upcoming' : booking.status
-  }))
+  // Time-based session categorization logic
+  const categorizeBookingsByTime = (bookings: Booking[]) => {
+    const now = new Date()
+    const categories = {
+      upcoming: [] as Booking[],
+      ongoing: [] as Booking[],
+      completed: [] as Booking[],
+      past: [] as Booking[]
+    }
+
+    bookings.forEach(booking => {
+      const bookingTime = new Date(booking.booking_date || booking.scheduled_date || '')
+      const sessionEndTime = new Date(bookingTime.getTime() + (booking.duration_minutes * 60 * 1000))
+      
+      // Categorize based on time and status
+      if (booking.status === 'completed') {
+        categories.completed.push(booking)
+      } else if (booking.status === 'cancelled') {
+        categories.past.push(booking)
+      } else if (bookingTime > now) {
+        // Future sessions
+        categories.upcoming.push(booking)
+      } else if (bookingTime <= now && sessionEndTime > now) {
+        // Currently happening
+        categories.ongoing.push(booking)
+      } else {
+        // Past sessions (time has passed but not completed)
+        categories.past.push(booking)
+      }
+    })
+
+    // Sort each category by date
+    Object.keys(categories).forEach(key => {
+      categories[key as keyof typeof categories].sort((a, b) => {
+        const dateA = new Date(a.booking_date || a.scheduled_date || '')
+        const dateB = new Date(b.booking_date || b.scheduled_date || '')
+        return key === 'upcoming' ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime()
+      })
+    })
+
+    return categories
+  }
+
+  // Categorized sessions
+  const categorizedSessions = categorizeBookingsByTime(bookings)
 
   useEffect(() => {
     if (!consultant) return;
@@ -884,239 +915,648 @@ export function RCICDashboard() {
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Today's Appointments */}
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  Today's Appointments
-                </h2>
-                <div className="space-y-4">
-                  {!initialBookingsLoaded ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-                      <p className="text-gray-500">Loading appointments...</p>
-                    </div>
-                  ) : todayAppointments.length > 0 ? (
-                    todayAppointments.map((appointment) => (
-                      <div key={appointment.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4">
-                          <Clock className="h-5 w-5 text-gray-400" />
-                          <div>
-                            <p className="font-medium text-gray-900">{appointment.time}</p>
-                            <p className="text-sm text-gray-600">{appointment.client}</p>
-                            <p className="text-xs text-gray-500">{appointment.service}</p>
-                          </div>
+            {!initialBookingsLoaded ? (
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                <CardContent className="p-6">
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
+                    <p className="text-gray-500">Loading dashboard...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Key Metrics Overview */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Clock className="h-5 w-5 text-blue-600" />
                         </div>
-                        <Badge
-                          className={
-                            appointment.status === 'upcoming' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-green-100 text-green-800'
-                          }
-                        >
-                          {appointment.status}
-                        </Badge>
+                        <div>
+                          <p className="text-sm font-medium text-blue-600">Upcoming</p>
+                          <p className="text-2xl font-bold text-blue-700">{categorizedSessions.upcoming.length}</p>
+                        </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-500">No appointments scheduled for today</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                      <p className="text-xs text-blue-600 mt-2">
+                        {categorizedSessions.upcoming.filter(b => new Date(b.booking_date || b.scheduled_date || '').toDateString() === new Date().toDateString()).length} today
+                      </p>
+                    </CardContent>
+                  </Card>
 
-            {/* Quick Actions */}
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Wrench className="h-5 w-5 text-emerald-600" />
-                  Quick Actions
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-                    onClick={() => navigate('/consultants')}
-                  >
-                    <Calendar className="h-4 w-4" /> Schedule New Session
-                  </Button>
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
-                    onClick={() => setActiveTab('sessions')}
-                  >
-                    <FileText className="h-4 w-4" /> View All Sessions
-                  </Button>
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
-                    onClick={() => setActiveTab('services')}
-                  >
-                    <Settings className="h-4 w-4" /> Manage Services
-                  </Button>
+                  <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <div className="h-5 w-5 bg-orange-500 rounded-full animate-pulse" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-orange-600">Live Now</p>
+                          <p className="text-2xl font-bold text-orange-700">{categorizedSessions.ongoing.length}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-orange-600 mt-2">Active sessions</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <div className="h-5 w-5 bg-green-500 rounded-full" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-green-600">Completed</p>
+                          <p className="text-2xl font-bold text-green-700">{categorizedSessions.completed.length}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-green-600 mt-2">
+                        {categorizedSessions.completed.filter(b => Date.now() - new Date(b.booking_date || b.scheduled_date || '').getTime() < 7 * 24 * 60 * 60 * 1000).length} this week
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-emerald-600">Total</p>
+                          <p className="text-2xl font-bold text-emerald-700">{bookings.length}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-emerald-600 mt-2">All time sessions</p>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Today's Focus & Urgent Actions */}
+                {(todayAppointments.length > 0 || categorizedSessions.ongoing.length > 0 || categorizedSessions.past.length > 0) && (
+                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <Bell className="h-5 w-5 text-amber-600" />
+                        Priority Actions
+                      </h2>
+                      <div className="space-y-3">
+                        {/* Ongoing sessions - highest priority */}
+                        {categorizedSessions.ongoing.map((booking) => {
+                          const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                          return (
+                            <div key={`ongoing-${booking.id}`} className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="h-3 w-3 bg-orange-500 rounded-full animate-pulse" />
+                                <div>
+                                  <p className="font-medium text-gray-900">Live: {clientName}</p>
+                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                </div>
+                              </div>
+                              <Badge className="bg-orange-100 text-orange-800 animate-pulse">ONGOING</Badge>
+                            </div>
+                          )
+                        })}
+
+                        {/* Today's upcoming sessions */}
+                        {todayAppointments.slice(0, 3).map((appointment) => (
+                          <div key={`today-${appointment.id}`} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <Clock className="h-4 w-4 text-blue-600" />
+                              <div>
+                                <p className="font-medium text-gray-900">Today {appointment.time}: {appointment.client}</p>
+                                <p className="text-sm text-gray-600">{appointment.service}</p>
+                              </div>
+                            </div>
+                            <Badge className="bg-blue-100 text-blue-800">TODAY</Badge>
+                          </div>
+                        ))}
+
+                        {/* Past sessions that need attention */}
+                        {categorizedSessions.past.slice(0, 2).map((booking) => {
+                          const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                          const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                          return (
+                            <div key={`past-${booking.id}`} className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <Calendar className="h-4 w-4 text-yellow-600" />
+                                <div>
+                                  <p className="font-medium text-gray-900">Needs followup: {clientName}</p>
+                                  <p className="text-sm text-gray-600">{bookingDate.toLocaleDateString()} • {booking.status}</p>
+                                </div>
+                              </div>
+                              <Button size="sm" variant="outline" className="text-xs" onClick={() => setActiveTab('sessions')}>
+                                Review
+                              </Button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Quick Actions - Only show if no urgent items */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-4 sm:p-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Wrench className="h-5 w-5 text-emerald-600" />
+                      Quick Actions
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Button 
+                        className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 justify-center"
+                        onClick={() => setActiveTab('sessions')}
+                      >
+                        <Calendar className="h-4 w-4" /> 
+                        <span>My Sessions</span>
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="flex items-center gap-2 justify-center border-gray-300 hover:bg-gray-50"
+                        onClick={() => setActiveTab('services')}
+                      >
+                        <Settings className="h-4 w-4" /> 
+                        <span>Manage Services</span>
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="flex items-center gap-2 justify-center border-gray-300 hover:bg-gray-50"
+                        onClick={() => setActiveTab('profile')}
+                      >
+                        <User className="h-4 w-4" /> 
+                        <span>Update Profile</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Weekly Performance Insight */}
+                {bookings.length > 0 && (
+                  <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Award className="h-5 w-5 text-purple-600" />
+                        This Week's Insights
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {categorizedSessions.completed.filter(b => {
+                              const bookingDate = new Date(b.booking_date || b.scheduled_date || '')
+                              const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                              return bookingDate >= weekAgo
+                            }).length}
+                          </div>
+                          <div className="text-sm text-gray-600">Sessions Completed</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {Math.round((categorizedSessions.completed.length / Math.max(bookings.length, 1)) * 100)}%
+                          </div>
+                          <div className="text-sm text-gray-600">Completion Rate</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {bookings.filter(b => b.intake_form_data).length}
+                          </div>
+                          <div className="text-sm text-gray-600">With Intake Forms</div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
           </div>
         )}
 
         {/* My Sessions Tab */}
         {activeTab === 'sessions' && (
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-            <CardContent className="p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">My Sessions</h2>
-              
-              {!initialBookingsLoaded ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-                  <p className="text-gray-500">Loading sessions...</p>
+          <div className="space-y-6">
+            {/* Header with Quick Stats */}
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">My Sessions</h2>
+                  <p className="text-emerald-100">Manage and track all your client consultations</p>
                 </div>
-              ) : bookings.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p>No sessions found</p>
-                  <p className="text-sm">Client sessions will appear here once they book appointments</p>
-                </div>
-              ) : (
-                <>
-                  {/* Mobile Card View */}
-                  <div className="block lg:hidden space-y-4">
-                    {bookings.map((booking) => {
-                      const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
-                      return (
-                        <div key={booking.id} className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium text-gray-900">{clientName}</h4>
-                              <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
-                              <p className="text-sm text-gray-500">
-                                {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleDateString()} at {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake Form</Badge>}
-                                {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
-                                  <Badge className="bg-green-100 text-green-800 text-xs">
-                                    {bookingDocuments[booking.id].length} Docs
-                                  </Badge>
-                                )}
-                                {documentLoading[booking.id] && <Badge className="bg-gray-100 text-gray-600 text-xs">Loading docs...</Badge>}
-                                {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
-                              </div>
-                            </div>
-                            <Badge className={getStatusBadge(booking.status)}>
-                              {booking.status}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-                            {booking.status === 'pending' ? (
-                              <>
-                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
-                                  {updatingStatus === booking.id ? 'Updating...' : 'Confirm'}
-                                </Button>
-                                <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'cancelled')} disabled={updatingStatus === booking.id}>
-                                  {updatingStatus === booking.id ? 'Updating...' : 'Cancel'}
-                                </Button>
-                              </>
-                            ) : booking.status === 'confirmed' ? (
-                              <>
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'completed')} disabled={updatingStatus === booking.id}>
-                                  {updatingStatus === booking.id ? 'Updating...' : 'Complete'}
-                                </Button>
-                                <Button size="sm" className="bg-orange-600 hover:bg-orange-700 flex-1 min-w-0" onClick={() => handleStatusChange(booking.id, 'delayed')} disabled={updatingStatus === booking.id}>
-                                  {updatingStatus === booking.id ? 'Updating...' : 'Delayed'}
-                                </Button>
-                              </>
-                            ) : (
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 w-full" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
-                                {updatingStatus === booking.id ? 'Updating...' : 'Reopen'}
-                              </Button>
-                            )}
-                          </div>
-                          {statusUpdateError && <div className="text-xs text-red-600">{statusUpdateError}</div>}
-                        </div>
-                      )
-                    })}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-2xl font-bold">{categorizedSessions.upcoming.length}</div>
+                    <div className="text-xs text-emerald-100">Upcoming</div>
                   </div>
-              
-                  {/* Desktop Table View */}
-                  <div className="hidden lg:block overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Client Name</th>
-                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Date & Time</th>
-                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Service Type</th>
-                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Status</th>
-                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Info</th>
-                          <th className="text-left p-3 text-gray-700 whitespace-nowrap">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bookings.map((booking) => {
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-2xl font-bold text-orange-200">{categorizedSessions.ongoing.length}</div>
+                    <div className="text-xs text-emerald-100">Live</div>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-2xl font-bold">{categorizedSessions.completed.length}</div>
+                    <div className="text-xs text-emerald-100">Completed</div>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-2xl font-bold">{categorizedSessions.past.length}</div>
+                    <div className="text-xs text-emerald-100">Past</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {!initialBookingsLoaded ? (
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="text-center py-12">
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                      <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-32 mx-auto mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-48 mx-auto"></div>
+                      </div>
+                    </div>
+                    <p className="text-gray-500 mt-4">Loading your sessions...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : bookings.length === 0 ? (
+              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                <CardContent className="p-8 sm:p-12">
+                  <div className="text-center text-gray-500">
+                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Calendar className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No Sessions Yet</h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                      Your client sessions will appear here once they start booking appointments with you.
+                    </p>
+                    <Button 
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={() => setActiveTab('profile')}
+                    >
+                      Complete Your Profile
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Upcoming Sessions */}
+                {categorizedSessions.upcoming.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Clock className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          Upcoming Sessions
+                        </h3>
+                        <p className="text-sm text-gray-500">{categorizedSessions.upcoming.length} sessions scheduled</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid gap-4">
+                      {categorizedSessions.upcoming.map((booking, index) => {
+                        const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                        const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                        const isToday = bookingDate.toDateString() === new Date().toDateString()
+                        const isTomorrow = bookingDate.toDateString() === new Date(Date.now() + 86400000).toDateString()
+                        const timeUntil = bookingDate.getTime() - Date.now()
+                        const hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60))
+                        const minutesUntil = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60))
+                        
+                        return (
+                          <Card key={booking.id} className={`group hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 ${
+                            isToday ? 'ring-2 ring-green-200 bg-gradient-to-r from-green-50 to-emerald-50' : 
+                            isTomorrow ? 'ring-2 ring-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50' :
+                            'bg-white/80 backdrop-blur-sm border-gray-200/50'
+                          }`} onClick={() => handleViewSessionDetail(booking)}>
+                            <CardContent className="p-6">
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                      {clientName.charAt(7).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-semibold text-gray-900 text-lg">{clientName}</h4>
+                                      <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="h-4 w-4" />
+                                      <span>{bookingDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="h-4 w-4" />
+                                      <span>{bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                                    </div>
+                                    {booking.duration_minutes && (
+                                      <div className="flex items-center gap-1">
+                                        <span className="w-4 h-4 flex items-center justify-center">⏱️</span>
+                                        <span>{booking.duration_minutes}min</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Time Until Session */}
+                                  {isToday && timeUntil > 0 && (
+                                    <div className="mb-3">
+                                      <div className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        {hoursUntil > 0 ? `${hoursUntil}h ${minutesUntil}m remaining` : `${minutesUntil}m remaining`}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {isToday && <Badge className="bg-green-100 text-green-800 text-xs font-medium">Today</Badge>}
+                                    {isTomorrow && <Badge className="bg-blue-100 text-blue-800 text-xs font-medium">Tomorrow</Badge>}
+                                    {booking.intake_form_data && (
+                                      <Badge className="bg-indigo-100 text-indigo-800 text-xs font-medium flex items-center gap-1">
+                                        <FileText className="h-3 w-3" />
+                                        Intake Form
+                                      </Badge>
+                                    )}
+                                    {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
+                                      <Badge className="bg-purple-100 text-purple-800 text-xs font-medium flex items-center gap-1">
+                                        <FileText className="h-3 w-3" />
+                                        {bookingDocuments[booking.id].length} Documents
+                                      </Badge>
+                                    )}
+                                    {booking.meeting_notes && (
+                                      <Badge className="bg-amber-100 text-amber-800 text-xs font-medium flex items-center gap-1">
+                                        <FileText className="h-3 w-3" />
+                                        Notes
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="flex flex-col items-end gap-2">
+                                  <Badge className={`${getStatusBadge(booking.status)} font-medium`}>
+                                    {booking.status}
+                                  </Badge>
+                                  <div className="text-right text-xs text-gray-500">
+                                    #{booking.id}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="border-t pt-4 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                                {booking.status === 'pending' && (
+                                  <>
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1" 
+                                      onClick={() => handleStatusChange(booking.id, 'confirmed')} 
+                                      disabled={updatingStatus === booking.id}
+                                    >
+                                      {updatingStatus === booking.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                                      ) : (
+                                        <>✓</>
+                                      )}
+                                      Confirm
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1" 
+                                      onClick={() => handleStatusChange(booking.id, 'cancelled')} 
+                                      disabled={updatingStatus === booking.id}
+                                    >
+                                      {updatingStatus === booking.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-red-600"></div>
+                                      ) : (
+                                        <>✕</>
+                                      )}
+                                      Cancel
+                                    </Button>
+                                  </>
+                                )}
+                                {booking.status === 'confirmed' && (
+                                  <>
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1" 
+                                      onClick={() => handleStatusChange(booking.id, 'completed')} 
+                                      disabled={updatingStatus === booking.id}
+                                    >
+                                      {updatingStatus === booking.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                                      ) : (
+                                        <>✓</>
+                                      )}
+                                      Complete
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="border-orange-200 text-orange-600 hover:bg-orange-50 flex items-center gap-1" 
+                                      onClick={() => handleStatusChange(booking.id, 'delayed')} 
+                                      disabled={updatingStatus === booking.id}
+                                    >
+                                      {updatingStatus === booking.id ? (
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-600"></div>
+                                      ) : (
+                                        <>⏸️</>
+                                      )}
+                                      Delay
+                                    </Button>
+                                  </>
+                                )}
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleViewSessionDetail(booking)}
+                                >
+                                  View Details
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Ongoing Sessions */}
+                {categorizedSessions.ongoing.length > 0 && (
+                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-orange-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-5 w-5 bg-orange-500 rounded-full animate-pulse" />
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Ongoing Sessions ({categorizedSessions.ongoing.length})
+                        </h3>
+                      </div>
+                      <div className="space-y-3">
+                        {categorizedSessions.ongoing.map((booking) => {
                           const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                          const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                          
                           return (
-                            <tr key={booking.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => handleViewSessionDetail(booking)}>
-                              <td className="p-3">{clientName}</td>
-                              <td className="p-3">
-                                {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleDateString()} at {new Date(booking.booking_date || booking.scheduled_date || '').toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                              </td>
-                              <td className="p-3">{booking.service_type || `Service #${booking.service_id}`}</td>
-                              <td className="p-3">
+                            <div key={booking.id} className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-medium text-gray-900">{clientName}</h4>
+                                    <Badge className="bg-orange-100 text-orange-800 text-xs animate-pulse">LIVE</Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-500">
+                                    Started at {bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake Form</Badge>}
+                                    {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
+                                      <Badge className="bg-green-100 text-green-800 text-xs">
+                                        {bookingDocuments[booking.id].length} Docs
+                                      </Badge>
+                                    )}
+                                    {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
+                                  </div>
+                                </div>
                                 <Badge className={getStatusBadge(booking.status)}>
                                   {booking.status}
                                 </Badge>
-                              </td>
-                              <td className="p-3">
-                                <div className="flex items-center gap-2">
-                                  {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake</Badge>}
-                                  {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
-                                    <Badge className="bg-green-100 text-green-800 text-xs">
-                                      {bookingDocuments[booking.id].length} Docs
-                                    </Badge>
-                                  )}
-                                  {documentLoading[booking.id] && <Badge className="bg-gray-100 text-gray-600 text-xs">Loading docs...</Badge>}
-                                  {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
-                                </div>
-                              </td>
-                              <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex flex-wrap gap-1">
-                                  {booking.status === 'pending' ? (
-                                    <>
-                                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
-                                        {updatingStatus === booking.id ? 'Updating...' : 'Confirm'}
-                                      </Button>
-                                      <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => handleStatusChange(booking.id, 'cancelled')} disabled={updatingStatus === booking.id}>
-                                        {updatingStatus === booking.id ? 'Updating...' : 'Cancel'}
-                                      </Button>
-                                    </>
-                                  ) : booking.status === 'confirmed' ? (
-                                    <>
-                                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange(booking.id, 'completed')} disabled={updatingStatus === booking.id}>
-                                        {updatingStatus === booking.id ? 'Updating...' : 'Complete'}
-                                      </Button>
-                                      <Button size="sm" className="bg-orange-600 hover:bg-orange-700" onClick={() => handleStatusChange(booking.id, 'delayed')} disabled={updatingStatus === booking.id}>
-                                        {updatingStatus === booking.id ? 'Updating...' : 'Delayed'}
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
-                                      {updatingStatus === booking.id ? 'Updating...' : 'Reopen'}
-                                    </Button>
-                                  )}
-                                </div>
-                                {statusUpdateError && <div className="text-xs text-red-600">{statusUpdateError}</div>}
-                              </td>
-                            </tr>
+                              </div>
+                              <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange(booking.id, 'completed')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Complete'}
+                                </Button>
+                                <Button size="sm" className="bg-orange-600 hover:bg-orange-700" onClick={() => handleStatusChange(booking.id, 'delayed')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Delay'}
+                                </Button>
+                              </div>
+                            </div>
                           )
                         })}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Completed Sessions */}
+                {categorizedSessions.completed.length > 0 && (
+                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-green-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-5 w-5 bg-green-500 rounded-full" />
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Completed Sessions ({categorizedSessions.completed.length})
+                        </h3>
+                      </div>
+                      <div className="space-y-3">
+                        {categorizedSessions.completed.slice(0, 5).map((booking) => {
+                          const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                          const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                          const isRecent = Date.now() - bookingDate.getTime() < 7 * 24 * 60 * 60 * 1000 // Within 7 days
+                          
+                          return (
+                            <div key={booking.id} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-medium text-gray-900">{clientName}</h4>
+                                    {isRecent && <Badge className="bg-green-100 text-green-800 text-xs">Recent</Badge>}
+                                  </div>
+                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {bookingDate.toLocaleDateString()} at {bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake Form</Badge>}
+                                    {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
+                                      <Badge className="bg-green-100 text-green-800 text-xs">
+                                        {bookingDocuments[booking.id].length} Docs
+                                      </Badge>
+                                    )}
+                                    {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
+                                  </div>
+                                </div>
+                                <Badge className={getStatusBadge(booking.status)}>
+                                  {booking.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {categorizedSessions.completed.length > 5 && (
+                          <div className="text-center pt-2">
+                            <p className="text-sm text-gray-500">Showing 5 of {categorizedSessions.completed.length} completed sessions</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Past Sessions */}
+                {categorizedSessions.past.length > 0 && (
+                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Calendar className="h-5 w-5 text-gray-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Past Sessions ({categorizedSessions.past.length})
+                        </h3>
+                        <p className="text-sm text-gray-500 ml-2">• Missed or Cancelled</p>
+                      </div>
+                      <div className="space-y-3">
+                        {categorizedSessions.past.slice(0, 3).map((booking) => {
+                          const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                          const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                          
+                          return (
+                            <div key={booking.id} className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-gray-900">{clientName}</h4>
+                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {bookingDate.toLocaleDateString()} at {bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {booking.intake_form_data && <Badge className="bg-blue-100 text-blue-800 text-xs">Intake Form</Badge>}
+                                    {bookingDocuments[booking.id] && bookingDocuments[booking.id].length > 0 && (
+                                      <Badge className="bg-green-100 text-green-800 text-xs">
+                                        {bookingDocuments[booking.id].length} Docs
+                                      </Badge>
+                                    )}
+                                    {booking.meeting_notes && <Badge className="bg-purple-100 text-purple-800 text-xs">Notes</Badge>}
+                                  </div>
+                                </div>
+                                <Badge className={getStatusBadge(booking.status)}>
+                                  {booking.status}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange(booking.id, 'confirmed')} disabled={updatingStatus === booking.id}>
+                                  {updatingStatus === booking.id ? 'Updating...' : 'Reschedule'}
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {categorizedSessions.past.length > 3 && (
+                          <div className="text-center pt-2">
+                            <p className="text-sm text-gray-500">Showing 3 of {categorizedSessions.past.length} past sessions</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+              </>
+            )}
+          </div>
         )}
 
         {/* Session Detail Modal */}
@@ -1140,217 +1580,863 @@ export function RCICDashboard() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Profile Settings</h2>
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleProfileSave() }}>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                    <textarea 
-                      className="w-full border border-gray-300 p-3 rounded-md"
-                      rows={4}
-                      value={profileForm.bio || ''}
-                      onChange={(e) => handleProfileInputChange('bio', e.target.value)}
-                    />
+            {/* Profile Header */}
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden bg-white/20">
+                    {profileForm.profile_image_url ? (
+                      <img 
+                        src={profileForm.profile_image_url} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="h-12 w-12 text-white/60" />
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md"
-                      value={profileForm.experience || ''}
-                      onChange={(e) => handleProfileInputChange('experience', e.target.value)}
-                      placeholder="e.g., 5+ years, 100+ clients"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Languages</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md"
-                      value={Array.isArray(profileForm.languages) ? profileForm.languages.join(', ') : (profileForm.languages || '')}
-                      onChange={(e) => handleProfileInputChange('languages', e.target.value)}
-                      placeholder="Comma-separated (e.g., English, Hindi)"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Specialties</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md"
-                      value={Array.isArray(profileForm.specialties) ? profileForm.specialties.join(', ') : (profileForm.specialties || '')}
-                      onChange={(e) => handleProfileInputChange('specialties', e.target.value)}
-                      placeholder="Comma-separated (e.g., Express Entry, Study Permits)"
-                    />
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                      <input className="w-full border border-gray-300 p-2 rounded-md" value={profileForm.location || ''} onChange={(e) => handleProfileInputChange('location', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-                      <input className="w-full border border-gray-300 p-2 rounded-md" value={profileForm.timezone || ''} onChange={(e) => handleProfileInputChange('timezone', e.target.value)} />
-                  </div>
-                    <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-1">RCIC Number</label>
-                      <input className="w-full border border-gray-300 p-2 rounded-md bg-gray-100 text-gray-600" value={profileForm.rcic_number || ''} disabled readOnly />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Calendly URL</label>
-                      <input className="w-full border border-gray-300 p-2 rounded-md" value={profileForm.calendly_url || ''} onChange={(e) => handleProfileInputChange('calendly_url', e.target.value)} />
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <Award className="h-4 w-4 text-emerald-600" />
                   </div>
                 </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image</label>
-                    <div className="flex items-center gap-3">
-                      {profileForm.profile_image_url ? (
-                        <img src={profileForm.profile_image_url} alt="Profile" className="w-12 h-12 rounded-full object-cover border" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gray-200" />
-                      )}
-                      <input type="file" accept="image/*" onChange={(e) => e.target.files && handleProfileImageUpload(e.target.files[0])} />
+                <div className="text-center sm:text-left flex-1">
+                  <h2 className="text-2xl font-bold mb-1">{profileForm.name || 'RCIC Profile'}</h2>
+                  <p className="text-emerald-100 mb-2">{profileForm.rcic_number ? `RCIC #${profileForm.rcic_number}` : 'Immigration Consultant'}</p>
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                    {profileForm.location && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
+                        <span>📍</span>
+                        <span>{profileForm.location}</span>
+                      </div>
+                    )}
+                    {profileForm.experience && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
+                        <span>⭐</span>
+                        <span>{profileForm.experience}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Profile Form */}
+              <div className="lg:col-span-2">
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <Settings className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">Profile Information</h3>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button type="submit" disabled={savingProfile} className="bg-blue-600 hover:bg-blue-700">{savingProfile ? 'Saving...' : 'Update Profile'}</Button>
-                    {profileSaveMessage && <span className={profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>{profileSaveMessage}</span>}
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+                    
+                    <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleProfileSave() }}>
+                      {/* Bio Section */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-emerald-600" />
+                          Professional Bio
+                        </label>
+                        <textarea 
+                          className="w-full border border-gray-300 p-4 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+                          rows={4}
+                          value={profileForm.bio || ''}
+                          onChange={(e) => handleProfileInputChange('bio', e.target.value)}
+                          placeholder="Tell potential clients about your expertise, background, and what makes you unique as an immigration consultant..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">This will be displayed on your public profile</p>
+                      </div>
+
+                      {/* Experience & Languages */}
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <Award className="h-4 w-4 text-emerald-600" />
+                            Experience
+                          </label>
+                          <input 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            value={profileForm.experience || ''}
+                            onChange={(e) => handleProfileInputChange('experience', e.target.value)}
+                            placeholder="e.g., 5+ years, 100+ clients served"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span className="text-emerald-600">🌐</span>
+                            Languages
+                          </label>
+                          <input 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            value={Array.isArray(profileForm.languages) ? profileForm.languages.join(', ') : (profileForm.languages || '')}
+                            onChange={(e) => handleProfileInputChange('languages', e.target.value)}
+                            placeholder="English, French, Hindi, etc."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Specialties */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          <span className="text-emerald-600">🎯</span>
+                          Specialization Areas
+                        </label>
+                        <input 
+                          className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          value={Array.isArray(profileForm.specialties) ? profileForm.specialties.join(', ') : (profileForm.specialties || '')}
+                          onChange={(e) => handleProfileInputChange('specialties', e.target.value)}
+                          placeholder="Express Entry, Study Permits, Work Permits, Family Class, etc."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Separate multiple specialties with commas</p>
+                      </div>
+
+                      {/* Location & Timezone */}
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <span className="text-emerald-600">📍</span>
+                            Office Location
+                          </label>
+                          <input 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            value={profileForm.location || ''} 
+                            onChange={(e) => handleProfileInputChange('location', e.target.value)}
+                            placeholder="Toronto, ON, Canada"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-emerald-600" />
+                            Timezone
+                          </label>
+                          <select 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            value={profileForm.timezone || 'America/Toronto'} 
+                            onChange={(e) => handleProfileInputChange('timezone', e.target.value)}
+                          >
+                            <option value="America/Toronto">Eastern Time (Toronto)</option>
+                            <option value="America/Vancouver">Pacific Time (Vancouver)</option>
+                            <option value="America/Edmonton">Mountain Time (Edmonton)</option>
+                            <option value="America/Winnipeg">Central Time (Winnipeg)</option>
+                            <option value="America/Halifax">Atlantic Time (Halifax)</option>
+                            <option value="America/St_Johns">Newfoundland Time</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Calendly URL */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-emerald-600" />
+                          Calendly Booking URL
+                        </label>
+                        <input 
+                          className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          value={profileForm.calendly_url || ''} 
+                          onChange={(e) => handleProfileInputChange('calendly_url', e.target.value)}
+                          placeholder="https://calendly.com/your-username"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Clients will use this link to book appointments with you</p>
+                      </div>
+
+                      {/* Save Button */}
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            {profileSaveMessage && (
+                              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                                profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') 
+                                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                                  : 'bg-red-100 text-red-700 border border-red-200'
+                              }`}>
+                                <span>{profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') ? '✅' : '❌'}</span>
+                                <span>{profileSaveMessage}</span>
+                              </div>
+                            )}
+                          </div>
+                          <Button 
+                            type="submit" 
+                            disabled={savingProfile} 
+                            className="bg-emerald-600 hover:bg-emerald-700 px-6 py-3 flex items-center gap-2"
+                          >
+                            {savingProfile ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Saving...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Settings className="h-4 w-4" />
+                                <span>Update Profile</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Profile Sidebar */}
+              <div className="space-y-6">
+                {/* Profile Image Upload */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <User className="h-5 w-5 text-emerald-600" />
+                      Profile Photo
+                    </h3>
+                    <div className="text-center">
+                      <div className="relative inline-block">
+                        <div className="w-32 h-32 rounded-full border-4 border-gray-200 overflow-hidden bg-gray-100 mx-auto">
+                          {profileForm.profile_image_url ? (
+                            <img 
+                              src={profileForm.profile_image_url} 
+                              alt="Profile" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="h-16 w-16 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <label className="absolute bottom-0 right-0 bg-emerald-600 rounded-full p-2 cursor-pointer hover:bg-emerald-700 transition-colors">
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden"
+                            onChange={(e) => e.target.files && handleProfileImageUpload(e.target.files[0])} 
+                          />
+                          <Edit2 className="h-4 w-4 text-white" />
+                        </label>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-4">Click the edit icon to upload a new photo</p>
+                      <p className="text-xs text-gray-500 mt-1">Recommended: Square image, 400x400px minimum</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* RCIC Credentials */}
+                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Award className="h-5 w-5 text-blue-600" />
+                      RCIC Credentials
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">RCIC Number</p>
+                          <p className="text-lg font-bold text-blue-600">{profileForm.rcic_number || 'Not Set'}</p>
+                        </div>
+                        <div className="text-blue-600">
+                          <Award className="h-6 w-6" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Status</p>
+                          <p className="text-sm font-semibold text-green-600">✅ Verified</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-emerald-600" />
+                      Profile Completion
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm text-gray-600">Overall Progress</span>
+                          <span className="text-sm font-semibold text-emerald-600">
+                            {Math.round((
+                              (profileForm.bio ? 1 : 0) +
+                              (profileForm.experience ? 1 : 0) +
+                              (profileForm.languages && Array.isArray(profileForm.languages) && profileForm.languages.length > 0 ? 1 : 0) +
+                              (profileForm.specialties && Array.isArray(profileForm.specialties) && profileForm.specialties.length > 0 ? 1 : 0) +
+                              (profileForm.location ? 1 : 0) +
+                              (profileForm.profile_image_url ? 1 : 0)
+                            ) / 6 * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.round((
+                                (profileForm.bio ? 1 : 0) +
+                                (profileForm.experience ? 1 : 0) +
+                                (profileForm.languages && Array.isArray(profileForm.languages) && profileForm.languages.length > 0 ? 1 : 0) +
+                                (profileForm.specialties && Array.isArray(profileForm.specialties) && profileForm.specialties.length > 0 ? 1 : 0) +
+                                (profileForm.location ? 1 : 0) +
+                                (profileForm.profile_image_url ? 1 : 0)
+                              ) / 6 * 100)}%`
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className={`flex items-center gap-2 ${profileForm.bio ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span>{profileForm.bio ? '✅' : '⭕'}</span>
+                          <span>Professional Bio</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${profileForm.profile_image_url ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span>{profileForm.profile_image_url ? '✅' : '⭕'}</span>
+                          <span>Profile Photo</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${profileForm.experience ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span>{profileForm.experience ? '✅' : '⭕'}</span>
+                          <span>Experience</span>
+                        </div>
+                        <div className={`flex items-center gap-2 ${profileForm.location ? 'text-green-600' : 'text-gray-400'}`}>
+                          <span>{profileForm.location ? '✅' : '⭕'}</span>
+                          <span>Location</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Services Tab */}
         {activeTab === 'services' && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Wrench className="h-5 w-5 text-emerald-600" />
+            {/* Services Header */}
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Wrench className="h-6 w-6" />
                     Services & Pricing
                   </h2>
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2"
-                    onClick={() => setIsAdding(true)}
-                  >
-                    <Plus className="h-4 w-4" /> Add Service
-                  </Button>
+                  <p className="text-emerald-100">Manage your consultation services and pricing structure</p>
                 </div>
-
-                {servicesError && (
-                  <div className="mb-4 p-3 rounded-md bg-red-50 text-red-700 text-sm">
-                    {servicesError}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold">{services.filter(s => s.is_active).length}</div>
+                    <div className="text-xs text-emerald-100">Active Services</div>
                   </div>
-                )}
-
-                {isAdding && (
-                  <div className="mb-6 border rounded-xl p-4 bg-gradient-to-r from-emerald-50 to-teal-50">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-medium text-gray-900">New Service</h3>
-                      <button onClick={() => { setIsAdding(false); resetNewService() }} className="text-gray-500 hover:text-gray-700">
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <Input value={newService.name} onChange={e => setNewService(s => ({ ...s, name: e.target.value }))} placeholder="e.g., 30-Min Consultation" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                        <Input value={newService.duration} onChange={e => setNewService(s => ({ ...s, duration: e.target.value }))} placeholder="e.g., 30m, 45m, 1h" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Price (CAD)</label>
-                        <Input type="number" value={newService.price} onChange={e => setNewService(s => ({ ...s, price: Number(e.target.value) }))} placeholder="e.g., 60" />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <input className="w-full border border-gray-300 p-2 rounded-md" value={newService.description} onChange={e => setNewService(s => ({ ...s, description: e.target.value }))} placeholder="Short description" />
-                      </div>
-                      <div className="sm:col-span-2 flex items-center gap-2">
-                        <input id="is_active_new" type="checkbox" checked={newService.is_active} onChange={e => setNewService(s => ({ ...s, is_active: e.target.checked }))} />
-                        <label htmlFor="is_active_new" className="text-sm text-gray-700">Active</label>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <Button onClick={handleAddService} className="bg-emerald-600 hover:bg-emerald-700">Save</Button>
-                      <Button variant="outline" onClick={() => { setIsAdding(false); resetNewService() }}>Cancel</Button>
-                    </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold">{services.length > 0 ? `$${Math.min(...services.map(s => s.price))}` : '$0'}</div>
+                    <div className="text-xs text-emerald-100">Starting From</div>
                   </div>
-                )}
+                </div>
+              </div>
+            </div>
 
-                {servicesLoading ? (
-                  <div className="text-center py-8 text-gray-500">Loading services...</div>
-                ) : services.length === 0 ? (
-                  <div className="text-center py-10 text-gray-600">
-                    No services yet. Click "Add Service" to create your first service.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {services.map(svc => (
-                      <div key={svc.id} className="border rounded-xl p-4 bg-white shadow-sm">
-                        {editingServiceId === svc.id ? (
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                <Input value={editService.name} onChange={e => setEditService(s => ({ ...s, name: e.target.value }))} />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                                <Input value={editService.duration} onChange={e => setEditService(s => ({ ...s, duration: e.target.value }))} />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Price (CAD)</label>
-                                <Input type="number" value={editService.price} onChange={e => setEditService(s => ({ ...s, price: Number(e.target.value) }))} />
-                              </div>
-                              <div className="sm:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <input className="w-full border border-gray-300 p-2 rounded-md" value={editService.description} onChange={e => setEditService(s => ({ ...s, description: e.target.value }))} />
-                              </div>
-                              <div className="sm:col-span-2 flex items-center gap-2">
-                                <input id={`is_active_${svc.id}`} type="checkbox" checked={editService.is_active} onChange={e => setEditService(s => ({ ...s, is_active: e.target.checked }))} />
-                                <label htmlFor={`is_active_${svc.id}`} className="text-sm text-gray-700">Active</label>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button onClick={() => handleUpdateService(svc.id)} className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
-                                <Edit2 className="h-4 w-4" /> Save
-                              </Button>
-                              <Button variant="outline" onClick={cancelEditService}>Cancel</Button>
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              {/* Main Services List */}
+              <div className="xl:col-span-3">
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-emerald-100 rounded-lg">
+                          <Wrench className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">Your Services</h3>
+                      </div>
+                      <Button
+                        className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 px-6 py-3"
+                        onClick={() => setIsAdding(true)}
+                      >
+                        <Plus className="h-4 w-4" /> Add New Service
+                      </Button>
+                    </div>
+
+                    {servicesError && (
+                      <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                        <span>❌</span>
+                        <span>{servicesError}</span>
+                      </div>
+                    )}
+
+                    {/* Add New Service Form */}
+                    {isAdding && (
+                      <div className="mb-8 border-2 border-emerald-200 rounded-2xl p-6 bg-gradient-to-br from-emerald-50 to-teal-50">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <Plus className="h-5 w-5 text-emerald-600" />
+                            Create New Service
+                          </h3>
+                          <button 
+                            onClick={() => { setIsAdding(false); resetNewService() }} 
+                            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                          >
+                            <X className="h-5 w-5 text-gray-500" />
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-emerald-600" />
+                              Service Name
+                            </label>
+                            <input 
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                              value={newService.name} 
+                              onChange={e => setNewService(s => ({ ...s, name: e.target.value }))} 
+                              placeholder="e.g., Initial Consultation, Document Review"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-emerald-600" />
+                              Duration
+                            </label>
+                            <select 
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                              value={newService.duration} 
+                              onChange={e => setNewService(s => ({ ...s, duration: e.target.value }))}
+                            >
+                              <option value="">Select duration</option>
+                              <option value="15 minutes">15 minutes</option>
+                              <option value="30 minutes">30 minutes</option>
+                              <option value="45 minutes">45 minutes</option>
+                              <option value="1 hour">1 hour</option>
+                              <option value="1.5 hours">1.5 hours</option>
+                              <option value="2 hours">2 hours</option>
+                              <option value="Custom">Custom Duration</option>
+                            </select>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-emerald-600" />
+                              Price (CAD)
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
+                              <input 
+                                type="number" 
+                                className="w-full border border-gray-300 p-3 pl-8 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                value={newService.price} 
+                                onChange={e => setNewService(s => ({ ...s, price: Number(e.target.value) }))} 
+                                placeholder="150"
+                                min="0"
+                                step="5"
+                              />
                             </div>
                           </div>
-                        ) : (
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div>
+                          
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                              <span className="text-emerald-600">🎯</span>
+                              Category
+                            </label>
+                            <select 
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                              value={newService.description?.includes('Express Entry') ? 'Express Entry' : 
+                                     newService.description?.includes('Study Permit') ? 'Study Permit' :
+                                     newService.description?.includes('Work Permit') ? 'Work Permit' :
+                                     newService.description?.includes('Family Class') ? 'Family Class' :
+                                     newService.description?.includes('Document Review') ? 'Document Review' : 'General'} 
+                              onChange={e => setNewService(s => ({ ...s, description: e.target.value === 'General' ? '' : `${e.target.value} consultation` }))}
+                            >
+                              <option value="General">General Consultation</option>
+                              <option value="Express Entry">Express Entry</option>
+                              <option value="Study Permit">Study Permit</option>
+                              <option value="Work Permit">Work Permit</option>
+                              <option value="Family Class">Family Class</option>
+                              <option value="Document Review">Document Review</option>
+                            </select>
+                          </div>
+                          
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-emerald-600" />
+                              Description
+                            </label>
+                            <textarea 
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+                              rows={3}
+                              value={newService.description} 
+                              onChange={e => setNewService(s => ({ ...s, description: e.target.value }))} 
+                              placeholder="Describe what clients can expect from this service..."
+                            />
+                          </div>
+                          
+                          <div className="md:col-span-2">
+                            <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-emerald-200">
                               <div className="flex items-center gap-3">
-                                <h3 className="font-medium text-gray-900">{svc.name}</h3>
-                                {svc.is_active ? (
-                                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                                ) : (
-                                  <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>
-                                )}
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
+                                  newService.is_active 
+                                    ? 'bg-emerald-500 border-emerald-500' 
+                                    : 'border-gray-300 hover:border-emerald-400'
+                                }`}>
+                                  {newService.is_active && <span className="text-white text-xs">✓</span>}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">Make service active</p>
+                                  <p className="text-sm text-gray-500">Clients will be able to book this service immediately</p>
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-600">{svc.description || 'No description'}</p>
-                              <div className="text-sm text-gray-500">{svc.duration} • ${svc.price} CAD</div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button variant="outline" onClick={() => startEditService(svc)} className="flex items-center gap-2">
-                                <Edit2 className="h-4 w-4" /> Edit
-                              </Button>
-                              <Button variant="outline" onClick={() => handleDeleteService(svc.id)} className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50">
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </Button>
+                              <input 
+                                type="checkbox" 
+                                className="sr-only"
+                                checked={newService.is_active} 
+                                onChange={e => setNewService(s => ({ ...s, is_active: e.target.checked }))} 
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setNewService(s => ({ ...s, is_active: !s.is_active }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                                  newService.is_active ? 'bg-emerald-500' : 'bg-gray-300'
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    newService.is_active ? 'translate-x-6' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
                             </div>
                           </div>
-                        )}
+                        </div>
+                        
+                        <div className="flex gap-3 mt-6 pt-6 border-t border-emerald-200">
+                          <Button 
+                            onClick={handleAddService} 
+                            className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 px-6"
+                            disabled={!newService.name || !newService.duration || newService.price <= 0}
+                          >
+                            {servicesLoading ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                              <Plus className="h-4 w-4" />
+                            )}
+                            Create Service
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => { setIsAdding(false); resetNewService() }}
+                            className="px-6"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    )}
+
+                    {/* Services List */}
+                    {servicesLoading ? (
+                      <div className="text-center py-12">
+                        <div className="relative">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                          <div className="animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-32 mx-auto mb-2"></div>
+                            <div className="h-3 bg-gray-200 rounded w-48 mx-auto"></div>
+                          </div>
+                        </div>
+                        <p className="text-gray-500 mt-4">Loading your services...</p>
+                      </div>
+                    ) : services.length === 0 ? (
+                      <div className="text-center py-16">
+                        <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                          <Wrench className="h-12 w-12 text-gray-400" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-700 mb-2">No Services Yet</h3>
+                        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                          Create your first service to start accepting client bookings and showcase your expertise.
+                        </p>
+                        <Button 
+                          className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2"
+                          onClick={() => setIsAdding(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Create Your First Service
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {services.map(svc => (
+                          <Card 
+                            key={svc.id} 
+                            className={`group hover:shadow-lg transition-all duration-200 ${
+                              editingServiceId === svc.id 
+                                ? 'ring-2 ring-emerald-200 bg-emerald-50/30' 
+                                : 'bg-white border-gray-200 hover:border-emerald-200'
+                            }`}
+                          >
+                            <CardContent className="p-6">
+                              {editingServiceId === svc.id ? (
+                                /* Edit Mode */
+                                <div className="space-y-6">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <Edit2 className="h-5 w-5 text-emerald-600" />
+                                    <h3 className="text-lg font-semibold text-gray-900">Edit Service</h3>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                      <label className="block text-sm font-semibold text-gray-700 mb-2">Service Name</label>
+                                      <input 
+                                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                        value={editService.name} 
+                                        onChange={e => setEditService(s => ({ ...s, name: e.target.value }))} 
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-semibold text-gray-700 mb-2">Duration</label>
+                                      <input 
+                                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                        value={editService.duration} 
+                                        onChange={e => setEditService(s => ({ ...s, duration: e.target.value }))} 
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-sm font-semibold text-gray-700 mb-2">Price (CAD)</label>
+                                      <div className="relative">
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
+                                        <input 
+                                          type="number" 
+                                          className="w-full border border-gray-300 p-3 pl-8 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                          value={editService.price} 
+                                          onChange={e => setEditService(s => ({ ...s, price: Number(e.target.value) }))} 
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                                      <textarea 
+                                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+                                        rows={3}
+                                        value={editService.description} 
+                                        onChange={e => setEditService(s => ({ ...s, description: e.target.value }))} 
+                                      />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                        <div>
+                                          <p className="font-medium text-gray-900">Service Status</p>
+                                          <p className="text-sm text-gray-500">Enable or disable client bookings</p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditService(s => ({ ...s, is_active: !s.is_active }))}
+                                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                            editService.is_active ? 'bg-emerald-500' : 'bg-gray-300'
+                                          }`}
+                                        >
+                                          <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                              editService.is_active ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                          />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex gap-3 pt-6 border-t">
+                                    <Button 
+                                      onClick={() => handleUpdateService(svc.id)} 
+                                      className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2"
+                                      disabled={servicesLoading}
+                                    >
+                                      {servicesLoading ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      ) : (
+                                        <Edit2 className="h-4 w-4" />
+                                      )}
+                                      Save Changes
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={cancelEditService}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                /* View Mode */
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-start justify-between mb-3">
+                                      <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg ${
+                                          svc.is_active 
+                                            ? 'bg-emerald-100 text-emerald-600' 
+                                            : 'bg-gray-100 text-gray-400'
+                                        }`}>
+                                          <Wrench className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                          <h3 className="text-lg font-bold text-gray-900">{svc.name}</h3>
+                                          <div className="flex items-center gap-2 mt-1">
+                                            {svc.is_active ? (
+                                              <Badge className="bg-green-100 text-green-800 text-xs font-medium">
+                                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                                Active
+                                              </Badge>
+                                            ) : (
+                                              <Badge className="bg-gray-100 text-gray-600 text-xs font-medium">
+                                                <span className="w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+                                                Inactive
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="text-2xl font-bold text-emerald-600">${svc.price}</div>
+                                        <div className="text-sm text-gray-500">CAD</div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <Clock className="h-4 w-4" />
+                                        <span>{svc.duration}</span>
+                                      </div>
+                                      
+                                      {svc.description && (
+                                        <p className="text-gray-700 leading-relaxed">{svc.description}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2 lg:flex-col lg:items-stretch">
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => startEditService(svc)} 
+                                      className="flex items-center gap-2 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700"
+                                    >
+                                      <Edit2 className="h-4 w-4" /> 
+                                      Edit
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      onClick={() => handleDeleteService(svc.id)} 
+                                      className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                                    >
+                                      <Trash2 className="h-4 w-4" /> 
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Services Sidebar */}
+              <div className="space-y-6">
+                {/* Pricing Guide */}
+                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                      Pricing Guide
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Initial Consultation</span>
+                        <span className="font-semibold text-gray-900">$100-150</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Document Review</span>
+                        <span className="font-semibold text-gray-900">$75-125</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Application Support</span>
+                        <span className="font-semibold text-gray-900">$200-300</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Follow-up Session</span>
+                        <span className="font-semibold text-gray-900">$75-100</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-3 italic">*Suggested pricing based on industry standards</p>
+                  </CardContent>
+                </Card>
+
+                {/* Service Tips */}
+                <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="text-emerald-600">💡</span>
+                      Pro Tips
+                    </h3>
+                    <div className="space-y-4 text-sm text-gray-700">
+                      <div className="flex gap-3">
+                        <span className="text-emerald-600 font-bold">•</span>
+                        <div>
+                          <p className="font-medium">Clear Descriptions</p>
+                          <p className="text-gray-600">Help clients understand exactly what they'll get from each service.</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <span className="text-emerald-600 font-bold">•</span>
+                        <div>
+                          <p className="font-medium">Competitive Pricing</p>
+                          <p className="text-gray-600">Research market rates to price your services appropriately.</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <span className="text-emerald-600 font-bold">•</span>
+                        <div>
+                          <p className="font-medium">Service Packages</p>
+                          <p className="text-gray-600">Consider bundling related services for better value.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-purple-600" />
+                      Service Stats
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 text-sm">Total Services</span>
+                        <span className="font-bold text-purple-600">{services.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 text-sm">Active Services</span>
+                        <span className="font-bold text-green-600">{services.filter(s => s.is_active).length}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 text-sm">Price Range</span>
+                        <span className="font-bold text-gray-900">
+                          {services.length > 0 
+                            ? `$${Math.min(...services.map(s => s.price))} - $${Math.max(...services.map(s => s.price))}` 
+                            : '$0 - $0'
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         )}
 
