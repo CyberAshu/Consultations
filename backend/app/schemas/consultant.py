@@ -10,14 +10,18 @@ class ConsultantServiceBase(BaseModel):
     is_active: bool = True
 
 class ConsultantServiceCreate(ConsultantServiceBase):
-    pass
+    service_template_id: int  # Required for template-based creation
 
-class ConsultantServiceUpdate(ConsultantServiceBase):
-    pass
+class ConsultantServiceUpdate(BaseModel):
+    # Only allow updating price, description, and active status
+    price: Optional[float] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
 
 class ConsultantServiceInDB(ConsultantServiceBase):
     id: int
     consultant_id: int
+    service_template_id: Optional[int] = None
 
     class Config:
         from_attributes = True

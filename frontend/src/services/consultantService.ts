@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete, apiPostFormData } from './api';
+import { apiGet, apiPost, apiPut, apiDelete, apiPatch, apiPostFormData } from './api';
 import { 
   Consultant, 
   ConsultantFilters,
@@ -43,7 +43,22 @@ class ConsultantService {
     return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services`);
   }
 
+  // Get all consultant services (including inactive ones) for management
+  async getAllConsultantServices(consultantId: number): Promise<ConsultantServiceInDB[]> {
+    // Updated to use the new endpoint that returns all services for consultant's own management
+    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services`);
+  }
+
+  // Get only active services for public view (for booking)
+  async getActiveConsultantServices(consultantId: number): Promise<ConsultantServiceInDB[]> {
+    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services/active`);
+  }
+
   async createConsultantService(consultantId: number, serviceData: ConsultantServiceCreate): Promise<ConsultantServiceInDB> {
+    // Validate that service_template_id is provided
+    if (!serviceData.service_template_id) {
+      throw new Error('Service template is required. Custom services are not allowed.');
+    }
     return apiPost<ConsultantServiceInDB>(`/consultants/${consultantId}/services`, serviceData);
   }
 
@@ -51,8 +66,26 @@ class ConsultantService {
     return apiPut<ConsultantServiceInDB>(`/consultants/${consultantId}/services/${serviceId}`, serviceData);
   }
 
-  async deleteConsultantService(consultantId: number, serviceId: number): Promise<void> {
-    return apiDelete<void>(`/consultants/${consultantId}/services/${serviceId}`);
+  // Toggle service active/inactive status (replaces delete functionality)
+  async toggleConsultantService(consultantId: number, serviceId: number): Promise<{
+    success: boolean;
+    message: string;
+    service_id: number;
+    is_active: boolean;
+    service_name: string;
+  }> {
+    return apiPatch<{
+      success: boolean;
+      message: string;
+      service_id: number;
+      is_active: boolean;
+      service_name: string;
+    }>(`/consultants/${consultantId}/services/${serviceId}/toggle`);
+  }
+
+  // Validate price against template range
+  validateServicePrice(price: number, template: { min_price: number; max_price: number }): boolean {
+    return price >= template.min_price && price <= template.max_price;
   }
 
   // Profile management methods

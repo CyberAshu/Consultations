@@ -126,6 +126,14 @@ export const apiPut = <T>(endpoint: string, data?: any): Promise<T> => {
   });
 };
 
+// Helper function for PATCH requests
+export const apiPatch = <T>(endpoint: string, data?: any): Promise<T> => {
+  return apiRequest<T>(endpoint, {
+    method: 'PATCH',
+    body: data ? JSON.stringify(data) : undefined,
+  });
+};
+
 // Helper function for DELETE requests
 export const apiDelete = <T>(endpoint: string): Promise<T> => {
   return apiRequest<T>(endpoint, { method: 'DELETE' });

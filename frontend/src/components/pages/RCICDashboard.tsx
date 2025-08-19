@@ -7,8 +7,9 @@ import { ToastContainer, useToasts } from '../ui/Toast'
 import { Calendar, Clock, User, FileText, Settings, DollarSign, LogOut, ArrowLeft, Bell, Award, Wrench, Plus, Trash2, Edit2, X, Wifi, WifiOff } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { consultantService } from '../../services/consultantService'
+import { serviceTemplateService } from '../../services/serviceTemplateService'
 import { useAuth } from '../../hooks/useAuth'
-import { Booking, Consultant, ConsultantServiceInDB } from '../../services/types'
+import { Booking, Consultant, ConsultantServiceInDB, ServiceTemplate } from '../../services/types'
 import { Input } from '../ui/Input'
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
@@ -25,8 +26,12 @@ export function RCICDashboard() {
   const [services, setServices] = useState<ConsultantServiceInDB[]>([])
   const [servicesLoading, setServicesLoading] = useState(false)
   const [servicesError, setServicesError] = useState<string | null>(null)
+  const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [templatesError, setTemplatesError] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const [newService, setNewService] = useState({
+    service_template_id: 0,
     name: '',
     duration: '',
     price: 0,
@@ -389,8 +394,26 @@ export function RCICDashboard() {
     fetchServices()
   }, [consultant])
 
+  // Fetch service templates on component mount
+  useEffect(() => {
+    const fetchServiceTemplates = async () => {
+      try {
+        setTemplatesLoading(true)
+        setTemplatesError(null)
+        const templates = await serviceTemplateService.getServiceTemplates()
+        setServiceTemplates(templates)
+      } catch (error: any) {
+        setTemplatesError(error?.message || 'Failed to load service templates')
+        setServiceTemplates([])
+      } finally {
+        setTemplatesLoading(false)
+      }
+    }
+    fetchServiceTemplates()
+  }, [])
+
   const resetNewService = () => {
-    setNewService({ name: '', duration: '', price: 0, description: '', is_active: true })
+    setNewService({ service_template_id: 0, name: '', duration: '', price: 0, description: '', is_active: true })
   }
 
   const handleAddService = async () => {
@@ -437,14 +460,19 @@ export function RCICDashboard() {
     }
   }
 
-  const handleDeleteService = async (serviceId: number) => {
+  const handleToggleService = async (serviceId: number) => {
     if (!consultant) return
     try {
       setServicesLoading(true)
-      await consultantService.deleteConsultantService(consultant.id, serviceId)
-      setServices(prev => prev.filter(s => s.id !== serviceId))
+      const result = await consultantService.toggleConsultantService(consultant.id, serviceId)
+      // Update the service in the list with new status
+      setServices(prev => prev.map(s => 
+        s.id === serviceId ? { ...s, is_active: result.is_active } : s
+      ))
+      // Show success message
+      alert(result.message)
     } catch (error: any) {
-      setServicesError(error?.message || 'Failed to delete service')
+      setServicesError(error?.message || 'Failed to toggle service status')
     } finally {
       setServicesLoading(false)
     }
@@ -1986,14 +2014,61 @@ export function RCICDashboard() {
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                               <FileText className="h-4 w-4 text-emerald-600" />
+                              Service Template
+                            </label>
+                            <select 
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                              value={newService.service_template_id} 
+                              onChange={(e) => {
+                                const templateId = Number(e.target.value)
+                                const template = serviceTemplates.find(t => t.id === templateId)
+                                if (template) {
+                                  setNewService(s => ({
+                                    ...s,
+                                    service_template_id: templateId,
+                                    name: template.name,
+                                    duration: template.default_duration,
+                                    price: template.min_price,
+                                    description: template.default_description
+                                  }))
+                                } else {
+                                  setNewService(s => ({ ...s, service_template_id: templateId }))
+                                }
+                              }}
+                            >
+                              <option value={0}>Select a service template</option>
+                              {templatesLoading ? (
+                                <option disabled>Loading templates...</option>
+                              ) : serviceTemplates.length > 0 ? (
+                                serviceTemplates.map(template => (
+                                  <option key={template.id} value={template.id}>
+                                    {template.name}
+                                  </option>
+                                ))
+                              ) : (
+                                <option disabled>No templates available</option>
+                              )}
+                            </select>
+                            {templatesError && (
+                              <p className="text-xs text-red-500 mt-1">{templatesError}</p>
+                            )}
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-emerald-600" />
                               Service Name
                             </label>
                             <input 
-                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all bg-gray-50" 
                               value={newService.name} 
                               onChange={e => setNewService(s => ({ ...s, name: e.target.value }))} 
-                              placeholder="e.g., Initial Consultation, Document Review"
+                              placeholder="Select a template first"
+                              readOnly={newService.service_template_id === 0}
                             />
+                            {newService.service_template_id === 0 && (
+                              <p className="text-xs text-gray-500 mt-1">Name will be populated based on selected template</p>
+                            )}
                           </div>
                           
                           <div>
@@ -2026,14 +2101,52 @@ export function RCICDashboard() {
                               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
                               <input 
                                 type="number" 
-                                className="w-full border border-gray-300 p-3 pl-8 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                                className={`w-full border p-3 pl-8 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all ${
+                                  newService.service_template_id > 0 && serviceTemplates.find(t => t.id === newService.service_template_id) ? (
+                                    (() => {
+                                      const template = serviceTemplates.find(t => t.id === newService.service_template_id)!
+                                      if (newService.price < template.min_price || newService.price > template.max_price) {
+                                        return 'border-yellow-300 bg-yellow-50'
+                                      }
+                                      return 'border-gray-300'
+                                    })()
+                                  ) : 'border-gray-300'
+                                }`}
                                 value={newService.price} 
-                                onChange={e => setNewService(s => ({ ...s, price: Number(e.target.value) }))} 
+                                onChange={e => {
+                                  const price = Number(e.target.value)
+                                  setNewService(s => ({ ...s, price }))
+                                }} 
                                 placeholder="150"
                                 min="0"
                                 step="5"
                               />
                             </div>
+                            {newService.service_template_id > 0 && serviceTemplates.find(t => t.id === newService.service_template_id) && (() => {
+                              const template = serviceTemplates.find(t => t.id === newService.service_template_id)!
+                              if (newService.price < template.min_price) {
+                                return (
+                                  <p className="text-xs text-yellow-600 mt-1 flex items-center gap-1">
+                                    <span>⚠️</span>
+                                    Price below template minimum (${template.min_price})
+                                  </p>
+                                )
+                              } else if (newService.price > template.max_price) {
+                                return (
+                                  <p className="text-xs text-yellow-600 mt-1 flex items-center gap-1">
+                                    <span>⚠️</span>
+                                    Price above template maximum (${template.max_price})
+                                  </p>
+                                )
+                              } else {
+                                return (
+                                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                    <span>✓</span>
+                                    Price within template range (${template.min_price} - ${template.max_price})
+                                  </p>
+                                )
+                              }
+                            })()}
                           </div>
                           
                           <div>
@@ -2325,11 +2438,24 @@ export function RCICDashboard() {
                                     </Button>
                                     <Button 
                                       variant="outline" 
-                                      onClick={() => handleDeleteService(svc.id)} 
-                                      className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                                      onClick={() => handleToggleService(svc.id)} 
+                                      className={`flex items-center gap-2 ${
+                                        svc.is_active 
+                                          ? 'text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300'
+                                          : 'text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300'
+                                      }`}
                                     >
-                                      <Trash2 className="h-4 w-4" /> 
-                                      Delete
+                                      {svc.is_active ? (
+                                        <>
+                                          <X className="h-4 w-4" /> 
+                                          Deactivate
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Plus className="h-4 w-4" /> 
+                                          Activate
+                                        </>
+                                      )}
                                     </Button>
                                   </div>
                                 </div>

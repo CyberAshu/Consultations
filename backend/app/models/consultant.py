@@ -39,6 +39,7 @@ class ConsultantService(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     consultant_id = Column(Integer, ForeignKey("consultants.id"), nullable=False)
+    service_template_id = Column(Integer, ForeignKey("service_templates.id"), nullable=True)
     name = Column(String, nullable=False)
     duration = Column(String)
     price = Column(Float, nullable=False)
@@ -48,6 +49,7 @@ class ConsultantService(Base):
     
     # Relationships
     consultant = relationship("Consultant", back_populates="services")
+    service_template = relationship("ServiceTemplate", lazy="select")
     bookings = relationship("Booking", back_populates="service")
 
 class ConsultantReview(Base):

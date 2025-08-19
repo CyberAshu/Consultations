@@ -253,10 +253,25 @@ export interface Service {
   created_at: string;
 }
 
+// Service Template Types
+export interface ServiceTemplate {
+  id: number;
+  name: string;
+  default_description: string;
+  min_price: number;
+  max_price: number;
+  default_duration: string;
+  order_index: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
 // Consultant Service Types
 export interface ConsultantServiceInDB {
   id: number;
   consultant_id: number;
+  service_template_id?: number;
   name: string;
   duration: string;
   price: number;
@@ -266,6 +281,7 @@ export interface ConsultantServiceInDB {
 }
 
 export interface ConsultantServiceCreate {
+  service_template_id: number;
   name: string;
   duration: string;
   price: number;
@@ -274,8 +290,6 @@ export interface ConsultantServiceCreate {
 }
 
 export interface ConsultantServiceUpdate {
-  name?: string;
-  duration?: string;
   price?: number;
   description?: string;
   is_active?: boolean;
