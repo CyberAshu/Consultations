@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, validator
 from datetime import datetime
 
@@ -49,4 +49,53 @@ class ServiceTemplateInDB(ServiceTemplateBase):
 
 
 class ServiceTemplateResponse(ServiceTemplateInDB):
+    duration_options: List["ServiceDurationOptionInDB"] = []
+
+
+# Service Duration Option Schemas
+class ServiceDurationOptionBase(BaseModel):
+    service_template_id: int
+    duration_minutes: int
+    duration_label: str
+    min_price: float
+    max_price: float
+    is_active: bool = True
+    order_index: int = 0
+
+    @validator('max_price')
+    def validate_price_range(cls, v, values):
+        if 'min_price' in values and v <= values['min_price']:
+            raise ValueError('max_price must be greater than min_price')
+        return v
+
+
+class ServiceDurationOptionCreate(ServiceDurationOptionBase):
     pass
+
+
+class ServiceDurationOptionUpdate(BaseModel):
+    duration_minutes: Optional[int] = None
+    duration_label: Optional[str] = None
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    is_active: Optional[bool] = None
+    order_index: Optional[int] = None
+
+    @validator('max_price')
+    def validate_price_range(cls, v, values):
+        if v is not None and 'min_price' in values and values['min_price'] is not None and v <= values['min_price']:
+            raise ValueError('max_price must be greater than min_price')
+        return v
+
+
+class ServiceDurationOptionInDB(ServiceDurationOptionBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# Update forward reference
+ServiceTemplateResponse.model_rebuild()

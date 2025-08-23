@@ -1,30 +1,112 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional
+from datetime import datetime
 
-# Consultant Service Schemas
-class ConsultantServiceBase(BaseModel):
-    name: str
-    duration: str
+# Consultant Service Pricing Schemas (New duration-based pricing)
+class ConsultantServicePricingBase(BaseModel):
+    consultant_service_id: int
+    duration_option_id: int
     price: float
+    is_active: bool = True
+
+
+class ConsultantServicePricingCreate(ConsultantServicePricingBase):
+    pass
+
+
+class ConsultantServicePricingUpdate(BaseModel):
+    price: Optional[float] = None
+    is_active: Optional[bool] = None
+
+
+class ConsultantServicePricingInDB(ConsultantServicePricingBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# Enhanced service schema with duration options and pricing
+class ConsultantServiceWithPricing(BaseModel):
+    id: int
+    consultant_id: int
+    service_template_id: Optional[int] = None
+    name: str
     description: Optional[str] = None
     is_active: bool = True
+    pricing_options: List["ConsultantServicePricingWithDuration"] = []
+
+    class Config:
+        from_attributes = True
+
+
+class ConsultantServicePricingWithDuration(BaseModel):
+    id: int
+    price: float
+    is_active: bool
+    duration_option: "ServiceDurationOptionResponse"
+
+    class Config:
+        from_attributes = True
+
+
+# Service Duration Option Response (imported from service_template schemas)
+class ServiceDurationOptionResponse(BaseModel):
+    id: int
+    duration_minutes: int
+    duration_label: str
+    min_price: float
+    max_price: float
+    is_active: bool
+    order_index: int
+
+    class Config:
+        from_attributes = True
+
+
+# Legacy Consultant Service Schemas (for backward compatibility)
+class ConsultantServiceBase(BaseModel):
+    name: str
+    duration: int # Duration in minutes (legacy)
+    price: float # Legacy single price
+    description: Optional[str] = None
+    is_active: bool = True
+    
+    @validator('duration')
+    def validate_duration(cls, v):
+        if v < 15:
+            raise ValueError('Duration cannot be less than 15 minutes')
+        return v
+
 
 class ConsultantServiceCreate(ConsultantServiceBase):
     service_template_id: int  # Required for template-based creation
 
+
 class ConsultantServiceUpdate(BaseModel):
     # Only allow updating price, description, and active status
+    duration: Optional[int] = None
     price: Optional[float] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
+
 
 class ConsultantServiceInDB(ConsultantServiceBase):
     id: int
     consultant_id: int
     service_template_id: Optional[int] = None
+    pricing_options: List[ConsultantServicePricingInDB] = []
 
     class Config:
         from_attributes = True
+
+
+# Bulk pricing update schema for RCIC panel
+class BulkPricingUpdate(BaseModel):
+    consultant_service_id: int
+    pricing_options: List[ConsultantServicePricingCreate]
 
 # Consultant Review Schemas
 class ConsultantReviewBase(BaseModel):
@@ -87,3 +169,8 @@ class ConsultantInDB(ConsultantBase):
 
     class Config:
         from_attributes = True
+
+
+# Update forward references
+ConsultantServiceWithPricing.model_rebuild()
+ConsultantServicePricingWithDuration.model_rebuild()

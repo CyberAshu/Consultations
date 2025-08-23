@@ -161,6 +161,47 @@ export interface CreateBookingRequest {
   client_id?: string; // optional; backend will override for clients
 }
 
+// New booking request with duration-based pricing
+export interface CreateBookingWithDurationRequest {
+  consultant_id: number;
+  service_id: number;
+  duration_option_id: number;
+  booking_date: string;
+  timezone?: string;
+  intake_form_data?: any;
+}
+
+// Price calculation request
+export interface PriceCalculationRequest {
+  service_id: number;
+  duration_option_id: number;
+}
+
+export interface PriceCalculationResponse {
+  price: number;
+  duration_minutes: number;
+  duration_label: string;
+}
+
+// Service pricing request types
+export interface ServicePricingOptions {
+  service_id: number;
+  service_name: string;
+  consultant_id: number;
+  duration_options: ServiceDurationOption[];
+  pricing_set_by_rcic: ConsultantServicePricing[];
+}
+
+export interface BulkPricingUpdate {
+  consultant_service_id: number;
+  pricing_options: {
+    consultant_service_id: number;
+    duration_option_id: number;
+    price: number;
+    is_active: boolean;
+  }[];
+}
+
 export interface ConsultantAvailability {
   date: string;
   slots: string[];
@@ -265,6 +306,45 @@ export interface ServiceTemplate {
   is_active: boolean;
   created_at: string;
   updated_at?: string;
+  duration_options?: ServiceDurationOption[];
+}
+
+// Service Duration Option Types (Admin-controlled)
+export interface ServiceDurationOption {
+  id: number;
+  service_template_id: number;
+  duration_minutes: number;
+  duration_label: string; // e.g., "30 minutes", "1 hour"
+  min_price: number;
+  max_price: number;
+  is_active: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+// Consultant Service Pricing Types (RCIC-controlled)
+export interface ConsultantServicePricing {
+  id: number;
+  consultant_service_id: number;
+  duration_option_id: number;
+  price: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  duration_option?: ServiceDurationOption;
+}
+
+// Enhanced service with duration-based pricing
+export interface ConsultantServiceWithPricing {
+  id: number;
+  consultant_id: number;
+  service_template_id?: number;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  pricing_options: ConsultantServicePricing[];
+  created_at?: string;
 }
 
 // Consultant Service Types
@@ -273,7 +353,7 @@ export interface ConsultantServiceInDB {
   consultant_id: number;
   service_template_id?: number;
   name: string;
-  duration: string;
+  duration: number; // Duration in minutes
   price: number;
   description?: string;
   is_active: boolean;
@@ -283,13 +363,14 @@ export interface ConsultantServiceInDB {
 export interface ConsultantServiceCreate {
   service_template_id: number;
   name: string;
-  duration: string;
+  duration: number; // Duration in minutes
   price: number;
   description?: string;
   is_active?: boolean;
 }
 
 export interface ConsultantServiceUpdate {
+  duration?: number; // Duration in minutes
   price?: number;
   description?: string;
   is_active?: boolean;

@@ -1,10 +1,14 @@
-import { apiGet, apiPost, apiPut, apiDelete, apiPatch, apiPostFormData } from './api';
+import { apiGet, apiPost, apiPut, apiPatch, apiPostFormData } from './api';
 import { 
   Consultant, 
   ConsultantFilters,
   ConsultantServiceInDB,
   ConsultantServiceCreate,
   ConsultantServiceUpdate,
+  ConsultantServiceWithPricing,
+  ServicePricingOptions,
+  BulkPricingUpdate,
+  ServiceDurationOption,
 } from './types';
 
 class ConsultantService {
@@ -51,7 +55,7 @@ class ConsultantService {
 
   // Get only active services for public view (for booking)
   async getActiveConsultantServices(consultantId: number): Promise<ConsultantServiceInDB[]> {
-    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services/active`);
+    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services?active_only=true`);
   }
 
   async createConsultantService(consultantId: number, serviceData: ConsultantServiceCreate): Promise<ConsultantServiceInDB> {
@@ -99,6 +103,61 @@ class ConsultantService {
     formData.append('file', file);
     
     return apiPostFormData<{url: string, filename: string, path: string}>('/uploads/profile-image', formData);
+  }
+
+  // Duration-based pricing methods
+  
+  // Get services with pricing options for RCIC management
+  async getConsultantServicesWithPricing(consultantId: number, activeOnly = false): Promise<ConsultantServiceWithPricing[]> {
+    return apiGet<ConsultantServiceWithPricing[]>(
+      `/consultants/${consultantId}/services-with-pricing`,
+      { active_only: activeOnly }
+    );
+  }
+
+  // Get pricing options for a specific service
+  async getServicePricingOptions(consultantId: number, serviceId: number): Promise<ServicePricingOptions> {
+    return apiGet<ServicePricingOptions>(`/consultants/${consultantId}/services/${serviceId}/pricing-options`);
+  }
+
+  // Set pricing for a service's duration options
+  async setServicePricing(consultantId: number, serviceId: number, pricingData: BulkPricingUpdate): Promise<{
+    success: boolean;
+    message: string;
+    service_id: number;
+    updated_pricing: any[];
+  }> {
+    return apiPost<{
+      success: boolean;
+      message: string;
+      service_id: number;
+      updated_pricing: any[];
+    }>(`/consultants/${consultantId}/services/${serviceId}/set-pricing`, pricingData);
+  }
+
+  // Initialize default pricing for a service
+  async initializeServicePricing(consultantId: number, serviceId: number): Promise<{
+    success: boolean;
+    message: string;
+    service_id: number;
+    pricing_options: any[];
+  }> {
+    return apiPost<{
+      success: boolean;
+      message: string;
+      service_id: number;
+      pricing_options: any[];
+    }>(`/consultants/${consultantId}/services/${serviceId}/initialize-pricing`, {});
+  }
+
+  // Get duration options for a service template
+  async getServiceTemplateDurationOptions(templateId: number): Promise<ServiceDurationOption[]> {
+    return apiGet<ServiceDurationOption[]>(`/service-duration-options/template/${templateId}`);
+  }
+
+  // Validate price against duration option range
+  validateDurationPrice(price: number, durationOption: ServiceDurationOption): boolean {
+    return price >= durationOption.min_price && price <= durationOption.max_price;
   }
 }
 

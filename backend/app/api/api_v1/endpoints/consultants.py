@@ -5,7 +5,19 @@ from supabase import Client
 from app.api import deps
 from app.crud import crud_consultant
 from app.crud.crud_service_template import service_template
-from app.schemas.consultant import ConsultantInDB, ConsultantCreate, ConsultantUpdate, ConsultantServiceCreate, ConsultantReviewCreate
+from app.crud.crud_service_duration_option import service_duration_option
+from app.crud.crud_consultant_service_pricing import consultant_service_pricing
+from app.schemas.consultant import (
+    ConsultantInDB, 
+    ConsultantCreate, 
+    ConsultantUpdate, 
+    ConsultantServiceCreate, 
+    ConsultantReviewCreate,
+    ConsultantServicePricingCreate,
+    ConsultantServicePricingUpdate,
+    ConsultantServiceWithPricing,
+    BulkPricingUpdate
+)
 from app.schemas.service_template import ServiceTemplateResponse
 
 router = APIRouter()
@@ -235,6 +247,142 @@ def toggle_consultant_service_status(
             status_code=500,
             detail=f"Error updating service status: {str(e)}"
         )
+
+# Duration-based pricing endpoints
+@router.get("/{consultant_id}/services/{service_id}/pricing-options")
+def get_service_pricing_options(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+    service_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get pricing options for a specific consultant service.
+    Shows duration options with set prices for RCIC management or client booking.
+    """
+    # Verify service belongs to consultant
+    service_response = db.table("consultant_services").select("*").eq("id", service_id).eq("consultant_id", consultant_id).execute()
+    if not service_response.data:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    service = service_response.data[0]
+    
+    # Get available duration options for this service template
+    duration_options = crud_consultant.get_available_duration_options_for_service(db, service_id)
+    
+    # Get existing pricing set by RCIC
+    pricing_data = consultant_service_pricing.get_by_service_with_duration(db, consultant_service_id=service_id, is_active=True)
+    
+    # Combine duration options with pricing (if set by RCIC)
+    result = {
+        "service_id": service_id,
+        "service_name": service["name"],
+        "consultant_id": consultant_id,
+        "duration_options": duration_options,
+        "pricing_set_by_rcic": pricing_data
+    }
+    
+    return result
+
+
+@router.post("/{consultant_id}/services/{service_id}/set-pricing")
+def set_service_pricing(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+    service_id: int,
+    pricing_update: BulkPricingUpdate,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Set pricing for different duration options of a consultant's service.
+    Only the consultant can set their own prices within admin-defined ranges.
+    """
+    # Verify consultant ownership
+    consultant = crud_consultant.consultant.get_by_user_id(db, current_user["id"])
+    if not consultant or consultant["id"] != consultant_id:
+        raise HTTPException(status_code=403, detail="You can only set pricing for your own services")
+    
+    # Verify service belongs to consultant
+    service_response = db.table("consultant_services").select("*").eq("id", service_id).eq("consultant_id", consultant_id).execute()
+    if not service_response.data:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    try:
+        # Bulk upsert pricing options
+        pricing_update.consultant_service_id = service_id
+        results = consultant_service_pricing.bulk_upsert(
+            db, 
+            consultant_service_id=service_id,
+            pricing_options=pricing_update.pricing_options
+        )
+        
+        return {
+            "success": True,
+            "message": f"Updated {len(results)} pricing options for service",
+            "service_id": service_id,
+            "updated_pricing": results
+        }
+    
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating pricing: {str(e)}")
+
+
+@router.get("/{consultant_id}/services-with-pricing", response_model=List[ConsultantServiceWithPricing])
+def get_consultant_services_with_pricing(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+    active_only: bool = Query(False),
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get all services for a consultant with their duration-based pricing.
+    Used by RCIC panel to manage service pricing.
+    """
+    # Verify consultant ownership for full access
+    consultant = crud_consultant.consultant.get_by_user_id(db, current_user["id"])
+    if consultant and consultant["id"] == consultant_id:
+        # Own services - can see all (active and inactive)
+        services = crud_consultant.get_services_with_pricing(db, consultant_id, active_only=False if not active_only else True)
+    else:
+        # Other user - only see active services
+        services = crud_consultant.get_services_with_pricing(db, consultant_id, active_only=True)
+    
+    return services
+
+
+@router.post("/{consultant_id}/services/{service_id}/initialize-pricing")
+def initialize_service_pricing(
+    *,
+    db: Client = Depends(deps.get_db),
+    consultant_id: int,
+    service_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Initialize default pricing for all duration options of a service.
+    Sets prices to minimum allowed for each duration option.
+    """
+    # Verify consultant ownership
+    consultant = crud_consultant.consultant.get_by_user_id(db, current_user["id"])
+    if not consultant or consultant["id"] != consultant_id:
+        raise HTTPException(status_code=403, detail="You can only initialize pricing for your own services")
+    
+    try:
+        pricing_options = crud_consultant.initialize_default_pricing_for_service(db, service_id)
+        return {
+            "success": True,
+            "message": f"Initialized {len(pricing_options)} default pricing options",
+            "service_id": service_id,
+            "pricing_options": pricing_options
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error initializing pricing: {str(e)}")
+
 
 @router.post("/{consultant_id}/reviews")
 def create_consultant_review(

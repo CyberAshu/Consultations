@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Text, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Text, JSON, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, backref
@@ -41,8 +41,8 @@ class ConsultantService(Base):
     consultant_id = Column(Integer, ForeignKey("consultants.id"), nullable=False)
     service_template_id = Column(Integer, ForeignKey("service_templates.id"), nullable=True)
     name = Column(String, nullable=False)
-    duration = Column(String)
-    price = Column(Float, nullable=False)
+    duration = Column(Integer) # Duration in minutes (legacy field - will be phased out)
+    price = Column(Float, nullable=False) # Legacy field - will be phased out
     description = Column(Text)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -51,6 +51,27 @@ class ConsultantService(Base):
     consultant = relationship("Consultant", back_populates="services")
     service_template = relationship("ServiceTemplate", lazy="select")
     bookings = relationship("Booking", back_populates="service")
+    pricing_options = relationship("ConsultantServicePricing", back_populates="consultant_service", cascade="all, delete-orphan")
+
+
+class ConsultantServicePricing(Base):
+    """RCIC-controlled pricing for different duration options of their services"""
+    __tablename__ = "consultant_service_pricing"
+
+    id = Column(Integer, primary_key=True, index=True)
+    consultant_service_id = Column(Integer, ForeignKey("consultant_services.id", ondelete="CASCADE"), nullable=False)
+    duration_option_id = Column(Integer, ForeignKey("service_duration_options.id", ondelete="CASCADE"), nullable=False)
+    price = Column(Float, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    consultant_service = relationship("ConsultantService", back_populates="pricing_options")
+    duration_option = relationship("ServiceDurationOption", back_populates="consultant_pricing")
+    
+    # Unique constraint: one price per service per duration option
+    __table_args__ = (UniqueConstraint('consultant_service_id', 'duration_option_id', name='uq_consultant_service_pricing_service_duration'),)
 
 class ConsultantReview(Base):
     __tablename__ = "consultant_reviews"

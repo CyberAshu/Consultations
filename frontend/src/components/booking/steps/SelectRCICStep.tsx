@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
 import { Badge } from '../../ui/Badge'
-import { consultantService } from '../../../services'
+import { DurationBasedServiceSelection } from './DurationBasedServiceSelection'
+import { consultantService, bookingService } from '../../../services'
 import { 
   Star, 
-  Clock, 
   CheckCircle, 
   Award,
   MessageSquare,
@@ -28,6 +28,8 @@ export function SelectRCICStep({
 }: SelectRCICStepProps) {
   const [selectedRCIC, setSelectedRCIC] = useState<any>(null)
   const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [selectedAddons, setSelectedAddons] = useState<any[]>([])
   const [rcics, setRCICs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,12 +41,25 @@ export function SelectRCICStep({
         setLoading(true)
         const data = await consultantService.getConsultants()
         
+        // Load active services for each consultant
+        const consultantsWithServices = await Promise.all(
+          data.map(async (rcic: any) => {
+            try {
+              const activeServices = await consultantService.getActiveConsultantServices(rcic.id);
+              return { ...rcic, services: activeServices };
+            } catch (error) {
+              console.error(`Failed to load services for consultant ${rcic.id}:`, error);
+              return { ...rcic, services: [] };
+            }
+          })
+        );
+        
         // If prefilledRCIC is provided, filter to show only that consultant
         if (prefilledRCIC) {
-          const filteredData = data.filter((rcic: any) => rcic.id === parseInt(prefilledRCIC))
+          const filteredData = consultantsWithServices.filter((rcic: any) => rcic.id === parseInt(prefilledRCIC))
           setRCICs(filteredData)
         } else {
-          setRCICs(data)
+          setRCICs(consultantsWithServices)
         }
       } catch (error) {
         console.error('Failed to fetch RCICs:', error)
@@ -138,41 +153,68 @@ export function SelectRCICStep({
     }
   ]
 
-  // Calculate total amount including addons
+
+  // Handle addon selection/deselection
+  const handleAddonToggle = (addon: any) => {
+    setSelectedAddons(prevAddons => {
+      const isSelected = prevAddons.find(a => a.id === addon.id)
+      if (isSelected) {
+        return prevAddons.filter(a => a.id !== addon.id)
+      } else {
+        return [...prevAddons, addon]
+      }
+    })
+  }
+
+  // Calculate total amount
   const calculateTotal = () => {
-    const basePrice = selectedService?.price || 0
-    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0)
-    return basePrice + addonsTotal
+    const basePrice = calculatedPrice || selectedService?.price || 0;
+    const addonsPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+    return basePrice + addonsPrice;
   }
 
   useEffect(() => {
     onDataChange({
       rcic: selectedRCIC,
       service: selectedService,
-      addons: selectedAddons,
+      duration: selectedDuration,
+      calculatedPrice: calculatedPrice,
+      selectedAddons: selectedAddons,
       totalAmount: calculateTotal()
     })
-  }, [selectedRCIC, selectedService, selectedAddons, onDataChange])
+  }, [selectedRCIC, selectedService, selectedDuration, calculatedPrice, selectedAddons, onDataChange])
 
   const handleRCICSelect = (rcic: any) => {
     setSelectedRCIC(rcic)
     setSelectedService(null) // Reset service when RCIC changes
+    setSelectedDuration(null);
+    setCalculatedPrice(null);
   }
 
   const handleServiceSelect = (service: any) => {
-    setSelectedService(service)
+    setSelectedService(service);
+    setSelectedDuration(service.duration); // Set default duration
+    setCalculatedPrice(service.price); // Set default price
   }
 
-  const handleAddonToggle = (addon: any) => {
-    setSelectedAddons(prev => {
-      const isSelected = prev.find(a => a.id === addon.id)
-      if (isSelected) {
-        return prev.filter(a => a.id !== addon.id)
-      } else {
-        return [...prev, addon]
+  const handleDurationChange = async (duration: number) => {
+    if (!selectedService) return;
+    
+    setSelectedDuration(duration);
+    if (duration >= 15 && selectedService.duration_option_id) {
+      try {
+        const response = await bookingService.calculateDurationPrice({
+          service_id: selectedService.id,
+          duration_option_id: selectedService.duration_option_id
+        });
+        setCalculatedPrice(response.price);
+      } catch (error) {
+        console.error('Failed to calculate duration price:', error);
+        // Fallback to the service's default price
+        setCalculatedPrice(selectedService.price);
       }
-    })
-  }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -310,52 +352,36 @@ export function SelectRCICStep({
         )}
       </div>
 
-      {/* Service Selection */}
+      {/* Duration-Based Service Selection */}
       {selectedRCIC && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Choose a Service with {selectedRCIC.name}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(selectedRCIC.services || []).map((service: any) => (
-              <Card 
-                key={service.id}
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                  selectedService?.id === service.id 
-                    ? 'ring-2 ring-green-500 bg-green-50/50' 
-                    : 'bg-white/80 backdrop-blur-sm border-gray-200/50'
-                }`}
-                onClick={() => handleServiceSelect(service)}
-              >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h4 className="font-semibold text-gray-900 text-lg">{service?.name || 'N/A'}</h4>
-                    <Badge className="bg-green-100 text-green-800 font-semibold">
-                      ${service?.price || 0} CAD
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-3 text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm">{service?.duration || 'N/A'}</span>
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                    {service?.description || 'No description available'}
-                  </p>
-
-                  {selectedService?.id === service.id && (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      <span className="text-sm font-medium">Selected Service</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <Card className="bg-white/80 backdrop-blur-sm border-gray-200/50">
+          <CardContent className="p-6">
+            <DurationBasedServiceSelection
+              consultantId={selectedRCIC.id}
+              onServiceSelect={(serviceData) => {
+                setSelectedService({
+                  id: serviceData.serviceId,
+                  name: serviceData.serviceName,
+                  duration: serviceData.durationMinutes,
+                  price: serviceData.price,
+                  duration_option_id: serviceData.durationOptionId,
+                  duration_label: serviceData.durationLabel
+                });
+                setCalculatedPrice(serviceData.price);
+              }}
+              selectedService={selectedService ? {
+                serviceId: selectedService.id,
+                serviceName: selectedService.name,
+                durationOptionId: selectedService.duration_option_id,
+                durationLabel: selectedService.duration_label,
+                price: selectedService.price,
+                durationMinutes: selectedService.duration
+              } : null}
+            />
+          </CardContent>
+        </Card>
       )}
+
 
       {/* Addons Selection */}
       {selectedRCIC && selectedService && (
@@ -431,13 +457,13 @@ export function SelectRCICStep({
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-medium text-gray-700">Duration:</span>
-                <span className="text-gray-900">{selectedService?.duration || 'N/A'}</span>
+                <span className="text-gray-900">{selectedDuration || selectedService?.duration || 'N/A'} minutes</span>
               </div>
               
               {/* Show base service price */}
               <div className="flex justify-between items-center pt-2 border-t border-green-200">
                 <span className="font-medium text-gray-700">Base Service:</span>
-                <span className="text-gray-900">${selectedService?.price || 0} CAD</span>
+                <span className="text-gray-900">${(calculatedPrice || selectedService?.price || 0).toFixed(2)} CAD</span>
               </div>
               
               {/* Show selected addons */}

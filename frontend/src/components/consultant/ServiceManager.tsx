@@ -18,10 +18,12 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [editingService, setEditingService] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<{
+    duration: number;
     price: number;
     description: string;
     is_active: boolean;
   }>({
+    duration: 15,
     price: 0,
     description: '',
     is_active: false
@@ -55,6 +57,7 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
   const handleEdit = (service: ConsultantServiceInDB) => {
     setEditingService(service.id);
     setEditForm({
+      duration: service.duration,
       price: service.price,
       description: service.description || '',
       is_active: service.is_active
@@ -64,6 +67,7 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
   const handleSave = async (serviceId: number) => {
     try {
       const updateData: ConsultantServiceUpdate = {
+        duration: editForm.duration,
         price: editForm.price,
         description: editForm.description,
         is_active: editForm.is_active
@@ -80,7 +84,11 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
 
   const handleCancel = () => {
     setEditingService(null);
-    setEditForm({ price: 0, description: '', is_active: false });
+    setEditForm({ duration: 15, price: 0, description: '', is_active: false });
+  };
+
+  const validateDuration = (duration: number): boolean => {
+    return duration >= 15;
   };
 
   const validatePrice = (price: number, template: ServiceTemplate): boolean => {
@@ -116,10 +124,32 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-medium text-gray-900">{service.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{service.duration}</p>
+                    <p className="text-sm text-gray-600 mt-1">{service.duration} minutes</p>
                     
                     {isEditing ? (
-                      <div className="mt-4 space-y-4">
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Duration (minimum 15 minutes)
+                          </label>
+                          <input
+                            type="number"
+                            min={15}
+                            step={5}
+                            value={editForm.duration}
+                            onChange={(e) => setEditForm({
+                              ...editForm,
+                              duration: parseInt(e.target.value) || 15
+                            })}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          {!validateDuration(editForm.duration) && (
+                            <p className="text-red-600 text-sm mt-1">
+                              Duration must be at least 15 minutes
+                            </p>
+                          )}
+                        </div>
+                        
                         <div>
                           <label className="block text-sm font-medium text-gray-700">
                             Price (${template?.min_price} - ${template?.max_price})
@@ -128,6 +158,7 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
                             type="number"
                             min={template?.min_price}
                             max={template?.max_price}
+                            step={0.01}
                             value={editForm.price}
                             onChange={(e) => setEditForm({
                               ...editForm,
@@ -176,7 +207,7 @@ export function ServiceManager({ consultantId }: ServiceManagerProps) {
                         <div className="flex space-x-3">
                           <button
                             onClick={() => handleSave(service.id)}
-                            disabled={template && !validatePrice(editForm.price, template)}
+                            disabled={(template && !validatePrice(editForm.price, template)) || !validateDuration(editForm.duration)}
                             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Save Changes

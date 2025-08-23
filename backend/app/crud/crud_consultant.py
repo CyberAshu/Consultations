@@ -2,6 +2,8 @@ from typing import List, Optional, Dict, Any
 from supabase import Client
 from app.schemas.consultant import ConsultantCreate, ConsultantUpdate, ConsultantServiceCreate, ConsultantServiceUpdate, ConsultantReviewCreate
 from app.crud.crud_service_template import service_template
+from app.crud.crud_service_duration_option import service_duration_option
+from app.crud.crud_consultant_service_pricing import consultant_service_pricing
 
 class CRUDConsultant:
     def create(self, db: Client, *, obj_in: ConsultantCreate) -> Dict[str, Any]:
@@ -109,61 +111,9 @@ def get_services_by_consultant(db: Client, consultant_id: int, active_only: bool
     response = query.execute()
     return response.data or []
 
-def validate_service_price(db: Client, service_template_id: int, price: float) -> bool:
-    """Validate that price is within template range"""
-    template = service_template.get(db, service_template_id)
-    if not template:
-        return False
-    return template['min_price'] <= price <= template['max_price']
-
-def create_consultant_service_from_template(db: Client, *, consultant_id: int, service_template_id: int, price: float, description: str = None, is_active: bool = False) -> Dict:
-    """Create consultant service based on template"""
-    template = service_template.get(db, service_template_id)
-    if not template:
-        raise ValueError("Service template not found")
-    
-    if not validate_service_price(db, service_template_id, price):
-        raise ValueError(f"Price must be between {template['min_price']} and {template['max_price']}")
-    
-    service_data = {
-        "consultant_id": consultant_id,
-        "service_template_id": service_template_id,
-        "name": template['name'],
-        "duration": template['default_duration'],
-        "price": price,
-        "description": description or template['default_description'],
-        "is_active": is_active
-    }
-    
-    response = db.table("consultant_services").insert(service_data).execute()
-    return response.data[0] if response.data else {}
-
-def create_consultant_service(db: Client, *, obj_in: Dict) -> Dict:
-    """Legacy method - now requires service_template_id"""
-    if 'service_template_id' not in obj_in:
-        raise ValueError("service_template_id is required")
-    
-    service_template_id = obj_in['service_template_id']
-    if not validate_service_price(db, service_template_id, obj_in['price']):
-        template = service_template.get(db, service_template_id)
-        raise ValueError(f"Price must be between {template['min_price']} and {template['max_price']}")
-    
-    response = db.table("consultant_services").insert(obj_in).execute()
-    return response.data[0]
-
 def update_consultant_service(db: Client, *, service_id: int, obj_in: ConsultantServiceUpdate) -> Dict:
     """Update consultant service with validation"""
     update_data = obj_in.dict(exclude_unset=True)
-    
-    # If price is being updated, validate against template
-    if 'price' in update_data:
-        # Get current service to get template_id
-        current_service = db.table("consultant_services").select("*").eq("id", service_id).execute()
-        if current_service.data:
-            service_template_id = current_service.data[0].get('service_template_id')
-            if service_template_id and not validate_service_price(db, service_template_id, update_data['price']):
-                template = service_template.get(db, service_template_id)
-                raise ValueError(f"Price must be between {template['min_price']} and {template['max_price']}")
     
     response = db.table("consultant_services").update(update_data).eq("id", service_id).execute()
     return response.data[0]
@@ -174,11 +124,14 @@ def create_default_consultant_services(db: Client, consultant_id: int) -> List[D
     created_services = []
     
     for template in templates:
+        # Extract the integer value from the duration string, e.g., "15 Mins" -> 15
+        duration_int = int(''.join(filter(str.isdigit, template['default_duration'])))
+
         service_data = {
             "consultant_id": consultant_id,
             "service_template_id": template['id'],
             "name": template['name'],
-            "duration": template['default_duration'],
+            "duration": duration_int,
             "price": template['min_price'],  # Start with minimum price
             "description": template['default_description'],
             "is_active": False  # Inactive by default
@@ -196,18 +149,68 @@ def get_bookings_by_service(db: Client, service_id: int) -> List[Dict]:
     return response.data or []
 
 def delete_consultant_service(db: Client, *, service_id: int) -> bool:
-    """Delete a consultant service - only if no bookings exist"""
-    # Check if there are any bookings for this service
-    existing_bookings = get_bookings_by_service(db, service_id)
+    """Soft delete a consultant service by setting is_active to False"""
+    response = db.table("consultant_services").update({"is_active": False}).eq("id", service_id).execute()
+    return len(response.data) > 0
+
+# Duration-based pricing functions
+def get_services_with_pricing(db: Client, consultant_id: int, active_only: bool = False) -> List[Dict]:
+    """Get all services for a consultant with their duration-based pricing options"""
+    services = get_services_by_consultant(db, consultant_id, active_only)
     
-    if existing_bookings:
-        # If there are bookings, use soft delete instead
-        response = db.table("consultant_services").update({"is_active": False}).eq("id", service_id).execute()
-        return len(response.data) > 0
-    else:
-        # If no bookings exist, we can safely delete the service
-        response = db.table("consultant_services").delete().eq("id", service_id).execute()
-        return len(response.data) > 0
+    for service in services:
+        # Get pricing options with duration details for each service
+        pricing_data = consultant_service_pricing.get_by_service_with_duration(
+            db, consultant_service_id=service["id"], is_active=active_only
+        )
+        service["pricing_options"] = pricing_data
+    
+    return services
+
+def get_service_price_for_duration(db: Client, service_id: int, duration_option_id: int) -> Optional[Dict]:
+    """Get the price set by RCIC for a specific service and duration"""
+    return consultant_service_pricing.get_price_by_duration(
+        db, consultant_service_id=service_id, duration_option_id=duration_option_id
+    )
+
+def get_available_duration_options_for_service(db: Client, service_id: int) -> List[Dict]:
+    """Get available duration options for a service based on its template"""
+    # Get the service to find its template
+    service_response = db.table("consultant_services").select("service_template_id").eq("id", service_id).execute()
+    if not service_response.data:
+        return []
+    
+    service_template_id = service_response.data[0]["service_template_id"]
+    if not service_template_id:
+        return []
+    
+    # Get duration options for this template
+    return service_duration_option.get_by_template(db, service_template_id=service_template_id, is_active=True)
+
+def initialize_default_pricing_for_service(db: Client, service_id: int) -> List[Dict]:
+    """Create default pricing for all duration options of a service"""
+    duration_options = get_available_duration_options_for_service(db, service_id)
+    created_pricing = []
+    
+    for option in duration_options:
+        # Set price to minimum allowed for this duration option
+        pricing_data = {
+            "consultant_service_id": service_id,
+            "duration_option_id": option["id"],
+            "price": option["min_price"],
+            "is_active": True
+        }
+        
+        try:
+            from app.schemas.consultant import ConsultantServicePricingCreate
+            pricing_create = ConsultantServicePricingCreate(**pricing_data)
+            pricing = consultant_service_pricing.create(db, obj_in=pricing_create)
+            created_pricing.append(pricing)
+        except ValueError:
+            # Pricing might already exist, skip
+            continue
+    
+    return created_pricing
 
 # Consultant Review CRUD
 def create_consultant_review(db: Client, *, obj_in: Dict) -> Dict:

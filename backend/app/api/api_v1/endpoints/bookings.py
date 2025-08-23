@@ -4,12 +4,58 @@ from supabase import Client
 from pydantic import BaseModel
 
 from app.api import deps
-from app.crud import crud_booking
+from app.crud import crud_booking, crud_consultant
 from app.schemas.booking import BookingInDB, BookingCreate, BookingUpdate, BookingDocumentCreate
 from app.models.booking import BookingStatus, PaymentStatus
 from app.utils.email_service import EmailService
 
 router = APIRouter()
+
+class PriceRequest(BaseModel):
+    service_id: int
+    duration_option_id: int  # New: specific duration option ID instead of arbitrary minutes
+
+class PriceResponse(BaseModel):
+    price: float
+    duration_minutes: int
+    duration_label: str
+
+@router.post("/calculate-price", response_model=PriceResponse)
+def calculate_price(
+    *, 
+    db: Client = Depends(deps.get_db),
+    price_request: PriceRequest
+) -> Any:
+    """
+    Get the price for a specific service and duration option.
+    Uses the new duration-based pricing system.
+    """
+    from app.crud.crud_consultant_service_pricing import consultant_service_pricing
+    from app.crud.crud_service_duration_option import service_duration_option
+    
+    # Get the pricing set by RCIC for this service and duration
+    pricing = consultant_service_pricing.get_price_by_duration(
+        db, 
+        consultant_service_id=price_request.service_id,
+        duration_option_id=price_request.duration_option_id
+    )
+    
+    if not pricing:
+        raise HTTPException(
+            status_code=404, 
+            detail="Price not set for this service and duration combination"
+        )
+    
+    # Get duration option details
+    duration_option = service_duration_option.get(db, option_id=price_request.duration_option_id)
+    if not duration_option:
+        raise HTTPException(status_code=404, detail="Duration option not found")
+    
+    return {
+        "price": pricing["price"],
+        "duration_minutes": duration_option["duration_minutes"],
+        "duration_label": duration_option["duration_label"]
+    }
 
 def sanitize_booking_data(bookings: List[dict]) -> List[dict]:
     """Sanitize booking data to handle null status and payment_status"""
@@ -84,10 +130,12 @@ def create_booking(
     *,
     db: Client = Depends(deps.get_db),
     booking_in: BookingCreate,
+    duration: Optional[int] = None, # Optional duration in minutes (legacy)
     current_user: dict = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Create new booking.
+    Create new booking (legacy endpoint - still supports old duration-based pricing).
+    For new duration-based pricing, use /bookings/create-with-duration endpoint.
     """
     # Ensure the client_id is set appropriately based on role
     if current_user["role"] == "client":
@@ -98,9 +146,113 @@ def create_booking(
         if not booking_in.client_id:
             raise HTTPException(status_code=400, detail="client_id is required when creating a booking as rcic or admin")
     
+    # Get the service to determine the price and duration
+    service = db.table("consultant_services").select("*").eq("id", booking_in.service_id).execute()
+    if not service.data:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    service_data = service.data[0]
+    
+    if duration:
+        if duration < 15:
+            raise HTTPException(status_code=400, detail="Duration cannot be less than 15 minutes")
+        
+        # Calculate price based on duration
+        price_per_minute = service_data['price'] / service_data['duration']
+        booking_in.price = price_per_minute * duration
+        booking_in.duration = duration
+    else:
+        # Use default service price and duration
+        booking_in.price = service_data['price']
+        booking_in.duration = service_data['duration']
+
     booking = crud_booking.create_booking(db=db, obj_in=booking_in)
     # Sanitize booking data to handle null values
     return sanitize_booking_data([booking])[0]
+
+
+class NewBookingRequest(BaseModel):
+    consultant_id: int
+    service_id: int
+    duration_option_id: int
+    booking_date: str  # ISO datetime string
+    timezone: str = "America/Toronto"
+    intake_form_data: Optional[dict] = None
+
+
+@router.post("/create-with-duration", response_model=BookingInDB)
+def create_booking_with_duration(
+    *,
+    db: Client = Depends(deps.get_db),
+    booking_request: NewBookingRequest,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Create new booking using the new duration-based pricing system.
+    Client selects a specific duration option that the RCIC has priced.
+    """
+    from app.crud.crud_consultant_service_pricing import consultant_service_pricing
+    from app.crud.crud_service_duration_option import service_duration_option
+    
+    # Only clients can create bookings through this endpoint
+    if current_user["role"] != "client":
+        raise HTTPException(status_code=403, detail="Only clients can book services")
+    
+    # Verify service belongs to consultant
+    service_response = db.table("consultant_services").select("*").eq("id", booking_request.service_id).eq("consultant_id", booking_request.consultant_id).execute()
+    if not service_response.data:
+        raise HTTPException(status_code=404, detail="Service not found for this consultant")
+    
+    service = service_response.data[0]
+    if not service["is_active"]:
+        raise HTTPException(status_code=400, detail="This service is not currently available")
+    
+    # Get the pricing set by RCIC for this service and duration
+    pricing = consultant_service_pricing.get_price_by_duration(
+        db,
+        consultant_service_id=booking_request.service_id,
+        duration_option_id=booking_request.duration_option_id
+    )
+    
+    if not pricing:
+        raise HTTPException(
+            status_code=400,
+            detail="The RCIC has not set pricing for this service and duration combination"
+        )
+    
+    # Get duration option details
+    duration_option = service_duration_option.get(db, option_id=booking_request.duration_option_id)
+    if not duration_option:
+        raise HTTPException(status_code=404, detail="Duration option not found")
+    
+    # Create booking with duration-based pricing
+    booking_data = {
+        "client_id": current_user["id"],
+        "consultant_id": booking_request.consultant_id,
+        "service_id": booking_request.service_id,
+        "booking_date": booking_request.booking_date,
+        "timezone": booking_request.timezone,
+        "total_amount": pricing["price"],
+        "intake_form_data": booking_request.intake_form_data or {},
+        # Store duration info for reference
+        "duration_minutes": duration_option["duration_minutes"],
+        "duration_option_id": booking_request.duration_option_id,
+    }
+    
+    try:
+        # Use the existing booking creation function
+        from app.schemas.booking import BookingCreate
+        booking_create = BookingCreate(**booking_data)
+        booking = crud_booking.create_booking(db=db, obj_in=booking_create)
+        
+        # Sanitize booking data to handle null values
+        return sanitize_booking_data([booking])[0]
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create booking: {str(e)}"
+        )
 
 @router.put("/{booking_id}", response_model=BookingInDB)
 def update_booking(

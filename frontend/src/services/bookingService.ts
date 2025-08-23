@@ -2,9 +2,21 @@ import { apiGet, apiPost, apiPut, apiPostFormData } from './api';
 import { 
   Booking, 
   CreateBookingRequest,
+  CreateBookingWithDurationRequest,
+  PriceCalculationRequest,
+  PriceCalculationResponse,
   ConsultantAvailability,
   BookingDocument 
 } from './types';
+
+interface PriceRequest {
+  service_id: number;
+  duration: number; // Duration in minutes
+}
+
+interface PriceResponse {
+  price: number;
+}
 
 class BookingService {
   // Get user's bookings
@@ -17,9 +29,15 @@ class BookingService {
     return apiGet<Booking>(`/bookings/${bookingId}`);
   }
 
-  // Create a new booking
-  async createBooking(bookingData: CreateBookingRequest): Promise<Booking> {
-    return apiPost<Booking>('/bookings', bookingData);
+  // Calculate price for a service with specific duration
+  async calculatePrice(priceRequest: PriceRequest): Promise<PriceResponse> {
+    return apiPost<PriceResponse>('/bookings/calculate-price', priceRequest);
+  }
+
+  // Create a new booking with optional duration
+  async createBooking(bookingData: CreateBookingRequest, duration?: number): Promise<Booking> {
+    const payload = duration ? { ...bookingData, duration } : bookingData;
+    return apiPost<Booking>('/bookings', payload);
   }
 
   // Update booking information
@@ -83,6 +101,18 @@ class BookingService {
     expires_in: number;
   }> {
     return apiGet(`/bookings/${bookingId}/documents/${documentId}/download`);
+  }
+
+  // NEW: Duration-based pricing methods
+  
+  // Calculate price for a service with specific duration option
+  async calculateDurationPrice(priceRequest: PriceCalculationRequest): Promise<PriceCalculationResponse> {
+    return apiPost<PriceCalculationResponse>('/bookings/calculate-price', priceRequest);
+  }
+
+  // Create booking with duration-based pricing
+  async createBookingWithDuration(bookingData: CreateBookingWithDurationRequest): Promise<Booking> {
+    return apiPost<Booking>('/bookings/create-with-duration', bookingData);
   }
 }
 
