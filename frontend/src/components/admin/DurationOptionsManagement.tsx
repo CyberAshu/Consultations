@@ -349,7 +349,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                           type="number"
                           className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           value={newOption.duration_minutes}
-                          onChange={(e) => setNewOption(prev => ({
+                          onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
                             duration_minutes: parseInt(e.target.value) || 0
                           }))}
@@ -366,7 +366,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                           type="text"
                           className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           value={newOption.duration_label}
-                          onChange={(e) => setNewOption(prev => ({
+                          onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
                             duration_label: e.target.value
                           }))}
@@ -382,7 +382,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                           type="number"
                           className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           value={newOption.min_price}
-                          onChange={(e) => setNewOption(prev => ({
+                          onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
                             min_price: parseFloat(e.target.value) || 0
                           }))}
@@ -399,7 +399,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                           type="number"
                           className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           value={newOption.max_price}
-                          onChange={(e) => setNewOption(prev => ({
+                          onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
                             max_price: parseFloat(e.target.value) || 0
                           }))}
@@ -525,7 +525,7 @@ function DurationOptionItem({
                 type="number"
                 className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 value={editData.duration_minutes}
-                onChange={(e) => setEditData(prev => ({
+                onChange={(e) => setEditData((prev: ServiceDurationOptionUpdate) => ({
                   ...prev,
                   duration_minutes: parseInt(e.target.value) || 0
                 }))}
@@ -542,7 +542,7 @@ function DurationOptionItem({
                 type="text"
                 className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 value={editData.duration_label || ''}
-                onChange={(e) => setEditData(prev => ({
+                onChange={(e) => setEditData((prev: ServiceDurationOptionUpdate) => ({
                   ...prev,
                   duration_label: e.target.value
                 }))}
@@ -557,7 +557,7 @@ function DurationOptionItem({
                 type="number"
                 className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 value={editData.min_price}
-                onChange={(e) => setEditData(prev => ({
+                onChange={(e) => setEditData((prev: ServiceDurationOptionUpdate) => ({
                   ...prev,
                   min_price: parseFloat(e.target.value) || 0
                 }))}
@@ -574,7 +574,7 @@ function DurationOptionItem({
                 type="number"
                 className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 value={editData.max_price}
-                onChange={(e) => setEditData(prev => ({
+                onChange={(e) => setEditData((prev: ServiceDurationOptionUpdate) => ({
                   ...prev,
                   max_price: parseFloat(e.target.value) || 0
                 }))}
@@ -590,7 +590,7 @@ function DurationOptionItem({
                 type="checkbox"
                 className="mr-2"
                 checked={editData.is_active}
-                onChange={(e) => setEditData(prev => ({
+                onChange={(e) => setEditData((prev: ServiceDurationOptionUpdate) => ({
                   ...prev,
                   is_active: e.target.checked
                 }))}

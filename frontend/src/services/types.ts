@@ -323,6 +323,26 @@ export interface ServiceDurationOption {
   updated_at?: string;
 }
 
+export interface ServiceDurationOptionCreate {
+  service_template_id: number;
+  duration_minutes: number;
+  duration_label: string;
+  min_price: number;
+  max_price: number;
+  is_active: boolean;
+  order_index: number;
+}
+
+export interface ServiceDurationOptionUpdate {
+  service_template_id?: number;
+  duration_minutes?: number;
+  duration_label?: string;
+  min_price?: number;
+  max_price?: number;
+  is_active?: boolean;
+  order_index?: number;
+}
+
 // Consultant Service Pricing Types (RCIC-controlled)
 export interface ConsultantServicePricing {
   id: number;
