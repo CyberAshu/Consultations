@@ -30,6 +30,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
   const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<ServiceTemplate | null>(null)
   const [durationOptions, setDurationOptions] = useState<ServiceDurationOption[]>([])
+  const [durationOptionsCount, setDurationOptionsCount] = useState<{[key: number]: number}>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,6 +47,35 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
     is_active: true
   })
 
+  // Load duration options count for all templates
+  const loadDurationOptionsCount = async (templates: ServiceTemplate[]) => {
+    try {
+      console.log('🔄 Starting to load duration options count for', templates.length, 'templates')
+      const counts: {[key: number]: number} = {}
+      
+      // Load duration options count for each template
+      await Promise.all(
+        templates.map(async (template) => {
+          try {
+            console.log(`🔄 Loading duration options for template ${template.id} (${template.name})`)
+            const options = await serviceTemplateService.getDurationOptionsForTemplate(template.id)
+            counts[template.id] = options.length
+            console.log(`✅ Template ${template.id} has ${options.length} duration options`)
+          } catch (err) {
+            console.warn(`❌ Failed to load duration options for template ${template.id}:`, err)
+            counts[template.id] = 0
+          }
+        })
+      )
+      
+      console.log('🎯 Final duration options counts:', counts)
+      setDurationOptionsCount(counts)
+      console.log('✅ Duration options count state updated')
+    } catch (err: any) {
+      console.error('❌ Failed to load duration options count:', err)
+    }
+  }
+
   // Load service templates
   const loadServiceTemplates = async () => {
     try {
@@ -55,6 +85,9 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
       setServiceTemplates(templates)
       
       console.log('🔄 Loaded service templates for admin:', templates.length)
+      
+      // Load duration options count for all templates
+      await loadDurationOptionsCount(templates)
       
       if (templates.length > 0 && !selectedTemplate) {
         setSelectedTemplate(templates[0])
@@ -133,6 +166,12 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
       const created = await serviceTemplateService.createDurationOption(newOption)
       await loadDurationOptions(selectedTemplate.id)
       
+      // Update duration options count for this template
+      setDurationOptionsCount(prev => ({
+        ...prev,
+        [selectedTemplate.id]: (prev[selectedTemplate.id] || 0) + 1
+      }))
+      
       setShowAddForm(false)
       setSuccessMessage(`Duration option "${newOption.duration_label}" added successfully!`)
       setTimeout(() => setSuccessMessage(null), 5000)
@@ -180,6 +219,12 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
       
       await serviceTemplateService.deleteDurationOption(optionId)
       await loadDurationOptions(selectedTemplate.id)
+      
+      // Update duration options count for this template
+      setDurationOptionsCount(prev => ({
+        ...prev,
+        [selectedTemplate.id]: Math.max(0, (prev[selectedTemplate.id] || 0) - 1)
+      }))
       
       setSuccessMessage('Duration option deleted successfully!')
       setTimeout(() => setSuccessMessage(null), 5000)
@@ -290,7 +335,8 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                         Price: ${template.min_price} - ${template.max_price}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Duration Options: {template.duration_options?.length || 0}
+                        Duration Options: {selectedTemplate?.id === template.id ? durationOptions.length : (durationOptionsCount[template.id] || 0)}
+                        {/* Debug: {JSON.stringify(durationOptionsCount)} */}
                       </p>
                     </div>
                     <Badge className={template.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}>
