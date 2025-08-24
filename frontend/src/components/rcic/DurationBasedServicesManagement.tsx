@@ -35,6 +35,7 @@ export function DurationBasedServicesManagement({ consultantId, onServicesChange
   const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [editingPrices, setEditingPrices] = useState<{[serviceId: number]: boolean}>({})
   const [priceChanges, setPriceChanges] = useState<{[serviceId: number]: {[durationOptionId: number]: number}}>({})
   const [savingPrices, setSavingPrices] = useState<{[serviceId: number]: boolean}>({})
@@ -75,8 +76,16 @@ export function DurationBasedServicesManagement({ consultantId, onServicesChange
   const handleInitializePricing = async (serviceId: number) => {
     try {
       setSavingPrices(prev => ({ ...prev, [serviceId]: true }))
+      setError(null)
+      setSuccessMessage(null)
+      
+      const service = services.find(s => s.id === serviceId)
       await consultantService.initializeServicePricing(consultantId, serviceId)
       await loadServices() // Reload to get updated pricing data
+      
+      setSuccessMessage(`Pricing has been initialized for ${service?.name || 'service'}. You can now edit the prices.`)
+      setTimeout(() => setSuccessMessage(null), 5000) // Clear success message after 5 seconds
+      
       onServicesChange?.()
     } catch (err: any) {
       setError(err?.message || 'Failed to initialize pricing')
@@ -112,6 +121,8 @@ export function DurationBasedServicesManagement({ consultantId, onServicesChange
   const savePriceChanges = async (serviceId: number) => {
     try {
       setSavingPrices(prev => ({ ...prev, [serviceId]: true }))
+      setError(null)
+      setSuccessMessage(null)
       
       const service = services.find(s => s.id === serviceId)
       if (!service) return
@@ -135,6 +146,10 @@ export function DurationBasedServicesManagement({ consultantId, onServicesChange
       // Clear editing state
       setEditingPrices(prev => ({ ...prev, [serviceId]: false }))
       setPriceChanges(prev => ({ ...prev, [serviceId]: {} }))
+      
+      setSuccessMessage(`Pricing for ${service?.name || 'service'} has been updated successfully!`)
+      setTimeout(() => setSuccessMessage(null), 5000) // Clear success message after 5 seconds
+      
       onServicesChange?.()
     } catch (err: any) {
       setError(err?.message || 'Failed to save pricing changes')
@@ -246,6 +261,21 @@ export function DurationBasedServicesManagement({ consultantId, onServicesChange
             variant="outline"
             size="sm"
             onClick={() => setError(null)}
+            className="ml-auto"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2">
+          <CheckCircle className="h-4 w-4" />
+          <span>{successMessage}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSuccessMessage(null)}
             className="ml-auto"
           >
             <X className="h-3 w-3" />
@@ -398,7 +428,12 @@ export function DurationBasedServicesManagement({ consultantId, onServicesChange
                     <div className="flex items-center gap-2">
                       {!hasPricing ? (
                         <Button
-                          onClick={() => handleInitializePricing(service.id)}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleInitializePricing(service.id)
+                          }}
                           disabled={isSaving}
                           className="bg-emerald-600 hover:bg-emerald-700"
                         >

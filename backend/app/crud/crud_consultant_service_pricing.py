@@ -90,14 +90,25 @@ class CRUDConsultantServicePricing:
 
     def create(self, db: Client, *, obj_in: ConsultantServicePricingCreate) -> Dict[str, Any]:
         """Create new consultant service pricing"""
-        # Check for duplicate pricing (enforced by unique constraint but good to check)
-        existing = self.get_price_by_duration(
-            db, 
-            consultant_service_id=obj_in.consultant_service_id, 
-            duration_option_id=obj_in.duration_option_id
+        # Check for any existing pricing (active or inactive) for this combination
+        existing_response = (
+            db.table("consultant_service_pricing")
+            .select("*")
+            .eq("consultant_service_id", obj_in.consultant_service_id)
+            .eq("duration_option_id", obj_in.duration_option_id)
+            .execute()
         )
-        if existing:
-            raise ValueError("Pricing already exists for this service and duration combination")
+        
+        if existing_response.data:
+            existing = existing_response.data[0]
+            # If pricing already exists, update it instead of creating new
+            update_data = {
+                "price": obj_in.price,
+                "is_active": obj_in.is_active,
+                "updated_at": "now()"
+            }
+            response = db.table("consultant_service_pricing").update(update_data).eq("id", existing["id"]).execute()
+            return response.data[0]
         
         # Validate price is within the duration option's range
         duration_option = db.table("service_duration_options").select("min_price, max_price").eq("id", obj_in.duration_option_id).execute()

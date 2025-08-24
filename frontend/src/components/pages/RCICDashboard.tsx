@@ -12,7 +12,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { Booking, Consultant, ConsultantServiceInDB, ServiceTemplate } from '../../services/types'
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
-import { DurationBasedServicesManagement } from '../rcic/DurationBasedServicesManagement'
+import { ServicesTableView } from '../rcic/ServicesTableView'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
@@ -1943,7 +1943,7 @@ export function RCICDashboard() {
 
         {/* Services Tab */}
         {activeTab === 'services' && consultant && (
-          <DurationBasedServicesManagement 
+          <ServicesTableView 
             consultantId={consultant.id}
             onServicesChange={() => {
               // Refresh services list if needed

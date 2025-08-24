@@ -4,6 +4,7 @@ import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { consultantApplicationService } from '../../services/consultantApplicationService'
+import { DurationOptionsManagement } from '../admin/DurationOptionsManagement'
 import { 
   Users, 
   Calendar, 
@@ -137,6 +138,7 @@ export function AdminDashboard() {
     { id: 'consultants', label: 'RCIC Management', icon: <UserCheck className="h-4 w-4" /> },
     { id: 'applications', label: 'Applications', icon: <FileText className="h-4 w-4" /> },
     { id: 'bookings', label: 'Bookings', icon: <Calendar className="h-4 w-4" /> },
+    { id: 'duration-options', label: 'Duration Options', icon: <Clock className="h-4 w-4" /> },
     { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-4 w-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> }
   ]
@@ -930,6 +932,11 @@ export function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Duration Options Tab */}
+        {activeTab === 'duration-options' && (
+          <DurationOptionsManagement />
         )}
 
         {/* Analytics Tab */}

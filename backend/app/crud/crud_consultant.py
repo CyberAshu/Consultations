@@ -160,8 +160,9 @@ def get_services_with_pricing(db: Client, consultant_id: int, active_only: bool 
     
     for service in services:
         # Get pricing options with duration details for each service
+        # Note: For pricing, we want active pricing unless specifically requested otherwise
         pricing_data = consultant_service_pricing.get_by_service_with_duration(
-            db, consultant_service_id=service["id"], is_active=active_only
+            db, consultant_service_id=service["id"], is_active=None if not active_only else True
         )
         service["pricing_options"] = pricing_data
     

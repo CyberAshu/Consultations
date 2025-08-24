@@ -1,5 +1,5 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './api';
-import { ServiceTemplate } from './types';
+import { ServiceTemplate, ServiceDurationOption, ServiceDurationOptionCreate, ServiceDurationOptionUpdate } from './types';
 
 class ServiceTemplateService {
   // Get all active service templates
@@ -25,6 +25,28 @@ class ServiceTemplateService {
   // Admin only: Delete service template
   async deleteServiceTemplate(templateId: number): Promise<void> {
     return apiDelete<void>(`/service-templates/${templateId}`);
+  }
+
+  // Duration Options Management
+  
+  // Get duration options for a service template
+  async getDurationOptionsForTemplate(templateId: number): Promise<ServiceDurationOption[]> {
+    return apiGet<ServiceDurationOption[]>(`/service-duration-options/template/${templateId}`);
+  }
+
+  // Admin only: Create new duration option
+  async createDurationOption(optionData: ServiceDurationOptionCreate): Promise<ServiceDurationOption> {
+    return apiPost<ServiceDurationOption>('/service-duration-options', optionData);
+  }
+
+  // Admin only: Update duration option
+  async updateDurationOption(optionId: number, optionData: ServiceDurationOptionUpdate): Promise<ServiceDurationOption> {
+    return apiPut<ServiceDurationOption>(`/service-duration-options/${optionId}`, optionData);
+  }
+
+  // Admin only: Delete duration option
+  async deleteDurationOption(optionId: number): Promise<void> {
+    return apiDelete<void>(`/service-duration-options/${optionId}`);
   }
 }
 
