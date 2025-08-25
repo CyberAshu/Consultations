@@ -162,6 +162,7 @@ export function BecomeConsultantPage() {
       submitFormData.append('date_of_birth', formData.dateOfBirth);
       submitFormData.append('city_province', formData.cityProvince);
       submitFormData.append('time_zone', formData.timeZone);
+      submitFormData.append('rcic_license_number', formData.rcicLicenseNumber);
       
       const result = await consultantApplicationService.createInitialApplication(submitFormData);
       setApplicationId(result.id);
@@ -494,22 +495,39 @@ export function BecomeConsultantPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="timeZone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Time Zone *
-                  </label>
-                  <select
-                    id="timeZone"
-                    name="timeZone"
-                    required
-                    value={formData.timeZone}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {timeZones.map(zone => (
-                      <option key={zone} value={zone}>{zone}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="timeZone" className="block text-sm font-medium text-gray-700 mb-2">
+                      Time Zone *
+                    </label>
+                    <select
+                      id="timeZone"
+                      name="timeZone"
+                      required
+                      value={formData.timeZone}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {timeZones.map(zone => (
+                        <option key={zone} value={zone}>{zone}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="rcicLicenseNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      RCIC License Number *
+                    </label>
+                    <Input
+                      id="rcicLicenseNumber"
+                      name="rcicLicenseNumber"
+                      type="text"
+                      required
+                      value={formData.rcicLicenseNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter your RCIC license number"
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -526,21 +544,6 @@ export function BecomeConsultantPage() {
                   </CardHeader>
                   <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="rcicLicenseNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                          RCIC License Number *
-                        </label>
-                        <Input
-                          id="rcicLicenseNumber"
-                          name="rcicLicenseNumber"
-                          type="text"
-                          required
-                          value={formData.rcicLicenseNumber}
-                          onChange={handleInputChange}
-                          placeholder="Enter your RCIC license number"
-                          className="w-full"
-                        />
-                      </div>
                       <div>
                         <label htmlFor="yearOfInitialLicensing" className="block text-sm font-medium text-gray-700 mb-2">
                           Year of Initial Licensing *
