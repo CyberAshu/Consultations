@@ -819,24 +819,6 @@ export function AdminDashboard() {
                             </Button>
                             {app.status === 'pending' && (
                               <>
-                                {/* Request Additional Sections Button - Only show if only Section 1 is completed */}
-                                {app.section_1_completed === true && 
-                                 app.section_2_completed !== true && 
-                                 app.section_3_completed !== true && 
-                                 app.section_4_completed !== true && 
-                                 app.section_5_completed !== true && 
-                                 app.section_6_completed !== true && 
-                                 app.section_7_completed !== true && (
-                                  <Button 
-                                    size="sm" 
-                                    className="bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center gap-2 w-full"
-                                    onClick={() => handleRequestAdditionalSections([2, 3, 4, 5, 6, 7])}
-                                    disabled={loading}
-                                  >
-                                    <Mail className="h-4 w-4" />
-                                    {loading ? 'Requesting...' : 'Request Sections'}
-                                  </Button>
-                                )}
                                 
                                 {/* Approve Profile Button - Only show if all sections are completed */}
                                 {app.section_1_completed === true && 
