@@ -37,8 +37,8 @@ class CRUDConsultantApplication:
             # Handle initial application creation (only Section 1)
             if isinstance(obj_in, ConsultantApplicationInitialCreate):
                 # Set default values for required fields that are not in initial submission
+                # Note: rcic_license_number is now included in initial submission, so don't override it
                 data.update({
-                    'rcic_license_number': None,  # Will be filled later
                     'practice_type': 'independent',  # Default value
                     'confirm_licensed_rcic': False,  # Will be filled later
                     'agree_terms_guidelines': False,  # Will be filled later

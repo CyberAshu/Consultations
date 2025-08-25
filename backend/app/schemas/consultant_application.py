@@ -78,6 +78,7 @@ class ConsultantApplicationInitialCreate(BaseModel):
     date_of_birth: Optional[date] = None
     city_province: Optional[str] = None
     time_zone: Optional[str] = None
+    rcic_license_number: str
     
     # System fields
     status: str = "pending"

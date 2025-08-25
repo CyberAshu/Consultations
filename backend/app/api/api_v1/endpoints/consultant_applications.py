@@ -33,6 +33,7 @@ async def create_initial_application(
     date_of_birth: Optional[str] = Form(None),
     city_province: Optional[str] = Form(None),
     time_zone: Optional[str] = Form(None),
+    rcic_license_number: str = Form(...),
     
     db: Client = Depends(deps.get_admin_db)
 ):
@@ -47,15 +48,36 @@ async def create_initial_application(
             detail="Application with this email already exists"
         )
     
+    # Check if RCIC number already exists
+    existing_rcic = consultant_application.get_by_rcic_number(db, rcic_number=rcic_license_number)
+    if existing_rcic:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application with this RCIC license number already exists"
+        )
+    
+    # Parse date if provided
+    parsed_date_of_birth = None
+    if date_of_birth:
+        try:
+            from datetime import date
+            parsed_date_of_birth = date.fromisoformat(date_of_birth)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format for date_of_birth. Use YYYY-MM-DD"
+            )
+    
     # Create application data with only Section 1
     application_data = ConsultantApplicationInitialCreate(
         full_legal_name=full_legal_name,
         preferred_display_name=preferred_display_name,
         email=email,
         mobile_phone=mobile_phone,
-        date_of_birth=date_of_birth,
+        date_of_birth=parsed_date_of_birth,
         city_province=city_province,
         time_zone=time_zone,
+        rcic_license_number=rcic_license_number,
         section_1_completed=True
     )
     
