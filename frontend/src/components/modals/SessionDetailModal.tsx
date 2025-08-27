@@ -634,142 +634,10 @@ export function SessionDetailModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Intake Form Section */}
-          {hasIntakeForm && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3">Intake Form Data</h3>
-              <div className="space-y-3">
-                {parsedIntakeData.completed !== undefined && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Status:</span>
-                    <Badge className={parsedIntakeData.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                      {parsedIntakeData.completed ? 'Completed' : 'In Progress'}
-                    </Badge>
-                  </div>
-                )}
-                
-                {parsedIntakeData.uploadedFiles && parsedIntakeData.uploadedFiles.length > 0 && (
-                  <div>
-                    <span className="font-medium text-green-700">Required Documents ({parsedIntakeData.uploadedFiles.length}):</span>
-                    <div className="mt-2 space-y-2">
-                    {parsedIntakeData.uploadedFiles.map((file: any) => {
-                      // Enhanced file object for intake form files
-                      const enhancedFile = {
-                        ...file,
-                        // Note: intake form files don't have URLs initially
-                        // They need to be retrieved from the booking documents API
-                        needsUrlGeneration: true,
-                        source: 'intake_form'
-                      }
-                      
-                      return (
-                        <div key={file.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-green-600" />
-                            <div>
-                              <p className="font-medium text-green-800">{file.name}</p>
-                              <p className="text-xs text-green-600">
-                                {file.size > 1024 * 1024 
-                                  ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-                                  : `${Math.round(file.size / 1024)} KB`
-                                }
-                                {!file.url && !file.content && (
-                                  <span className="ml-2 text-amber-600">(Metadata only)</span>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="h-6 px-2 text-xs"
-                              onClick={() => handleViewDocumentInternal(enhancedFile)}
-                            >
-                              View
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="h-6 px-2 text-xs"
-                              onClick={() => onDownloadDocument(enhancedFile)}
-                            >
-                              Download
-                            </Button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Other form fields - exclude formData since it's already shown in Personal Details */}
-                {Object.entries(parsedIntakeData).map(([key, value]) => {
-                  // Skip fields that are already shown elsewhere or are structural
-                  if (['method', 'completed', 'uploadedFiles', 'optionalUploads', 'formData'].includes(key)) {
-                    return null
-                  }
-                  if (!value || (Array.isArray(value) && value.length === 0)) {
-                    return null
-                  }
-
-                  // Helper function to render complex objects properly
-                  const renderValue = (val: any): React.ReactNode => {
-                    if (typeof val === 'string') {
-                      return val
-                    }
-                    if (typeof val === 'number') {
-                      return val.toString()
-                    }
-                    if (typeof val === 'boolean') {
-                      return val ? 'Yes' : 'No'
-                    }
-                    if (Array.isArray(val)) {
-                      return val.join(', ')
-                    }
-                    if (typeof val === 'object' && val !== null) {
-                      // For objects, render as a nicely formatted list
-                      return (
-                        <div className="ml-4 mt-1 bg-white rounded p-2 border">
-                          {Object.entries(val).map(([subKey, subValue]) => (
-                            <div key={subKey} className="flex justify-between items-center text-xs mb-1 last:mb-0">
-                              <span className="font-medium capitalize text-gray-700">
-                                {subKey.replace(/([A-Z])/g, ' $1').trim()}:
-                              </span>
-                              <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                                typeof subValue === 'boolean' 
-                                  ? (subValue ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600')
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}>
-                                {typeof subValue === 'boolean' ? (subValue ? 'Yes' : 'No') : String(subValue)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    }
-                    return String(val)
-                  }
-
-                  return (
-                    <div key={key}>
-                      <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                      <span className="ml-2">
-                        {renderValue(value)}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Documents Section */}
-          {hasDocuments && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-              <h3 className="text-lg font-semibold text-green-900 mb-3">Uploaded Documents</h3>
+        {/* Documents Section */}
+        {hasDocuments && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+            <h3 className="text-lg font-semibold text-green-900 mb-3">Uploaded Documents</h3>
               <div className="space-y-2">
                 {booking.documents?.map((doc) => (
                   <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
@@ -820,9 +688,8 @@ export function SessionDetailModal({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Session Notes Section */}
         <SessionNotesSection

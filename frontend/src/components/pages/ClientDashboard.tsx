@@ -23,7 +23,8 @@ import {
   Trash2,
   Eye,
   Wifi,
-  WifiOff
+  WifiOff,
+  User as UserIcon
 } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { authService } from '../../services/authService'
@@ -43,11 +44,23 @@ export function ClientDashboard() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [selectedSession, setSelectedSession] = useState<Booking | null>(null)
+  
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    language_preference: 'English',
+    location: '',
+    timezone: 'America/Toronto',
+    immigration_notes: ''
+  })
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null)
 
   const tabs = [
     { id: 'dashboard', label: 'Home / Dashboard', icon: <Home className="h-4 w-4" /> },
     { id: 'bookings', label: 'My Bookings', icon: <Calendar className="h-4 w-4" /> },
-    { id: 'documents', label: 'My Documents', icon: <FileText className="h-4 w-4" /> },
     { id: 'settings', label: 'Account Settings', icon: <Settings className="h-4 w-4" /> }
   ]
 
@@ -61,6 +74,16 @@ export function ClientDashboard() {
         const storedUser = authService.getStoredUser()
         if (storedUser) {
           setCurrentUser(storedUser)
+          // Initialize profile form with user data
+          setProfileForm({
+            full_name: storedUser.full_name || '',
+            email: storedUser.email || '',
+            phone: '',
+            language_preference: 'English',
+            location: '',
+            timezone: 'America/Toronto',
+            immigration_notes: ''
+          })
         }
         
         // Fetch user's bookings
@@ -71,6 +94,12 @@ export function ClientDashboard() {
         try {
           const freshUser = await authService.getCurrentUser()
           setCurrentUser(freshUser)
+          // Update profile form with fresh user data
+          setProfileForm(prev => ({
+            ...prev,
+            full_name: freshUser.full_name || '',
+            email: freshUser.email || ''
+          }))
         } catch (userError) {
           // If API fails, we'll keep using stored user data
           console.warn('Could not fetch fresh user data:', userError)
@@ -174,31 +203,57 @@ export function ClientDashboard() {
   }
 
   const handleFileUpload = async () => {
-    if (!selectedFile || !upcomingSessions.length) {
-      setUploadError('Please select a file and ensure you have an upcoming booking')
-      return
-    }
+    // Document upload functionality will be implemented later
+    setUploadError('Document upload feature coming soon')
+  }
+
+  const handleProfileInputChange = (field: string, value: string) => {
+    setProfileForm(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleProfileSave = async () => {
+    if (!currentUser) return
 
     try {
-      setUploading(true)
-      setUploadError(null)
+      setSavingProfile(true)
+      setProfileSaveMessage(null)
+
+      // Call API to update user profile
+      const response = await fetch(`/api/v1/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authService.getToken()}`
+        },
+        body: JSON.stringify({
+          full_name: profileForm.full_name
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile')
+      }
+
+      const updatedUser = await response.json()
+      setCurrentUser(updatedUser)
+      // Update stored user data
+      localStorage.setItem('user', JSON.stringify(updatedUser))
       
-      // Upload to the first upcoming booking (you might want to let user choose which booking)
-      const bookingId = upcomingSessions[0].id
-      await bookingService.uploadBookingDocument(bookingId, selectedFile)
+      setProfileSaveMessage('Profile updated successfully!')
       
-      // Refresh bookings to get updated documents
-      const updatedBookings = await bookingService.getBookings()
-      setBookings(updatedBookings)
-      
-      setSelectedFile(null)
-      // Reset file input
-      const fileInput = document.getElementById('file-upload') as HTMLInputElement
-      if (fileInput) fileInput.value = ''
-    } catch (err: any) {
-      setUploadError(err?.message || 'Failed to upload document')
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setProfileSaveMessage(null)
+      }, 3000)
+
+    } catch (error) {
+      console.error('Profile update error:', error)
+      setProfileSaveMessage('Failed to update profile. Please try again.')
     } finally {
-      setUploading(false)
+      setSavingProfile(false)
     }
   }
 
@@ -211,6 +266,11 @@ export function ClientDashboard() {
   }
 
   const handleViewSummary = (session: Booking) => {
+    setSelectedSession(session)
+    setShowSummaryModal(true)
+  }
+
+  const handleBookingRowClick = (session: Booking) => {
     setSelectedSession(session)
     setShowSummaryModal(true)
   }
@@ -644,7 +704,7 @@ export function ClientDashboard() {
                     const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
                     const { date, time } = formatDateTime(safeDateTime)
                     return (
-                      <div key={session.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
+                      <div key={session.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleBookingRowClick(session)}>
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium text-gray-900">{session.service_type}</h4>
@@ -655,7 +715,7 @@ export function ClientDashboard() {
                             {session.status}
                           </Badge>
                         </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button 
                           size="sm" 
                           className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0"
@@ -701,7 +761,7 @@ export function ClientDashboard() {
                         const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
                         const { date, time } = formatDateTime(safeDateTime)
                         return (
-                          <tr key={session.id} className="border-b">
+                          <tr key={session.id} className="border-b cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleBookingRowClick(session)}>
                             <td className="p-3 font-medium">{session.service_type}</td>
                             <td className="p-3">Consultant ID: {session.consultant_id}</td>
                             <td className="p-3">{date} {time}</td>
@@ -710,7 +770,7 @@ export function ClientDashboard() {
                                 {session.status}
                               </Badge>
                             </td>
-                          <td className="p-3">
+                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
                             <div className="flex flex-wrap gap-1">
                               <Button 
                                 size="sm" 
@@ -753,7 +813,7 @@ export function ClientDashboard() {
                     const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
                     const { date, time } = formatDateTime(safeDateTime)
                     return (
-                      <div key={session.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div key={session.id} className="bg-gray-50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleBookingRowClick(session)}>
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium text-gray-900">{session.service_type}</h4>
@@ -764,7 +824,7 @@ export function ClientDashboard() {
                             {session.status}
                           </Badge>
                         </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button 
                           size="sm" 
                           variant="outline" 
@@ -803,7 +863,7 @@ export function ClientDashboard() {
                         const safeDateTime = (session.booking_date || session.scheduled_date || new Date().toISOString()) as string
                         const { date, time } = formatDateTime(safeDateTime)
                         return (
-                          <tr key={session.id} className="border-b">
+                          <tr key={session.id} className="border-b cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleBookingRowClick(session)}>
                             <td className="p-3 font-medium">{session.service_type}</td>
                             <td className="p-3">Consultant ID: {session.consultant_id}</td>
                             <td className="p-3">{date} {time}</td>
@@ -812,7 +872,7 @@ export function ClientDashboard() {
                                 {session.status}
                               </Badge>
                             </td>
-                          <td className="p-3">
+                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
                             <div className="flex flex-wrap gap-1">
                               <Button 
                                 size="sm" 
@@ -841,241 +901,103 @@ export function ClientDashboard() {
           </Card>
         )}
 
-        {/* My Documents Tab */}
-        {activeTab === 'documents' && (
-          <div className="space-y-6">
-            {/* Intake Forms Section */}
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Intake Forms</h2>
-                
-                {intakeForms.length > 0 ? (
-                  <div className="space-y-4">
-                    {intakeForms.map((form) => (
-                      <div key={form.id} className="border border-blue-200/50 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h3 className="font-medium text-gray-900">{form.service}</h3>
-                            <p className="text-sm text-gray-600">Submitted on {formatDocumentDate(form.date || new Date().toISOString())}</p>
-                          </div>
-                          <Button size="sm" variant="outline" className="flex items-center gap-2">
-                            <Eye className="h-4 w-4" />
-                            View Form
-                          </Button>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <p>Form data submitted for this consultation</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <p>No intake forms submitted yet</p>
-                    <p className="text-sm">Complete an intake form when booking a consultation</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Documents Section */}
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">My Documents</h2>
-                
-                {/* Upload Section */}
-                <div className="mb-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Documents</h3>
-                  
-                  {upcomingSessions.length === 0 ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50">
-                      <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-4">No upcoming sessions to upload documents to</p>
-                      <Button 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate('/consultants')}
-                      >
-                        Book a Consultation
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-blue-300/50 rounded-xl p-8 text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50 hover:border-blue-400/70 transition-colors">
-                      <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-4">Upload documents for your upcoming consultation</p>
-                      
-                      <div className="space-y-4">
-                        <input
-                          id="file-upload"
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                          onChange={handleFileSelect}
-                          className="hidden"
-                        />
-                        <div className="flex items-center justify-center gap-3">
-                          <Button 
-                            onClick={() => document.getElementById('file-upload')?.click()}
-                            variant="outline"
-                            className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                          >
-                            Choose Files
-                          </Button>
-                          {selectedFile && (
-                            <Button 
-                              onClick={handleFileUpload}
-                              disabled={uploading}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              {uploading ? 'Uploading...' : 'Upload'}
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {selectedFile && (
-                          <div className="text-sm text-gray-600">
-                            Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                          </div>
-                        )}
-                        
-                        {uploadError && (
-                          <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                            {uploadError}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <p className="text-sm text-gray-500 mt-4">Supported formats: PDF, JPG, PNG, DOC (Max 10MB)</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Uploaded Documents */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Uploaded Documents</h3>
-                  
-                  {allDocuments.length > 0 ? (
-                    <div className="space-y-3">
-                      {allDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-200/50 rounded-xl bg-gradient-to-r from-white to-gray-50/50 shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                            <div>
-                              <p className="font-medium text-gray-900">{doc.file_name}</p>
-                              <p className="text-sm text-gray-600">{doc.booking_service}</p>
-                              <p className="text-sm text-gray-500">
-                                Uploaded {formatDocumentDate(doc.uploaded_at || doc.created_at || new Date().toISOString())}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleViewDocument(doc)}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleDownloadDocument(doc)}
-                            >
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              className="bg-red-600 hover:bg-red-700"
-                              onClick={() => handleDeleteDocument(doc)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                      <p>No documents uploaded yet</p>
-                      <p className="text-sm">Upload documents for your consultations above</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Account Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
+            {/* Profile Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden bg-white/20">
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="h-12 w-12 text-white/60 flex items-center justify-center rounded-full bg-white/10">
+                        <span className="text-2xl font-bold">
+                          {currentUser?.full_name?.charAt(0)?.toUpperCase() || 'C'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <CheckCircle className="h-4 w-4 text-blue-600" />
+                  </div>
+                </div>
+                <div className="text-center sm:text-left flex-1">
+                  <h2 className="text-2xl font-bold mb-1">{currentUser?.full_name || 'Client Profile'}</h2>
+                  <p className="text-blue-100 mb-2">Immigration Client</p>
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                    {currentUser?.email && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
+                        <span>📧</span>
+                        <span>{currentUser.email}</span>
+                      </div>
+                    )}
+                    {currentUser?.email_verified && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
+                        <span>✅</span>
+                        <span>Verified</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
               <CardContent className="p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Account Settings</h2>
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Settings className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Profile Information</h3>
+                </div>
                 
-                <form className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="grid sm:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <UserIcon className="h-4 w-4 text-blue-600" />
+                        Full Name
+                      </label>
                       <input 
-                        className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         type="text"
-                        defaultValue={currentUser?.full_name?.split(' ')[0] || ''}
+                        value={profileForm.full_name || ''}
+                        onChange={(e) => handleProfileInputChange('full_name', e.target.value)}
+                        placeholder="Enter your full name"
+                        onBlur={handleProfileSave}
                       />
+                      <p className="text-xs text-gray-500 mt-1">Changes are saved automatically</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <span className="text-blue-600">📧</span>
+                        Email Address
+                      </label>
                       <input 
-                        className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        type="text"
-                        defaultValue={currentUser?.full_name?.split(' ').slice(1).join(' ') || ''}
+                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50"
+                        type="email"
+                        value={profileForm.email || ''}
+                        disabled
+                        placeholder="Email managed by authentication system"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Email changes must be done through account security settings</p>
                     </div>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      type="email"
-                      defaultValue={currentUser?.email || ''}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      type="text"
-                      defaultValue="+1 (555) 123-4567"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Language Preference</label>
-                    <select className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>English</option>
-                      <option>French</option>
-                      <option>Spanish</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                    <input 
-                      className="w-full border border-gray-300 p-2 sm:p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      type="password"
-                      placeholder="Leave blank to keep current password"
-                    />
-                  </div>
-                  
-                  <Button className="bg-blue-600 hover:bg-blue-700 px-6 sm:px-8 py-2 sm:py-3 w-full sm:w-auto">
-                    Update Settings
-                  </Button>
-                </form>
+
+                  {/* Save Status */}
+                  {profileSaveMessage && (
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                      profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') 
+                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                        : 'bg-red-100 text-red-700 border border-red-200'
+                    }`}>
+                      <span>{profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') ? '✅' : '❌'}</span>
+                      <span>{profileSaveMessage}</span>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
