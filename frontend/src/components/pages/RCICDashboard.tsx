@@ -1681,29 +1681,91 @@ export function RCICDashboard() {
 
                       {/* Experience & Languages */}
                       <div className="grid sm:grid-cols-2 gap-6">
-                        <div>
+                        <div className="relative">
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                             <Award className="h-4 w-4 text-emerald-600" />
                             Experience
                           </label>
-                          <input 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          <select 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
                             value={profileForm.experience || ''}
                             onChange={(e) => handleProfileInputChange('experience', e.target.value)}
-                            placeholder="e.g., 5+ years, 100+ clients served"
-                          />
+                          >
+                            <option value="">Select your experience level</option>
+                            <option value="1-2 years">1-2 years</option>
+                            <option value="3-5 years">3-5 years</option>
+                            <option value="5-10 years">5-10 years</option>
+                            <option value="10-15 years">10-15 years</option>
+                            <option value="15+ years">15+ years</option>
+                            <option value="20+ years">20+ years</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none top-8">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                             <span className="text-emerald-600">🌐</span>
                             Languages
                           </label>
-                          <input 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            value={Array.isArray(profileForm.languages) ? profileForm.languages.join(', ') : (profileForm.languages || '')}
-                            onChange={(e) => handleProfileInputChange('languages', e.target.value)}
-                            placeholder="English, French, Hindi, etc."
-                          />
+                          <div className="relative">
+                            <select 
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                              multiple
+                              value={Array.isArray(profileForm.languages) ? profileForm.languages : []}
+                              onChange={(e) => {
+                                const selectedLanguages = Array.from(e.target.selectedOptions, option => option.value)
+                                handleProfileInputChange('languages', selectedLanguages)
+                              }}
+                            >
+                              <option value="English">English</option>
+                              <option value="French">French</option>
+                              <option value="Spanish">Spanish</option>
+                              <option value="Hindi">Hindi</option>
+                              <option value="Punjabi">Punjabi</option>
+                              <option value="Urdu">Urdu</option>
+                              <option value="Arabic">Arabic</option>
+                              <option value="Mandarin">Mandarin</option>
+                              <option value="Cantonese">Cantonese</option>
+                              <option value="Korean">Korean</option>
+                              <option value="Japanese">Japanese</option>
+                              <option value="Portuguese">Portuguese</option>
+                              <option value="Russian">Russian</option>
+                              <option value="German">German</option>
+                              <option value="Italian">Italian</option>
+                              <option value="Tagalog">Tagalog</option>
+                              <option value="Vietnamese">Vietnamese</option>
+                              <option value="Thai">Thai</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                              </svg>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple languages</p>
+                          {Array.isArray(profileForm.languages) && profileForm.languages.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {profileForm.languages.map((lang, index) => (
+                                <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                  {lang}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const currentLanguages = Array.isArray(profileForm.languages) ? profileForm.languages : []
+                                      const newLanguages = currentLanguages.filter((_: string, i: number) => i !== index)
+                                      handleProfileInputChange('languages', newLanguages)
+                                    }}
+                                    className="ml-1 text-emerald-600 hover:text-emerald-800"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -1713,28 +1775,143 @@ export function RCICDashboard() {
                           <span className="text-emerald-600">🎯</span>
                           Specialization Areas
                         </label>
-                        <input 
-                          className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                          value={Array.isArray(profileForm.specialties) ? profileForm.specialties.join(', ') : (profileForm.specialties || '')}
-                          onChange={(e) => handleProfileInputChange('specialties', e.target.value)}
-                          placeholder="Express Entry, Study Permits, Work Permits, Family Class, etc."
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Separate multiple specialties with commas</p>
+                        <div className="relative">
+                          <select 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                            multiple
+                            value={Array.isArray(profileForm.specialties) ? profileForm.specialties : []}
+                            onChange={(e) => {
+                              const selectedSpecialties = Array.from(e.target.selectedOptions, option => option.value)
+                              handleProfileInputChange('specialties', selectedSpecialties)
+                            }}
+                          >
+                            <option value="Express Entry">Express Entry</option>
+                            <option value="Provincial Nominee Program (PNP)">Provincial Nominee Program (PNP)</option>
+                            <option value="Study Permits">Study Permits</option>
+                            <option value="Work Permits">Work Permits</option>
+                            <option value="Family Class Sponsorship">Family Class Sponsorship</option>
+                            <option value="Visitor Visas">Visitor Visas</option>
+                            <option value="Citizenship Applications">Citizenship Applications</option>
+                            <option value="Refugee Protection">Refugee Protection</option>
+                            <option value="Business Immigration">Business Immigration</option>
+                            <option value="Start-up Visa Program">Start-up Visa Program</option>
+                            <option value="Self-employed Persons Program">Self-employed Persons Program</option>
+                            <option value="Caregiver Program">Caregiver Program</option>
+                            <option value="Quebec Immigration">Quebec Immigration</option>
+                            <option value="Appeals & Reviews">Appeals & Reviews</option>
+                            <option value="Labour Market Impact Assessment (LMIA)">Labour Market Impact Assessment (LMIA)</option>
+                            <option value="Permanent Residence Renewal">Permanent Residence Renewal</option>
+                            <option value="Travel Documents">Travel Documents</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple specialization areas</p>
+                        {Array.isArray(profileForm.specialties) && profileForm.specialties.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {profileForm.specialties.map((specialty, index) => (
+                              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {specialty}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentSpecialties = Array.isArray(profileForm.specialties) ? profileForm.specialties : []
+                                    const newSpecialties = currentSpecialties.filter((_: string, i: number) => i !== index)
+                                    handleProfileInputChange('specialties', newSpecialties)
+                                  }}
+                                  className="ml-1 text-blue-600 hover:text-blue-800"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Location & Timezone */}
                       <div className="grid sm:grid-cols-2 gap-6">
-                        <div>
+                        <div className="relative">
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                             <span className="text-emerald-600">📍</span>
                             Office Location
                           </label>
-                          <input 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            value={profileForm.location || ''} 
+                          <select 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                            value={profileForm.location || ''}
                             onChange={(e) => handleProfileInputChange('location', e.target.value)}
-                            placeholder="Toronto, ON, Canada"
-                          />
+                          >
+                            <option value="">Select your office location</option>
+                            <optgroup label="Alberta">
+                              <option value="Calgary, AB, Canada">Calgary, AB, Canada</option>
+                              <option value="Edmonton, AB, Canada">Edmonton, AB, Canada</option>
+                            </optgroup>
+                            <optgroup label="British Columbia">
+                              <option value="Vancouver, BC, Canada">Vancouver, BC, Canada</option>
+                              <option value="Victoria, BC, Canada">Victoria, BC, Canada</option>
+                              <option value="Burnaby, BC, Canada">Burnaby, BC, Canada</option>
+                              <option value="Surrey, BC, Canada">Surrey, BC, Canada</option>
+                            </optgroup>
+                            <optgroup label="Manitoba">
+                              <option value="Winnipeg, MB, Canada">Winnipeg, MB, Canada</option>
+                            </optgroup>
+                            <optgroup label="New Brunswick">
+                              <option value="Moncton, NB, Canada">Moncton, NB, Canada</option>
+                              <option value="Saint John, NB, Canada">Saint John, NB, Canada</option>
+                            </optgroup>
+                            <optgroup label="Newfoundland and Labrador">
+                              <option value="St. John's, NL, Canada">St. John's, NL, Canada</option>
+                            </optgroup>
+                            <optgroup label="Northwest Territories">
+                              <option value="Yellowknife, NT, Canada">Yellowknife, NT, Canada</option>
+                            </optgroup>
+                            <optgroup label="Nova Scotia">
+                              <option value="Halifax, NS, Canada">Halifax, NS, Canada</option>
+                            </optgroup>
+                            <optgroup label="Nunavut">
+                              <option value="Iqaluit, NU, Canada">Iqaluit, NU, Canada</option>
+                            </optgroup>
+                            <optgroup label="Ontario">
+                              <option value="Toronto, ON, Canada">Toronto, ON, Canada</option>
+                              <option value="Ottawa, ON, Canada">Ottawa, ON, Canada</option>
+                              <option value="Mississauga, ON, Canada">Mississauga, ON, Canada</option>
+                              <option value="Brampton, ON, Canada">Brampton, ON, Canada</option>
+                              <option value="Hamilton, ON, Canada">Hamilton, ON, Canada</option>
+                              <option value="London, ON, Canada">London, ON, Canada</option>
+                              <option value="Markham, ON, Canada">Markham, ON, Canada</option>
+                              <option value="Vaughan, ON, Canada">Vaughan, ON, Canada</option>
+                              <option value="Kitchener, ON, Canada">Kitchener, ON, Canada</option>
+                              <option value="Windsor, ON, Canada">Windsor, ON, Canada</option>
+                            </optgroup>
+                            <optgroup label="Prince Edward Island">
+                              <option value="Charlottetown, PE, Canada">Charlottetown, PE, Canada</option>
+                            </optgroup>
+                            <optgroup label="Quebec">
+                              <option value="Montreal, QC, Canada">Montreal, QC, Canada</option>
+                              <option value="Quebec City, QC, Canada">Quebec City, QC, Canada</option>
+                              <option value="Laval, QC, Canada">Laval, QC, Canada</option>
+                              <option value="Gatineau, QC, Canada">Gatineau, QC, Canada</option>
+                            </optgroup>
+                            <optgroup label="Saskatchewan">
+                              <option value="Saskatoon, SK, Canada">Saskatoon, SK, Canada</option>
+                              <option value="Regina, SK, Canada">Regina, SK, Canada</option>
+                            </optgroup>
+                            <optgroup label="Yukon">
+                              <option value="Whitehorse, YT, Canada">Whitehorse, YT, Canada</option>
+                            </optgroup>
+                            <optgroup label="Remote/Online">
+                              <option value="Remote - Canada Wide">Remote - Canada Wide</option>
+                              <option value="Online Consultations Only">Online Consultations Only</option>
+                            </optgroup>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none top-8">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">

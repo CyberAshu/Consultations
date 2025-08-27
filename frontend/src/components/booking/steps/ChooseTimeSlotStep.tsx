@@ -250,35 +250,174 @@ export function ChooseTimeSlotStep({
       ) : (
         /* Built-in Calendar */
         <div className="space-y-4">
-          {/* Date Selector */}
+          {/* Enhanced Calendar View */}
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
             <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Select Date</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  Select Date
+                </h3>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDateChange('prev')}
-                    disabled={isPastDate(new Date(currentDate.getTime() - 24 * 60 * 60 * 1000))}
+                    onClick={() => {
+                      const newDate = new Date(currentDate)
+                      newDate.setMonth(currentDate.getMonth() - 1)
+                      setCurrentDate(newDate)
+                    }}
+                    className="px-3 py-2"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
+                  <div className="text-center min-w-[120px]">
+                    <p className="font-semibold text-gray-900">
+                      {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDateChange('next')}
+                    onClick={() => {
+                      const newDate = new Date(currentDate)
+                      newDate.setMonth(currentDate.getMonth() + 1)
+                      setCurrentDate(newDate)
+                    }}
+                    className="px-3 py-2"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
               
-              <div className="text-center">
-                <p className="text-xl font-semibold text-gray-900">{formatDate(currentDate)}</p>
-                {isToday(currentDate) && (
-                  <Badge className="bg-blue-100 text-blue-800 mt-2">Today</Badge>
-                )}
+              {/* Calendar Grid */}
+              <div className="space-y-4">
+                {/* Day Headers */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                    <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar Days */}
+                <div className="grid grid-cols-7 gap-1">
+                  {(() => {
+                    const year = currentDate.getFullYear()
+                    const month = currentDate.getMonth()
+                    const firstDay = new Date(year, month, 1)
+                    const lastDay = new Date(year, month + 1, 0)
+                    const startDate = new Date(firstDay)
+                    startDate.setDate(startDate.getDate() - firstDay.getDay())
+                    
+                    const days = []
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    
+                    for (let i = 0; i < 42; i++) {
+                      const date = new Date(startDate)
+                      date.setDate(startDate.getDate() + i)
+                      
+                      const isCurrentMonth = date.getMonth() === month
+                      const isToday = date.getTime() === today.getTime()
+                      const isPast = date < today
+                      const isSelected = date.toDateString() === currentDate.toDateString()
+                      
+                      days.push(
+                        <button
+                          key={i}
+                          onClick={() => {
+                            if (!isPast && isCurrentMonth) {
+                              setCurrentDate(new Date(date))
+                              setSelectedTimeSlot(null)
+                            }
+                          }}
+                          disabled={isPast || !isCurrentMonth}
+                          className={`
+                            aspect-square p-2 text-sm font-medium rounded-lg transition-all duration-200 relative
+                            ${isCurrentMonth 
+                              ? isPast 
+                                ? 'text-gray-300 cursor-not-allowed' 
+                                : isSelected
+                                  ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-500 ring-offset-2'
+                                  : isToday
+                                    ? 'bg-blue-50 text-blue-600 border-2 border-blue-200 hover:bg-blue-100'
+                                    : 'text-gray-900 hover:bg-blue-50 hover:text-blue-600 border border-gray-200'
+                              : 'text-gray-300 cursor-not-allowed'
+                            }
+                          `}
+                        >
+                          {date.getDate()}
+                          {isToday && (
+                            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                          )}
+                        </button>
+                      )
+                    }
+                    return days
+                  })()}
+                </div>
+                
+                {/* Quick Date Selection */}
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const today = new Date()
+                      setCurrentDate(today)
+                      setSelectedTimeSlot(null)
+                    }}
+                    className="text-xs"
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const tomorrow = new Date()
+                      tomorrow.setDate(tomorrow.getDate() + 1)
+                      setCurrentDate(tomorrow)
+                      setSelectedTimeSlot(null)
+                    }}
+                    className="text-xs"
+                  >
+                    Tomorrow
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const nextWeek = new Date()
+                      nextWeek.setDate(nextWeek.getDate() + 7)
+                      setCurrentDate(nextWeek)
+                      setSelectedTimeSlot(null)
+                    }}
+                    className="text-xs"
+                  >
+                    Next Week
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Selected Date Display */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                    {currentDate.getDate()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{formatDate(currentDate)}</p>
+                    <p className="text-sm text-gray-600">
+                      {isToday(currentDate) ? 'Today' : 
+                       currentDate.getTime() === new Date(Date.now() + 24*60*60*1000).setHours(0,0,0,0) ? 'Tomorrow' :
+                       'Selected Date'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -289,33 +428,172 @@ export function ChooseTimeSlotStep({
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Time Slots</h3>
               
               {loadingSlots ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                  <p className="text-gray-500">Loading available time slots...</p>
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600 font-medium">Loading available time slots...</p>
+                  <p className="text-sm text-gray-400 mt-1">Please wait while we check availability</p>
                 </div>
               ) : availableSlots.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {availableSlots.map((slot) => (
-                    <Button
-                      key={slot.id}
-                      variant={selectedTimeSlot?.id === slot.id ? "default" : "outline"}
-                      onClick={() => handleTimeSlotSelect(slot)}
-                      className={`p-3 h-auto flex flex-col items-center gap-1 transition-all duration-200 ${
-                        selectedTimeSlot?.id === slot.id
-                          ? 'bg-blue-600 text-white ring-2 ring-blue-500'
-                          : 'hover:bg-blue-50 hover:border-blue-300'
-                      }`}
-                    >
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm font-medium">{slot.time}</span>
-                    </Button>
-                  ))}
+                <div className="space-y-6">
+                  {/* Time Period Headers */}
+                  {(() => {
+                    const morningSlots = availableSlots.filter(slot => {
+                      const hour = parseInt(slot.time.split(':')[0])
+                      return hour >= 6 && hour < 12
+                    })
+                    const afternoonSlots = availableSlots.filter(slot => {
+                      const hour = parseInt(slot.time.split(':')[0])
+                      return hour >= 12 && hour < 17
+                    })
+                    const eveningSlots = availableSlots.filter(slot => {
+                      const hour = parseInt(slot.time.split(':')[0])
+                      return hour >= 17 && hour < 21
+                    })
+
+                    return (
+                      <>
+                        {morningSlots.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <span className="text-yellow-600 text-sm">🌅</span>
+                              </div>
+                              <h4 className="font-semibold text-gray-900">Morning (6:00 AM - 12:00 PM)</h4>
+                              <div className="flex-1 h-px bg-gray-200"></div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {morningSlots.map((slot) => (
+                                <button
+                                  key={slot.id}
+                                  onClick={() => handleTimeSlotSelect(slot)}
+                                  className={`
+                                    p-4 rounded-xl border-2 transition-all duration-200 text-center hover:scale-105
+                                    ${selectedTimeSlot?.id === slot.id
+                                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg ring-2 ring-blue-500 ring-offset-2'
+                                      : 'bg-white border-gray-200 text-gray-900 hover:bg-blue-50 hover:border-blue-300 shadow-sm hover:shadow-md'
+                                    }
+                                  `}
+                                >
+                                  <Clock className={`h-4 w-4 mx-auto mb-2 ${selectedTimeSlot?.id === slot.id ? 'text-white' : 'text-blue-600'}`} />
+                                  <div className="font-semibold text-sm">{slot.time}</div>
+                                  <div className={`text-xs mt-1 ${selectedTimeSlot?.id === slot.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    {(() => {
+                                      const [hours, minutes] = slot.time.split(':')
+                                      const hour = parseInt(hours)
+                                      const ampm = hour >= 12 ? 'PM' : 'AM'
+                                      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+                                      return `${displayHour}:${minutes} ${ampm}`
+                                    })()}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {afternoonSlots.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                <span className="text-orange-600 text-sm">☀️</span>
+                              </div>
+                              <h4 className="font-semibold text-gray-900">Afternoon (12:00 PM - 5:00 PM)</h4>
+                              <div className="flex-1 h-px bg-gray-200"></div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {afternoonSlots.map((slot) => (
+                                <button
+                                  key={slot.id}
+                                  onClick={() => handleTimeSlotSelect(slot)}
+                                  className={`
+                                    p-4 rounded-xl border-2 transition-all duration-200 text-center hover:scale-105
+                                    ${selectedTimeSlot?.id === slot.id
+                                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg ring-2 ring-blue-500 ring-offset-2'
+                                      : 'bg-white border-gray-200 text-gray-900 hover:bg-blue-50 hover:border-blue-300 shadow-sm hover:shadow-md'
+                                    }
+                                  `}
+                                >
+                                  <Clock className={`h-4 w-4 mx-auto mb-2 ${selectedTimeSlot?.id === slot.id ? 'text-white' : 'text-blue-600'}`} />
+                                  <div className="font-semibold text-sm">{slot.time}</div>
+                                  <div className={`text-xs mt-1 ${selectedTimeSlot?.id === slot.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    {(() => {
+                                      const [hours, minutes] = slot.time.split(':')
+                                      const hour = parseInt(hours)
+                                      const ampm = hour >= 12 ? 'PM' : 'AM'
+                                      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+                                      return `${displayHour}:${minutes} ${ampm}`
+                                    })()}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {eveningSlots.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span className="text-purple-600 text-sm">🌙</span>
+                              </div>
+                              <h4 className="font-semibold text-gray-900">Evening (5:00 PM - 9:00 PM)</h4>
+                              <div className="flex-1 h-px bg-gray-200"></div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {eveningSlots.map((slot) => (
+                                <button
+                                  key={slot.id}
+                                  onClick={() => handleTimeSlotSelect(slot)}
+                                  className={`
+                                    p-4 rounded-xl border-2 transition-all duration-200 text-center hover:scale-105
+                                    ${selectedTimeSlot?.id === slot.id
+                                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg ring-2 ring-blue-500 ring-offset-2'
+                                      : 'bg-white border-gray-200 text-gray-900 hover:bg-blue-50 hover:border-blue-300 shadow-sm hover:shadow-md'
+                                    }
+                                  `}
+                                >
+                                  <Clock className={`h-4 w-4 mx-auto mb-2 ${selectedTimeSlot?.id === slot.id ? 'text-white' : 'text-blue-600'}`} />
+                                  <div className="font-semibold text-sm">{slot.time}</div>
+                                  <div className={`text-xs mt-1 ${selectedTimeSlot?.id === slot.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    {(() => {
+                                      const [hours, minutes] = slot.time.split(':')
+                                      const hour = parseInt(hours)
+                                      const ampm = hour >= 12 ? 'PM' : 'AM'
+                                      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+                                      return `${displayHour}:${minutes} ${ampm}`
+                                    })()}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No available slots for this date</p>
-                  <p className="text-sm text-gray-400">Try selecting a different date</p>
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">No Available Slots</h4>
+                  <p className="text-gray-600 mb-4">No time slots are available for {formatDate(currentDate)}</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Try selecting a different date or</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const tomorrow = new Date(currentDate)
+                        tomorrow.setDate(currentDate.getDate() + 1)
+                        setCurrentDate(tomorrow)
+                      }}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      Check Tomorrow
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
