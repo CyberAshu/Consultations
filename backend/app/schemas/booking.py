@@ -29,6 +29,7 @@ class BookingBase(BaseModel):
     timezone: str = "America/Toronto"
     intake_form_data: Optional[Any] = None
     total_amount: float
+    duration_option_id: Optional[int] = None  # For new duration-based pricing
 
 class BookingCreate(BookingBase):
     client_id: Optional[str] = None  # Will be set from auth context (UUID string)

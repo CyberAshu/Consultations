@@ -234,8 +234,6 @@ def create_booking_with_duration(
         "timezone": booking_request.timezone,
         "total_amount": pricing["price"],
         "intake_form_data": booking_request.intake_form_data or {},
-        # Store duration info for reference
-        "duration_minutes": duration_option["duration_minutes"],
         "duration_option_id": booking_request.duration_option_id,
     }
     

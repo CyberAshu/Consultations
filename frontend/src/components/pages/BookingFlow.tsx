@@ -21,6 +21,7 @@ import { BookingConfirmation } from '../booking/steps/BookingConfirmation'
 import { FloatingBookingSummary } from '../booking/FloatingBookingSummary'
 import { ScrollToTop } from '../ui/ScrollToTop'
 import { bookingService } from '../../services/bookingService'
+import { consultantService } from '../../services/consultantService'
 import { CreateBookingRequest } from '../../services/types'
 
 export function BookingFlow() {
@@ -137,24 +138,50 @@ export function BookingFlow() {
       throw new Error('Invalid date or time format')
     }
 
-    // Prepare booking data for API
-    const bookingRequest: CreateBookingRequest = {
+    // Extract service and duration IDs with multiple fallback strategies
+    const serviceId = bookingData.service.serviceId || bookingData.service.id;
+    let durationOptionId = bookingData.service.durationOptionId || 
+                          bookingData.service.duration_option_id ||
+                          bookingData.service.selected_duration_id ||
+                          bookingData.service.selectedDurationId;
+    
+    console.log('🔍 Extracting booking IDs:', {
+      serviceId,
+      durationOptionId,
+      serviceObject: bookingData.service,
+      rcicId: bookingData.rcic.id,
+      allServiceKeys: Object.keys(bookingData.service),
+      serviceValues: Object.entries(bookingData.service).filter(([key, value]) => 
+        key.toLowerCase().includes('duration') || key.toLowerCase().includes('option')
+      ),
+      isLegacyService: !durationOptionId && bookingData.service.duration
+    });
+    
+    if (!serviceId) {
+      throw new Error(`Missing service ID: ${serviceId}`);
+    }
+    
+    
+    if (!durationOptionId) {
+      console.error('Service object details:', bookingData.service);
+      throw new Error(`Missing duration option ID. This appears to be a legacy service format. Available keys: ${Object.keys(bookingData.service).join(', ')}`);
+    }
+    
+    // Prepare booking data for API using new duration-based endpoint
+    const bookingRequest = {
       consultant_id: bookingData.rcic.id,
-      service_id: bookingData.service.id,
+      service_id: serviceId,
+      duration_option_id: durationOptionId,
       booking_date: scheduleDate.toISOString(),
       timezone: bookingData.timezone,
-      total_amount: bookingData.totalAmount,
-      payment_intent_id: bookingData.payment.id,
       intake_form_data: bookingData.intakeForm,
-      // Pass client_id if present (e.g., when booking created by rcic/admin on behalf of a client)
-      client_id: bookingData?.client?.id || bookingData?.client_id
     }
 
     console.log('Creating booking with data:', bookingRequest)
     console.log('Service object:', bookingData.service)
     console.log('RCIC object:', bookingData.rcic)
 
-    const createdBooking = await bookingService.createBooking(bookingRequest)
+    const createdBooking = await bookingService.createBookingWithDuration(bookingRequest)
 
     try {
       // After booking is created, upload any files from intake form
@@ -223,21 +250,59 @@ export function BookingFlow() {
   }, [])
 
   const canProceed = () => {
+    console.log('🔍 canProceed check:', {
+      currentStep,
+      bookingData: bookingData,
+      rcic: bookingData.rcic,
+      service: bookingData.service
+    });
+    
     switch (currentStep) {
-      case 1: return bookingData.rcic && bookingData.service
-      case 2: return bookingData.timeSlot
-      case 3: return bookingData.payment
+      case 1: {
+        const hasRCIC = !!bookingData.rcic;
+        
+        // More flexible service validation
+        const service = bookingData.service;
+        const hasService = service && (
+          // New format: serviceId + durationOptionId
+          (service.serviceId && service.durationOptionId) ||
+          // Legacy format: id + name (for backwards compatibility)
+          (service.id && service.name) ||
+          // Alternative formats
+          (service.serviceId && service.id)
+        );
+        
+        console.log('🔍 Step 1 validation:', {
+          hasRCIC,
+          hasService,
+          serviceData: service,
+          serviceId: service?.serviceId || service?.id,
+          durationOptionId: service?.durationOptionId,
+          serviceName: service?.serviceName || service?.name,
+          fullServiceObject: service
+        });
+        
+        return hasRCIC && hasService;
+      }
+      case 2: {
+        const hasTimeSlot = !!bookingData.timeSlot;
+        return hasTimeSlot;
+      }
+      case 3: {
+        const hasPayment = !!bookingData.payment;
+        return hasPayment;
+      }
       case 4: {
         // Check if intake form exists and is marked as completed
         const intakeForm = bookingData.intakeForm
-        if (!intakeForm) return false
+        if (!intakeForm) return false;
         
         // Must have completed the form
-        if (!intakeForm.completed) return false
+        if (!intakeForm.completed) return false;
         
         // Must have filled basic form data
         const formData = intakeForm.formData
-        if (!formData) return false
+        if (!formData) return false;
         
         // Check if required fields are filled
         const hasRequiredData = (
@@ -246,32 +311,40 @@ export function BookingFlow() {
           formData.specificQuestions?.trim()
         )
         
-        return hasRequiredData
+        return hasRequiredData;
       }
-      default: return false
+      default: {
+        return false;
+      }
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50/30 to-purple-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50/30 to-purple-50/20 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl"></div>
+      </div>
+      
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-white/20">
+      <div className="relative bg-white/95 backdrop-blur-xl shadow-lg border-b border-white/20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4 sm:py-6">
-            <div className="flex items-center gap-4">
+          <div className="py-6">
+            <div className="flex items-center gap-6">
               <Button 
-                variant="outline" 
+                variant="outline"
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-2 bg-white/60 border-blue-200 text-blue-700 hover:bg-blue-50"
+                className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-white/90 hover:shadow-md transition-all duration-200"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span className="hidden sm:inline">Back</span>
               </Button>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   Book Your Consultation
                 </h1>
-                <p className="text-gray-600 text-sm">Step {currentStep} of {steps.length}</p>
+                <p className="text-gray-600 text-sm mt-1">Step {currentStep} of {steps.length}</p>
               </div>
             </div>
           </div>
@@ -363,33 +436,54 @@ export function BookingFlow() {
 
           {/* Navigation Buttons */}
           {currentStep < 5 && (
-            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Previous
-              </Button>
+            <div className="relative">
+              {/* Glassmorphism container */}
+              <div className="bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl p-6 shadow-xl">
+                <div className="flex justify-between items-center">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevious}
+                    disabled={currentStep === 1}
+                    className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-gray-300 hover:bg-white/90 hover:shadow-md transition-all duration-200 px-6 py-3"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="font-medium">Previous</span>
+                  </Button>
 
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-gray-500">
-                  Step {currentStep} of {steps.length - 1}
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <div className="text-sm text-gray-500 mb-1">
+                        Step {currentStep} of {steps.length - 1}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {steps.find(s => s.id === currentStep)?.title}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleNext}
+                      disabled={!canProceed() || isCompleting}
+                      className={`flex items-center gap-3 px-8 py-3 font-semibold transition-all duration-200 ${
+                        !canProceed() || isCompleting
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                      }`}
+                    >
+                      {currentStep === 4 ? (isCompleting ? 'Creating Booking...' : 'Complete Booking') : 'Next Step'}
+                      {isCompleting ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      ) : (
+                        <ArrowRight className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceed() || isCompleting}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {currentStep === 4 ? (isCompleting ? 'Completing...' : 'Complete Booking') : 'Next Step'}
-                  {isCompleting ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <ArrowRight className="h-4 w-4" />
-                  )}
-                </Button>
+              </div>
+              
+              {/* Progress indicator */}
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                <div className="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-medium shadow-lg">
+                  {Math.round((currentStep / (steps.length - 1)) * 100)}% Complete
+                </div>
               </div>
             </div>
           )}

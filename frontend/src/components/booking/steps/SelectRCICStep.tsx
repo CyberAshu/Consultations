@@ -41,18 +41,9 @@ export function SelectRCICStep({
         setLoading(true)
         const data = await consultantService.getConsultants()
         
-        // Load active services for each consultant
-        const consultantsWithServices = await Promise.all(
-          data.map(async (rcic: any) => {
-            try {
-              const activeServices = await consultantService.getActiveConsultantServices(rcic.id);
-              return { ...rcic, services: activeServices };
-            } catch (error) {
-              console.error(`Failed to load services for consultant ${rcic.id}:`, error);
-              return { ...rcic, services: [] };
-            }
-          })
-        );
+        // Don't load services here since DurationBasedServiceSelection handles service loading
+        // This prevents conflicts between legacy service format and new duration-based format
+        const consultantsWithServices = data.map((rcic: any) => ({ ...rcic, services: [] }));
         
         // If prefilledRCIC is provided, filter to show only that consultant
         if (prefilledRCIC) {
@@ -110,12 +101,13 @@ export function SelectRCICStep({
     if (prefilledRCIC && rcics.length > 0) {
       const rcic = rcics.find((r: any) => r.id === parseInt(prefilledRCIC))
       if (rcic) {
+        console.log('🔍 Setting prefilled RCIC:', rcic);
         setSelectedRCIC(rcic)
+        
+        // DON'T set prefilled service here - let DurationBasedServiceSelection handle it properly
+        // This ensures proper duration-based flow is followed
         if (prefilledService) {
-          const service = rcic.services?.find((s: any) => s.id === parseInt(prefilledService))
-          if (service) {
-            setSelectedService(service)
-          }
+          console.log('🔍 Prefilled service detected:', prefilledService, 'but letting DurationBasedServiceSelection handle it');
         }
       }
     }
@@ -176,7 +168,7 @@ export function SelectRCICStep({
   useEffect(() => {
     onDataChange({
       rcic: selectedRCIC,
-      service: selectedService,
+      service: selectedService, // This already has the correct structure from DurationBasedServiceSelection
       duration: selectedDuration,
       calculatedPrice: calculatedPrice,
       selectedAddons: selectedAddons,
@@ -185,10 +177,15 @@ export function SelectRCICStep({
   }, [selectedRCIC, selectedService, selectedDuration, calculatedPrice, selectedAddons, onDataChange])
 
   const handleRCICSelect = (rcic: any) => {
+    console.log('🔍 RCIC selected:', rcic);
+    console.log('🔍 Resetting service state...');
+    
     setSelectedRCIC(rcic)
     setSelectedService(null) // Reset service when RCIC changes
     setSelectedDuration(null);
     setCalculatedPrice(null);
+    
+    console.log('🔍 RCIC selection complete, service state reset');
   }
 
   const handleServiceSelect = (service: any) => {
@@ -228,96 +225,101 @@ export function SelectRCICStep({
       </div>
 
       {/* RCIC Selection */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {prefilledRCIC ? 'Your Selected RCIC' : 'Available RCICs'}
-        </h3>
+      <div className="space-y-6">
+        <div className="text-center sm:text-left">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {prefilledRCIC ? 'Your Selected RCIC' : 'Choose Your RCIC Consultant'}
+          </h3>
+          <p className="text-gray-600">
+            Select from our verified immigration consultants
+          </p>
+        </div>
         
         {loading ? (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="bg-white/80 backdrop-blur-sm border-gray-200/50">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="animate-pulse">
-                    <div className="flex gap-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-full"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                        <div className="h-3 bg-gray-300 rounded w-2/3"></div>
-                      </div>
+              <div key={i} className="bg-white/95 backdrop-blur-md border border-white/50 rounded-2xl p-6 shadow-lg">
+                <div className="animate-pulse">
+                  <div className="flex gap-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl"></div>
+                    <div className="flex-1 space-y-3">
+                      <div className="h-5 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-3/4"></div>
+                      <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-1/2"></div>
+                      <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-2/3"></div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-6">
             {rcics.map((rcic) => (
-              <Card 
+              <div
                 key={rcic.id} 
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                className={`group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 ${
                   selectedRCIC?.id === rcic.id 
-                    ? 'ring-2 ring-blue-500 bg-blue-50/50' 
-                    : 'bg-white/80 backdrop-blur-sm border-gray-200/50'
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 ring-2 ring-blue-500 shadow-xl transform scale-[1.02]' 
+                    : 'bg-white/95 backdrop-blur-md border border-white/50 shadow-lg hover:shadow-xl hover:bg-white'
                 }`}
                 onClick={() => handleRCICSelect(rcic)}
               >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
+                <div className="p-6">
+                  <div className="flex flex-col sm:flex-row gap-6">
                     {/* Avatar & Basic Info */}
-                    <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0 shadow-lg">
                         {(rcic?.name || '').split(' ').map((n: string) => n[0]).join('') || 'N/A'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900 text-lg">{rcic?.name || 'N/A'}</h4>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-bold text-gray-900 text-xl">{rcic?.name || 'N/A'}</h4>
                           {rcic.is_verified && (
-                            <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                            <Badge className="bg-green-100 text-green-800 flex items-center gap-1 px-2 py-1">
                               <CheckCircle className="h-3 w-3" />
-                              Verified
+                              <span className="text-xs font-medium">Verified</span>
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">License: {rcic?.rcic_number || 'N/A'}</p>
+                        <p className="text-sm text-gray-600 mb-3 font-medium">License: {rcic?.rcic_number || 'N/A'}</p>
                         
                         {/* Rating & Reviews */}
-                        <div className="flex items-center gap-4 mb-3">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium text-gray-900">{rcic?.rating || 'N/A'}</span>
+                        <div className="flex items-center gap-6 mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="font-bold text-gray-900">{rcic?.rating || 'N/A'}</span>
+                            </div>
                             <span className="text-sm text-gray-600">({rcic?.review_count || 0} reviews)</span>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <MessageSquare className="h-4 w-4" />
-                            Available
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm text-gray-600 font-medium">Available</span>
                           </div>
                         </div>
 
                         {/* Specialties */}
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-gray-700 mb-1">Specialties:</p>
-                          <div className="flex flex-wrap gap-1">
+                        <div className="mb-4">
+                          <p className="text-sm font-bold text-gray-700 mb-2">Specialties:</p>
+                          <div className="flex flex-wrap gap-2">
                             {(rcic.specialties || []).slice(0, 3).map((specialty: string, index: number) => (
-                              <Badge key={index} className="bg-blue-100 text-blue-800 text-xs">
+                              <span key={index} className="bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full">
                                 {specialty}
-                              </Badge>
+                              </span>
                             ))}
                             {(rcic.specialties || []).length > 3 && (
-                              <Badge className="bg-gray-100 text-gray-600 text-xs">
+                              <span className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
                                 +{(rcic.specialties || []).length - 3} more
-                              </Badge>
+                              </span>
                             )}
                           </div>
                         </div>
 
                         {/* Languages */}
-                        <div className="mb-3">
+                        <div className="mb-4">
                           <div className="flex items-center gap-2">
                             <Globe className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm text-gray-700 font-medium">
                               {(rcic.languages || []).join(', ') || 'English'}
                             </span>
                           </div>
@@ -330,23 +332,30 @@ export function SelectRCICStep({
 
                     {/* Experience Badge */}
                     <div className="flex-shrink-0">
-                      <Badge className="bg-purple-100 text-purple-800 flex items-center gap-1">
-                        <Award className="h-3 w-3" />
-                        {rcic?.experience_years ? `${rcic.experience_years}+ years` : (rcic?.experience || 'N/A')}
-                      </Badge>
+                      <div className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full flex items-center gap-2">
+                        <Award className="h-4 w-4" />
+                        <span className="text-sm font-bold">
+                          {rcic?.experience_years ? `${rcic.experience_years}+ years` : (rcic?.experience || 'N/A')}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {selectedRCIC?.id === rcic.id && (
-                    <div className="mt-4 pt-4 border-t border-blue-200">
-                      <div className="flex items-center gap-2 text-blue-600">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Selected RCIC</span>
+                    <div className="mt-6 pt-4 border-t border-blue-200">
+                      <div className="flex items-center gap-3 text-blue-600">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="text-sm font-bold">Selected Consultant</span>
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+                
+                {/* Gradient accent bar */}
+                {selectedRCIC?.id === rcic.id && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-2xl"></div>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -359,23 +368,59 @@ export function SelectRCICStep({
             <DurationBasedServiceSelection
               consultantId={selectedRCIC.id}
               onServiceSelect={(serviceData) => {
-                setSelectedService({
+                console.log('🔍 SelectRCICStep received serviceData:', serviceData);
+                console.log('🔍 SelectRCICStep serviceData type:', typeof serviceData);
+                console.log('🔍 SelectRCICStep serviceData keys:', Object.keys(serviceData || {}));
+                
+                // Validate required fields
+                if (!serviceData || !serviceData.serviceId || !serviceData.durationOptionId) {
+                  console.error('❌ Missing required service data:', {
+                    serviceData: serviceData,
+                    serviceId: serviceData?.serviceId,
+                    durationOptionId: serviceData?.durationOptionId,
+                    fullServiceData: serviceData
+                  });
+                  alert('Service selection error: Missing required data. Please try selecting the service again.');
+                  return;
+                }
+                
+                console.log('✅ Service data validation passed, proceeding with mapping...');
+                console.log('🔍 Before mapping - serviceData:', serviceData);
+                
+                // Store the service data in the format expected by the booking API
+                const mappedService = {
+                  serviceId: serviceData.serviceId,
+                  serviceName: serviceData.serviceName,
+                  durationOptionId: serviceData.durationOptionId,
+                  durationLabel: serviceData.durationLabel,
+                  price: serviceData.price,
+                  durationMinutes: serviceData.durationMinutes,
+                  // Keep legacy fields for display purposes
                   id: serviceData.serviceId,
                   name: serviceData.serviceName,
                   duration: serviceData.durationMinutes,
-                  price: serviceData.price,
                   duration_option_id: serviceData.durationOptionId,
                   duration_label: serviceData.durationLabel
+                };
+                
+                console.log('🔍 SelectRCICStep mapped service:', mappedService);
+                console.log('✅ Service validation passed:', {
+                  hasServiceId: !!mappedService.serviceId,
+                  hasDurationOptionId: !!mappedService.durationOptionId,
+                  serviceId: mappedService.serviceId,
+                  durationOptionId: mappedService.durationOptionId
                 });
+                
+                setSelectedService(mappedService);
                 setCalculatedPrice(serviceData.price);
               }}
               selectedService={selectedService ? {
-                serviceId: selectedService.id,
-                serviceName: selectedService.name,
-                durationOptionId: selectedService.duration_option_id,
-                durationLabel: selectedService.duration_label,
+                serviceId: selectedService.serviceId || selectedService.id,
+                serviceName: selectedService.serviceName || selectedService.name,
+                durationOptionId: selectedService.durationOptionId || selectedService.duration_option_id,
+                durationLabel: selectedService.durationLabel || selectedService.duration_label,
                 price: selectedService.price,
-                durationMinutes: selectedService.duration
+                durationMinutes: selectedService.durationMinutes || selectedService.duration
               } : null}
             />
           </CardContent>
@@ -383,12 +428,17 @@ export function SelectRCICStep({
       )}
 
 
-      {/* Addons Selection */}
-      {selectedRCIC && selectedService && (
+      {/* Addons Selection - Show when RCIC is selected for consistency across both flows */}
+      {selectedRCIC && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">
             Enhance Your Experience (Optional)
           </h3>
+          {!selectedService && (
+            <p className="text-sm text-gray-600 mb-4">
+              Available addons for your consultation. Select a service above to see final pricing.
+            </p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {availableAddons.map((addon) => {
               const isSelected = selectedAddons.find(a => a.id === addon.id)

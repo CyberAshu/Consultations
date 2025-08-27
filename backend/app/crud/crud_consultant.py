@@ -62,11 +62,11 @@ class CRUDConsultant:
         for consultant in consultants:
             consultant_id = consultant["id"]
             
-            # Get services
-            services_response = db.table("consultant_services").select("*").eq("consultant_id", consultant_id).execute()
-            consultant["services"] = services_response.data or []
+            # Services are loaded separately by DurationBasedServiceSelection when needed
+            # Removing this to fix timeout issues in consultants list API
+            consultant["services"] = []
             
-            # Get reviews
+            # Get reviews for rating calculation
             reviews_response = db.table("consultant_reviews").select("*").eq("consultant_id", consultant_id).execute()
             reviews = reviews_response.data or []
             consultant["reviews"] = reviews

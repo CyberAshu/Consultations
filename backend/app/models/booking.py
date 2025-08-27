@@ -27,6 +27,7 @@ class Booking(Base):
     client_id = Column(UUID(as_uuid=True), nullable=False)  # References auth.users.id
     consultant_id = Column(Integer, ForeignKey("consultants.id"), nullable=False)
     service_id = Column(Integer, ForeignKey("consultant_services.id"), nullable=False)
+    duration_option_id = Column(Integer, ForeignKey("service_duration_options.id"), nullable=True)  # For new duration-based pricing
     
     # Booking details
     booking_date = Column(DateTime(timezone=True), nullable=False)
@@ -52,6 +53,7 @@ class Booking(Base):
     # Relationships
     consultant = relationship("Consultant", back_populates="bookings")
     service = relationship("ConsultantService", back_populates="bookings")
+    duration_option = relationship("ServiceDurationOption", lazy="select")
     documents = relationship("BookingDocument", back_populates="booking", cascade="all, delete-orphan")
     payment = relationship("Payment", back_populates="booking", uselist=False)
     session_notes = relationship("SessionNote", back_populates="booking", cascade="all, delete-orphan")
