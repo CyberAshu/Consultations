@@ -358,9 +358,9 @@ export function AdminDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-white/20">
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4 sm:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -368,18 +368,18 @@ export function AdminDashboard() {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/')}
-                  className="flex items-center gap-2 bg-white/60 border-purple-200 text-purple-700 hover:bg-purple-50 px-3 py-2"
+                  className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span className="hidden sm:inline">Back to Website</span>
                   <span className="sm:hidden">Back</span>
                 </Button>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                     <Crown className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                       Admin Dashboard
                     </h1>
                     <p className="text-gray-600 text-sm sm:text-base">System Administration Panel</p>
@@ -394,7 +394,7 @@ export function AdminDashboard() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="relative bg-white/60 border-gray-200 hover:bg-gray-50"
+                  className="relative bg-white border-gray-300 hover:bg-gray-50"
                 >
                   <Bell className="h-4 w-4" />
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">5</span>
@@ -402,7 +402,7 @@ export function AdminDashboard() {
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className="flex items-center gap-2 bg-white/60 border-gray-200 hover:bg-gray-50"
+                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>
@@ -414,7 +414,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white/60 backdrop-blur-xl border-b border-white/20">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-0 sm:space-x-2 overflow-x-auto scrollbar-hide pb-px">
             {tabs.map((tab) => (
@@ -423,8 +423,8 @@ export function AdminDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-3 sm:py-4 px-2 sm:px-4 inline-flex items-center gap-1 sm:gap-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 min-w-0 flex-shrink-0 ${
                   activeTab === tab.id
-                    ? 'border-purple-500 text-purple-600 bg-purple-50/50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50/50'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 <span className="flex-shrink-0">{tab.icon}</span>
@@ -443,7 +443,7 @@ export function AdminDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {stats.map((stat, index) => (
-                <Card key={index} className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50 hover:shadow-xl transition-shadow">
+                <Card key={index} className="bg-white shadow-sm border-gray-200 hover:shadow-md transition-shadow">
                   <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
@@ -462,7 +462,7 @@ export function AdminDashboard() {
 
             {/* Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Recent User Registrations</h3>
                   <div className="space-y-3">
@@ -481,7 +481,7 @@ export function AdminDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">System Alerts</h3>
                   <div className="space-y-3">
@@ -506,7 +506,7 @@ export function AdminDashboard() {
 
         {/* User Management Tab */}
         {activeTab === 'users' && (
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+          <Card className="bg-white shadow-sm border-gray-200">
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">User Management</h2>
@@ -577,7 +577,7 @@ export function AdminDashboard() {
 
         {/* RCIC Management Tab */}
         {activeTab === 'consultants' && (
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+          <Card className="bg-white shadow-sm border-gray-200">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">RCIC Management</h2>
@@ -628,11 +628,11 @@ export function AdminDashboard() {
           <div className="space-y-6">
             {/* Loading State */}
             {loading && (
-              <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                       <p className="text-gray-600">Loading consultant applications...</p>
                     </div>
                   </div>
@@ -642,7 +642,7 @@ export function AdminDashboard() {
             
             {/* Error State */}
             {error && !loading && (
-              <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
@@ -650,7 +650,7 @@ export function AdminDashboard() {
                         <X className="h-6 w-6 text-red-600" />
                       </div>
                       <p className="text-red-600 font-medium mb-2">{error}</p>
-                      <Button onClick={loadConsultantApplications} className="bg-purple-600 hover:bg-purple-700">
+                      <Button onClick={loadConsultantApplications} className="bg-blue-600 hover:bg-blue-700">
                         Try Again
                       </Button>
                     </div>
@@ -663,7 +663,7 @@ export function AdminDashboard() {
             {!loading && (
               <>
                 {/* Header with Stats and Actions */}
-                <Card className="bg-white/90 backdrop-blur-lg shadow-md border-gray-200/50">
+                <Card className="bg-white shadow-sm border-gray-200">
                   <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
@@ -675,7 +675,7 @@ export function AdminDashboard() {
                       <input 
                         type="text" 
                         placeholder="Search by name or license..."
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent w-full sm:w-64 transition-shadow shadow-sm"
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent w-full sm:w-64 transition-shadow shadow-sm"
                       />
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FileText className="h-5 w-5 text-gray-400" />
@@ -687,7 +687,7 @@ export function AdminDashboard() {
                 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-yellow-50/70 p-4 rounded-lg border border-yellow-200/80">
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-yellow-700 text-sm font-medium">Pending</p>
@@ -695,10 +695,10 @@ export function AdminDashboard() {
                           {consultantApplications.filter(app => app.status === 'pending').length}
                         </p>
                       </div>
-                      <Clock className="h-7 w-7 text-yellow-500 opacity-80" />
+                      <Clock className="h-7 w-7 text-yellow-500" />
                     </div>
                   </div>
-                  <div className="bg-green-50/70 p-4 rounded-lg border border-green-200/80">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-green-700 text-sm font-medium">Approved</p>
@@ -706,10 +706,10 @@ export function AdminDashboard() {
                           {consultantApplications.filter(app => app.status === 'approved').length}
                         </p>
                       </div>
-                      <Check className="h-7 w-7 text-green-600 opacity-80" />
+                      <Check className="h-7 w-7 text-green-600" />
                     </div>
                   </div>
-                  <div className="bg-red-50/70 p-4 rounded-lg border border-red-200/80">
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-red-700 text-sm font-medium">Rejected</p>
@@ -717,16 +717,16 @@ export function AdminDashboard() {
                           {consultantApplications.filter(app => app.status === 'rejected').length}
                         </p>
                       </div>
-                      <X className="h-7 w-7 text-red-600 opacity-80" />
+                      <X className="h-7 w-7 text-red-600" />
                     </div>
                   </div>
-                  <div className="bg-gray-100 p-4 rounded-lg border border-gray-200/80">
+                  <div className="bg-gray-100 p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-600 text-sm font-medium">Total</p>
                         <p className="text-2xl font-bold text-gray-800">{consultantApplications.length}</p>
                       </div>
-                      <FileText className="h-7 w-7 text-gray-500 opacity-80" />
+                      <FileText className="h-7 w-7 text-gray-500" />
                     </div>
                   </div>
                 </div>
@@ -736,7 +736,7 @@ export function AdminDashboard() {
             {/* Applications List */}
             <div className="space-y-4">
               {consultantApplications.map((app) => (
-                <Card key={app.id} className="bg-white/80 backdrop-blur-sm shadow-md border-gray-200/50 hover:shadow-lg transition-shadow duration-200">
+                <Card key={app.id} className="bg-white shadow-sm border-gray-200 hover:shadow-md transition-shadow duration-200">
                   <CardContent className="p-5">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       
@@ -744,7 +744,7 @@ export function AdminDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-4 mb-4">
                             <div className="flex items-center gap-4 min-w-0">
-                                <div className="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold text-xl flex-shrink-0">
+                                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-bold text-xl flex-shrink-0">
                                     {app.fullLegalName ? app.fullLegalName.charAt(0).toUpperCase() : app.full_legal_name ? app.full_legal_name.charAt(0).toUpperCase() : '?'}
                                 </div>
                                 <div className="min-w-0">
@@ -754,10 +754,10 @@ export function AdminDashboard() {
                             </div>
                             <Badge
                                 className={`${app.status === 'pending' 
-                                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200/80' 
+                                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200' 
                                   : app.status === 'approved' 
-                                  ? 'bg-green-100 text-green-800 border-green-200/80'
-                                  : 'bg-red-100 text-red-800 border-red-200/80'
+                                  ? 'bg-green-100 text-green-800 border-green-200'
+                                  : 'bg-red-100 text-red-800 border-red-200'
                                 } whitespace-nowrap`}
                             >
                                 {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
@@ -765,7 +765,7 @@ export function AdminDashboard() {
                         </div>
                         
                         {/* Details Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-gray-200/80 pt-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-t border-gray-200 pt-4">
                           <div>
                             <p className="text-gray-500">License #</p>
                             <p className="text-gray-800 font-mono font-medium">{app.rcicLicenseNumber || app.rcic_license_number || 'N/A'}</p>
@@ -785,7 +785,7 @@ export function AdminDashboard() {
                         </div>
                         
                         {/* Section Completion Status */}
-                        <div className="mt-4 pt-4 border-t border-gray-200/80">
+                        <div className="mt-4 pt-4 border-t border-gray-200">
                           <p className="text-sm text-gray-500 mb-2">Section Completion:</p>
                           <div className="flex flex-wrap gap-2">
                             {[1, 2, 3, 4, 5, 6, 7].map(sectionNum => {
@@ -811,7 +811,7 @@ export function AdminDashboard() {
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="border-t lg:border-t-0 lg:border-l border-gray-200/80 flex-shrink-0 lg:pl-4 pt-4 lg:pt-0">
+                      <div className="border-t lg:border-t-0 lg:border-l border-gray-200 flex-shrink-0 lg:pl-4 pt-4 lg:pt-0">
                           <div className="flex flex-col gap-2 w-full lg:w-48">
                             <Button size="sm" variant="outline" className="flex items-center justify-center gap-2 w-full" onClick={() => handleViewDetails(app)}>
                               <Eye className="h-4 w-4" />
@@ -862,7 +862,7 @@ export function AdminDashboard() {
           </div>
         )}
         {activeTab === 'bookings' && (
-          <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+          <Card className="bg-white shadow-sm border-gray-200">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Booking Management</h2>
@@ -924,7 +924,7 @@ export function AdminDashboard() {
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+            <Card className="bg-white shadow-sm border-gray-200">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Analytics Dashboard</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -947,7 +947,7 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+            <Card className="bg-white shadow-sm border-gray-200">
               <CardContent className="p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Service Type Distribution</h3>
                 <div className="space-y-3">
@@ -991,7 +991,7 @@ export function AdminDashboard() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+            <Card className="bg-white shadow-sm border-gray-200">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">System Settings</h2>
                 <form className="space-y-4">
@@ -1012,7 +1012,7 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+            <Card className="bg-white shadow-sm border-gray-200">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Email Templates</h2>
                 <div className="space-y-4">

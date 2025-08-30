@@ -854,9 +854,9 @@ export function RCICDashboard() {
   }, [isConnected, connectionType, bookings.length])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50/30 to-cyan-50/30">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-white/20">
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4 sm:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -864,18 +864,18 @@ export function RCICDashboard() {
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/')}
-                  className="flex items-center gap-2 bg-white/60 border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-3 py-2"
+                  className="flex items-center gap-2 bg-white border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span className="hidden sm:inline">Back to Website</span>
                   <span className="sm:hidden">Back</span>
                 </Button>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                     <Award className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                       RCIC Dashboard
                     </h1>
                     <p className="text-gray-600 text-sm sm:text-base">Welcome back, {consultant?.name || user?.full_name || 'User'}</p>
@@ -905,7 +905,7 @@ export function RCICDashboard() {
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className="flex items-center gap-2 bg-white/60 border-gray-200 hover:bg-gray-50"
+                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>
@@ -917,7 +917,7 @@ export function RCICDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white/60 backdrop-blur-xl border-b border-white/20">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-0 sm:space-x-2 overflow-x-auto scrollbar-hide pb-px">
             {tabs.map((tab) => (
@@ -926,8 +926,8 @@ export function RCICDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-3 sm:py-4 px-2 sm:px-4 inline-flex items-center gap-1 sm:gap-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 min-w-0 flex-shrink-0 ${
                   activeTab === tab.id
-                    ? 'border-emerald-500 text-emerald-600 bg-emerald-50/50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50/50'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 <span className="flex-shrink-0">{tab.icon}</span>
@@ -944,10 +944,10 @@ export function RCICDashboard() {
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {!initialBookingsLoaded ? (
-              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-6">
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
                     <p className="text-gray-500">Loading dashboard...</p>
                   </div>
                 </CardContent>
@@ -956,7 +956,7 @@ export function RCICDashboard() {
               <>
                 {/* Key Metrics Overview */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                  <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-lg">
@@ -973,7 +973,7 @@ export function RCICDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-orange-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-orange-100 rounded-lg">
@@ -988,7 +988,7 @@ export function RCICDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-green-100 rounded-lg">
@@ -1005,25 +1005,25 @@ export function RCICDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200/50">
-                    <CardContent className="p-4 sm:p-6">
+                  <Card className="bg-white shadow-sm border-gray-200">
+                    <CardContent className="p-6">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-100 rounded-lg">
-                          <FileText className="h-5 w-5 text-emerald-600" />
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-emerald-600">Total</p>
-                          <p className="text-2xl font-bold text-emerald-700">{bookings.length}</p>
+                          <p className="text-sm font-medium text-blue-600">Total</p>
+                          <p className="text-2xl font-bold text-blue-700">{bookings.length}</p>
                         </div>
                       </div>
-                      <p className="text-xs text-emerald-600 mt-2">All time sessions</p>
+                      <p className="text-xs text-blue-600 mt-2">All time sessions</p>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Today's Focus & Urgent Actions */}
                 {(todayAppointments.length > 0 || categorizedSessions.ongoing.length > 0 || categorizedSessions.past.length > 0) && (
-                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                         <Bell className="h-5 w-5 text-amber-600" />
@@ -1086,7 +1086,7 @@ export function RCICDashboard() {
                 )}
 
                 {/* Quick Actions - Only show if no urgent items */}
-                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                <Card className="bg-white shadow-sm border-gray-200">
                   <CardContent className="p-4 sm:p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <Wrench className="h-5 w-5 text-emerald-600" />
@@ -1094,7 +1094,7 @@ export function RCICDashboard() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <Button 
-                        className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 justify-center"
+                        className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 justify-center"
                         onClick={() => setActiveTab('sessions')}
                       >
                         <Calendar className="h-4 w-4" /> 
@@ -1122,15 +1122,15 @@ export function RCICDashboard() {
 
                 {/* Weekly Performance Insight */}
                 {bookings.length > 0 && (
-                  <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Award className="h-5 w-5 text-purple-600" />
+                        <Award className="h-5 w-5 text-blue-600" />
                         This Week's Insights
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                         <div>
-                          <div className="text-2xl font-bold text-purple-600">
+                          <div className="text-2xl font-bold text-blue-600">
                             {categorizedSessions.completed.filter(b => {
                               const bookingDate = new Date(b.booking_date || b.scheduled_date || '')
                               const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -1140,13 +1140,13 @@ export function RCICDashboard() {
                           <div className="text-sm text-gray-600">Sessions Completed</div>
                         </div>
                         <div>
-                          <div className="text-2xl font-bold text-purple-600">
+                          <div className="text-2xl font-bold text-blue-600">
                             {Math.round((categorizedSessions.completed.length / Math.max(bookings.length, 1)) * 100)}%
                           </div>
                           <div className="text-sm text-gray-600">Completion Rate</div>
                         </div>
                         <div>
-                          <div className="text-2xl font-bold text-purple-600">
+                          <div className="text-2xl font-bold text-blue-600">
                             {bookings.filter(b => b.intake_form_data).length}
                           </div>
                           <div className="text-sm text-gray-600">With Intake Forms</div>
@@ -1164,7 +1164,7 @@ export function RCICDashboard() {
         {activeTab === 'sessions' && (
           <div className="space-y-6">
             {/* Header with Quick Stats */}
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white">
+            <div className="bg-blue-600 rounded-2xl p-6 text-white">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h2 className="text-2xl font-bold mb-2">My Sessions</h2>
@@ -1192,11 +1192,11 @@ export function RCICDashboard() {
             </div>
 
             {!initialBookingsLoaded ? (
-              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-4 sm:p-6">
                   <div className="text-center py-12">
                     <div className="relative">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                       <div className="animate-pulse">
                         <div className="h-4 bg-gray-200 rounded w-32 mx-auto mb-2"></div>
                         <div className="h-3 bg-gray-200 rounded w-48 mx-auto"></div>
@@ -1207,10 +1207,10 @@ export function RCICDashboard() {
                 </CardContent>
               </Card>
             ) : bookings.length === 0 ? (
-              <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+              <Card className="bg-white shadow-sm border-gray-200">
                 <CardContent className="p-8 sm:p-12">
                   <div className="text-center text-gray-500">
-                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Calendar className="h-12 w-12 text-gray-400" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-700 mb-2">No Sessions Yet</h3>
@@ -1218,7 +1218,7 @@ export function RCICDashboard() {
                       Your client sessions will appear here once they start booking appointments with you.
                     </p>
                     <Button 
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => setActiveTab('profile')}
                     >
                       Complete Your Profile
@@ -1255,15 +1255,15 @@ export function RCICDashboard() {
                         
                         return (
                           <Card key={booking.id} className={`group hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 ${
-                            isToday ? 'ring-2 ring-green-200 bg-gradient-to-r from-green-50 to-emerald-50' : 
-                            isTomorrow ? 'ring-2 ring-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50' :
-                            'bg-white/80 backdrop-blur-sm border-gray-200/50'
+                            isToday ? 'ring-2 ring-green-200 bg-green-50' : 
+                            isTomorrow ? 'ring-2 ring-blue-200 bg-blue-50' :
+                            'bg-white border-gray-200'
                           }`} onClick={() => handleViewSessionDetail(booking)}>
                             <CardContent className="p-6">
                               <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                       {clientName.charAt(7).toUpperCase()}
                                     </div>
                                     <div>
@@ -1338,7 +1338,7 @@ export function RCICDashboard() {
                                   <>
                                     <Button 
                                       size="sm" 
-                                      className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1" 
+                                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1" 
                                       onClick={() => handleStatusChange(booking.id, 'confirmed')} 
                                       disabled={updatingStatus === booking.id}
                                     >
@@ -1415,7 +1415,7 @@ export function RCICDashboard() {
 
                 {/* Ongoing Sessions */}
                 {categorizedSessions.ongoing.length > 0 && (
-                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-orange-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="h-5 w-5 bg-orange-500 rounded-full animate-pulse" />
@@ -1429,7 +1429,7 @@ export function RCICDashboard() {
                           const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
                           
                           return (
-                            <div key={booking.id} className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                            <div key={booking.id} className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
@@ -1472,7 +1472,7 @@ export function RCICDashboard() {
 
                 {/* Completed Sessions */}
                 {categorizedSessions.completed.length > 0 && (
-                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-green-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="h-5 w-5 bg-green-500 rounded-full" />
@@ -1487,7 +1487,7 @@ export function RCICDashboard() {
                           const isRecent = Date.now() - bookingDate.getTime() < 7 * 24 * 60 * 60 * 1000 // Within 7 days
                           
                           return (
-                            <div key={booking.id} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                            <div key={booking.id} className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
@@ -1527,7 +1527,7 @@ export function RCICDashboard() {
 
                 {/* Past Sessions */}
                 {categorizedSessions.past.length > 0 && (
-                  <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <Card className="bg-white shadow-sm border-gray-200">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-2 mb-4">
                         <Calendar className="h-5 w-5 text-gray-500" />
@@ -1542,7 +1542,7 @@ export function RCICDashboard() {
                           const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
                           
                           return (
-                            <div key={booking.id} className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
+                            <div key={booking.id} className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewSessionDetail(booking)}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <h4 className="font-medium text-gray-900">{clientName}</h4>
@@ -1609,7 +1609,7 @@ export function RCICDashboard() {
         {activeTab === 'profile' && (
           <div className="space-y-6">
             {/* Profile Header */}
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-6 text-white">
+            <div className="bg-blue-600 rounded-2xl p-6 text-white">
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden bg-white/20">
@@ -1626,12 +1626,12 @@ export function RCICDashboard() {
                     )}
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    <Award className="h-4 w-4 text-emerald-600" />
+                    <Award className="h-4 w-4 text-blue-600" />
                   </div>
                 </div>
                 <div className="text-center sm:text-left flex-1">
                   <h2 className="text-2xl font-bold mb-1">{profileForm.name || 'RCIC Profile'}</h2>
-                  <p className="text-emerald-100 mb-2">{profileForm.rcic_number ? `RCIC #${profileForm.rcic_number}` : 'Immigration Consultant'}</p>
+                  <p className="text-blue-100 mb-2">{profileForm.rcic_number ? `RCIC #${profileForm.rcic_number}` : 'Immigration Consultant'}</p>
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                     {profileForm.location && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
@@ -1653,11 +1653,11 @@ export function RCICDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Profile Form */}
               <div className="lg:col-span-2">
-                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                <Card className="bg-white shadow-sm border-gray-200">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-6">
-                      <div className="p-2 bg-emerald-100 rounded-lg">
-                        <Settings className="h-5 w-5 text-emerald-600" />
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Settings className="h-5 w-5 text-blue-600" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-900">Profile Information</h3>
                     </div>
@@ -1666,11 +1666,11 @@ export function RCICDashboard() {
                       {/* Bio Section */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-emerald-600" />
+                          <FileText className="h-4 w-4 text-blue-600" />
                           Professional Bio
                         </label>
                         <textarea 
-                          className="w-full border border-gray-300 p-4 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+                          className="w-full border border-gray-300 p-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                           rows={4}
                           value={profileForm.bio || ''}
                           onChange={(e) => handleProfileInputChange('bio', e.target.value)}
@@ -1683,11 +1683,11 @@ export function RCICDashboard() {
                       <div className="grid sm:grid-cols-2 gap-6">
                         <div className="relative">
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <Award className="h-4 w-4 text-emerald-600" />
+                            <Award className="h-4 w-4 text-blue-600" />
                             Experience
                           </label>
                           <select 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none bg-white"
                             value={profileForm.experience || ''}
                             onChange={(e) => handleProfileInputChange('experience', e.target.value)}
                           >
@@ -1707,12 +1707,12 @@ export function RCICDashboard() {
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <span className="text-emerald-600">🌐</span>
+                            <span className="text-blue-600">🌐</span>
                             Languages
                           </label>
                           <div className="relative">
                             <select 
-                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                              className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none bg-white"
                               multiple
                               value={Array.isArray(profileForm.languages) ? profileForm.languages : []}
                               onChange={(e) => {
@@ -1749,7 +1749,7 @@ export function RCICDashboard() {
                           {Array.isArray(profileForm.languages) && profileForm.languages.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {profileForm.languages.map((lang, index) => (
-                                <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                   {lang}
                                   <button
                                     type="button"
@@ -1758,7 +1758,7 @@ export function RCICDashboard() {
                                       const newLanguages = currentLanguages.filter((_: string, i: number) => i !== index)
                                       handleProfileInputChange('languages', newLanguages)
                                     }}
-                                    className="ml-1 text-emerald-600 hover:text-emerald-800"
+                                    className="ml-1 text-blue-600 hover:text-blue-800"
                                   >
                                     ×
                                   </button>
@@ -1772,12 +1772,12 @@ export function RCICDashboard() {
                       {/* Specialties */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <span className="text-emerald-600">🎯</span>
+                          <span className="text-blue-600">🎯</span>
                           Specialization Areas
                         </label>
                         <div className="relative">
                           <select 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none bg-white"
                             multiple
                             value={Array.isArray(profileForm.specialties) ? profileForm.specialties : []}
                             onChange={(e) => {
@@ -1836,11 +1836,11 @@ export function RCICDashboard() {
                       <div className="grid sm:grid-cols-2 gap-6">
                         <div className="relative">
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <span className="text-emerald-600">📍</span>
+                            <span className="text-blue-600">📍</span>
                             Office Location
                           </label>
                           <select 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all appearance-none bg-white"
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none bg-white"
                             value={profileForm.location || ''}
                             onChange={(e) => handleProfileInputChange('location', e.target.value)}
                           >
@@ -1915,11 +1915,11 @@ export function RCICDashboard() {
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-emerald-600" />
+                            <Clock className="h-4 w-4 text-blue-600" />
                             Timezone
                           </label>
                           <select 
-                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                             value={profileForm.timezone || 'America/Toronto'} 
                             onChange={(e) => handleProfileInputChange('timezone', e.target.value)}
                           >
@@ -1936,11 +1936,11 @@ export function RCICDashboard() {
                       {/* Calendly URL */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-emerald-600" />
+                          <Calendar className="h-4 w-4 text-blue-600" />
                           Calendly Booking URL
                         </label>
                         <input 
-                          className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           value={profileForm.calendly_url || ''} 
                           onChange={(e) => handleProfileInputChange('calendly_url', e.target.value)}
                           placeholder="https://calendly.com/your-username"
@@ -1966,7 +1966,7 @@ export function RCICDashboard() {
                           <Button 
                             type="submit" 
                             disabled={savingProfile} 
-                            className="bg-emerald-600 hover:bg-emerald-700 px-6 py-3 flex items-center gap-2"
+                            className="bg-blue-600 hover:bg-blue-700 px-6 py-3 flex items-center gap-2"
                           >
                             {savingProfile ? (
                               <>
@@ -1990,10 +1990,10 @@ export function RCICDashboard() {
               {/* Profile Sidebar */}
               <div className="space-y-6">
                 {/* Profile Image Upload */}
-                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                <Card className="bg-white shadow-sm border-gray-200">
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <User className="h-5 w-5 text-emerald-600" />
+                      <User className="h-5 w-5 text-blue-600" />
                       Profile Photo
                     </h3>
                     <div className="text-center">
@@ -2011,7 +2011,7 @@ export function RCICDashboard() {
                             </div>
                           )}
                         </div>
-                        <label className="absolute bottom-0 right-0 bg-emerald-600 rounded-full p-2 cursor-pointer hover:bg-emerald-700 transition-colors">
+                        <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors">
                           <input 
                             type="file" 
                             accept="image/*" 
@@ -2028,7 +2028,7 @@ export function RCICDashboard() {
                 </Card>
 
                 {/* RCIC Credentials */}
-                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/50">
+                <Card className="bg-white shadow-sm border-gray-200">
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                       <Award className="h-5 w-5 text-blue-600" />
@@ -2055,17 +2055,17 @@ export function RCICDashboard() {
                 </Card>
 
                 {/* Quick Stats */}
-                <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200/50">
+                <Card className="bg-white shadow-sm border-gray-200">
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-emerald-600" />
+                      <FileText className="h-5 w-5 text-blue-600" />
                       Profile Completion
                     </h3>
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm text-gray-600">Overall Progress</span>
-                          <span className="text-sm font-semibold text-emerald-600">
+                          <span className="text-sm font-semibold text-blue-600">
                             {Math.round((
                               (profileForm.bio ? 1 : 0) +
                               (profileForm.experience ? 1 : 0) +
@@ -2078,7 +2078,7 @@ export function RCICDashboard() {
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div 
-                            className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500"
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                             style={{
                               width: `${Math.round((
                                 (profileForm.bio ? 1 : 0) +
@@ -2136,7 +2136,7 @@ export function RCICDashboard() {
         {/* Payments Tab */}
         {activeTab === 'payments' && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+            <Card className="bg-white shadow-sm border-gray-200">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Monthly Payout Summary</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">

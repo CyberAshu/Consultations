@@ -238,10 +238,10 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
 
   if (loading) {
     return (
-      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+      <Card className="bg-white shadow-sm border-gray-200">
         <CardContent className="p-6">
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-500">Loading service templates...</p>
           </div>
         </CardContent>
@@ -252,19 +252,19 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 text-white">
+      <div className="bg-blue-600 rounded-2xl p-6 text-white">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
               <Clock className="h-6 w-6" />
               Duration Options Management
             </h2>
-            <p className="text-purple-100">Configure duration options for service templates</p>
+            <p className="text-blue-100">Configure duration options for service templates</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-center">
               <div className="text-2xl font-bold">{serviceTemplates.length}</div>
-              <div className="text-xs text-purple-100">Templates</div>
+              <div className="text-xs text-blue-100">Templates</div>
             </div>
             {onClose && (
               <Button
@@ -310,10 +310,10 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Service Templates List */}
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+        <Card className="bg-white shadow-sm border-gray-200">
           <CardContent className="p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Settings className="h-5 w-5 text-purple-600" />
+              <Settings className="h-5 w-5 text-blue-600" />
               Service Templates
             </h3>
             
@@ -323,7 +323,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                   key={template.id}
                   className={`p-4 rounded-lg cursor-pointer transition-all border-2 ${
                     selectedTemplate?.id === template.id
-                      ? 'bg-purple-50 border-purple-200'
+                      ? 'bg-blue-50 border-blue-200'
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                   }`}
                   onClick={() => handleTemplateSelect(template)}
@@ -350,11 +350,11 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
         </Card>
 
         {/* Duration Options Management */}
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+        <Card className="bg-white shadow-sm border-gray-200">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Clock className="h-5 w-5 text-purple-600" />
+                <Clock className="h-5 w-5 text-blue-600" />
                 Duration Options
                 {selectedTemplate && (
                   <span className="text-sm font-normal text-gray-500">
@@ -365,7 +365,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
               {selectedTemplate && (
                 <Button
                   onClick={startAddingOption}
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-blue-600 hover:bg-blue-700"
                   disabled={saving}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -383,8 +383,8 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
               <div className="space-y-4">
                 {/* Add New Option Form */}
                 {showAddForm && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-purple-900 mb-4">Add New Duration Option</h4>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-4">Add New Duration Option</h4>
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -393,7 +393,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                         </label>
                         <input
                           type="number"
-                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={newOption.duration_minutes}
                           onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
@@ -410,7 +410,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                         </label>
                         <input
                           type="text"
-                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={newOption.duration_label}
                           onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
@@ -426,7 +426,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                         </label>
                         <input
                           type="number"
-                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={newOption.min_price}
                           onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
@@ -443,7 +443,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                         </label>
                         <input
                           type="number"
-                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={newOption.max_price}
                           onChange={(e) => setNewOption((prev: ServiceDurationOptionCreate) => ({
                             ...prev,
@@ -459,7 +459,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                       <Button
                         onClick={saveNewOption}
                         disabled={saving || !newOption.duration_label || newOption.min_price >= newOption.max_price}
-                        className="bg-purple-600 hover:bg-purple-700"
+                        className="bg-blue-600 hover:bg-blue-700"
                       >
                         {saving ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
