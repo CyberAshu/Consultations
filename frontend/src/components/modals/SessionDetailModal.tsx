@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '../shared/Button'
 import { Badge } from '../ui/Badge'
-import { X, FileText, Calendar, Clock, User } from 'lucide-react'
+import { X, FileText, Calendar, Clock, User, Upload, Download, Eye } from 'lucide-react'
 import { Booking } from '../../services/types'
 import { bookingService } from '../../services/bookingService'
 import { SessionNotesSection } from '../sessionNotes/SessionNotesSection'
+import { DocumentUpload } from '../shared/DocumentUpload'
 
 interface SessionDetailModalProps {
   show: boolean
@@ -17,6 +18,7 @@ interface SessionDetailModalProps {
   updatingStatus: number | null
   onNotesUpdate: (bookingId: number, notes: string) => void
   isClientView?: boolean // Add optional prop for client view
+  onDocumentUploadSuccess?: () => void // Optional callback for when documents are uploaded
 }
 
 const getStatusBadge = (status: string) => {
@@ -54,10 +56,36 @@ export function SessionDetailModal({
   const [notes, setNotes] = React.useState(booking?.meeting_notes || '')
   const [showDocumentModal, setShowDocumentModal] = React.useState(false)
   const [selectedDocument, setSelectedDocument] = React.useState<any>(null)
+  const [activeTab, setActiveTab] = useState(isClientView ? 'overview' : 'overview')
+  const [documents, setDocuments] = useState<any[]>([])
+  const [documentsLoading, setDocumentsLoading] = useState(false)
 
   React.useEffect(() => {
     setNotes(booking?.meeting_notes || '')
+    
+    // Load documents with proper signed URLs when modal opens for ANY view
+    if (booking) {
+      loadBookingDocuments()
+    }
   }, [booking])
+
+  // Load documents with proper signed URLs from API
+  const loadBookingDocuments = async () => {
+    if (!booking) return
+    
+    try {
+      setDocumentsLoading(true)
+      const documentsData = await bookingService.getBookingDocuments(booking.id)
+      console.log('📄 Loaded documents with signed URLs:', documentsData)
+      setDocuments(documentsData.documents || [])
+    } catch (error) {
+      console.error('Error loading documents:', error)
+      // Fallback to original documents if API fails
+      setDocuments(booking?.documents || [])
+    } finally {
+      setDocumentsLoading(false)
+    }
+  }
 
   if (!show || !booking) return null
 
@@ -124,6 +152,27 @@ export function SessionDetailModal({
   const hasIntakeForm = parsedIntakeData
   const hasDocuments = booking.documents && booking.documents.length > 0
   const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+
+  // Document upload handlers
+  const handleDocumentUploadSuccess = (uploadedDocument: any) => {
+    console.log('Document uploaded successfully:', uploadedDocument)
+    // Always reload documents from API to get proper signed URLs
+    loadBookingDocuments()
+    // You could also show a success toast here
+    alert('Document uploaded successfully!')
+  }
+
+  const handleDocumentUploadError = (error: string) => {
+    console.error('Document upload failed:', error)
+    alert(`Document upload failed: ${error}`)
+  }
+
+  // Tab configuration for client view
+  const clientTabs = [
+    { id: 'overview', label: 'Session Overview', icon: <Eye className="h-4 w-4" /> },
+    { id: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
+    { id: 'upload', label: 'Upload Documents', icon: <Upload className="h-4 w-4" /> }
+  ]
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNotes(e.target.value)
@@ -345,9 +394,34 @@ export function SessionDetailModal({
           </Button>
         </div>
 
-        {/* Client Information Section */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 mb-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-4">Client Information</h3>
+        {/* Tab Navigation - Only show for client view */}
+        {isClientView && (
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="flex space-x-8">
+              {clientTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
+
+        {/* Tab Content */}
+        {(!isClientView || activeTab === 'overview') && (
+          <>
+            {/* Client Information Section */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">Client Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-blue-600" />
@@ -634,12 +708,20 @@ export function SessionDetailModal({
           </div>
         </div>
 
-        {/* Documents Section */}
-        {hasDocuments && (
+        {/* Documents Section - Show API-loaded documents for all views */}
+        {(documents.length > 0 || documentsLoading) && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <h3 className="text-lg font-semibold text-green-900 mb-3">Uploaded Documents</h3>
+            <h3 className="text-lg font-semibold text-green-900 mb-3">
+              Uploaded Documents {documents.length > 0 && `(${documents.length})`}
+            </h3>
+            {documentsLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                <span className="ml-2 text-green-700">Loading documents...</span>
+              </div>
+            ) : (
               <div className="space-y-2">
-                {booking.documents?.map((doc) => (
+                {documents.map((doc) => (
                   <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-green-600" />
@@ -649,7 +731,7 @@ export function SessionDetailModal({
                           {(doc.file_size || 0) / 1024 / 1024 > 1 
                             ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
                             : `${Math.round((doc.file_size || 0) / 1024)} KB`
-                          }
+                          } • Uploaded {new Date(doc.uploaded_at || doc.created_at || '').toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -663,7 +745,7 @@ export function SessionDetailModal({
                           name: doc.file_name,
                           size: doc.file_size,
                           type: doc.file_type,
-                          url: (doc as any).file_url || (doc as any).download_url || doc.file_path,
+                          url: doc.download_url || (doc as any).file_url,
                           uploadedAt: doc.uploaded_at || doc.created_at
                         })}
                       >
@@ -679,7 +761,7 @@ export function SessionDetailModal({
                           name: doc.file_name,
                           size: doc.file_size,
                           type: doc.file_type,
-                          url: (doc as any).file_url || (doc as any).download_url || doc.file_path
+                          url: doc.download_url || (doc as any).file_url
                         })}
                       >
                         Download
@@ -688,15 +770,136 @@ export function SessionDetailModal({
                   </div>
                 ))}
               </div>
+            )}
           </div>
         )}
 
-        {/* Session Notes Section */}
-        <SessionNotesSection
-          bookingId={booking.id}
-          currentUserRole={getCurrentUserRole()}
-          isClientView={isClientView}
-        />
+            {/* Session Notes Section */}
+            <SessionNotesSection
+              bookingId={booking.id}
+              currentUserRole={getCurrentUserRole()}
+              isClientView={isClientView}
+            />
+          </>
+        )}
+
+        {/* Documents Tab Content */}
+        {isClientView && activeTab === 'documents' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200/50 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Your Documents for this Session
+              </h3>
+              <p className="text-gray-600 mb-4">
+                View and download all documents associated with your consultation session.
+              </p>
+              
+              {documents.length > 0 ? (
+                <div className="space-y-3">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">{doc.file_name}</p>
+                          <p className="text-sm text-gray-600">
+                            {(doc.file_size || 0) / 1024 / 1024 > 1 
+                              ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
+                              : `${Math.round((doc.file_size || 0) / 1024)} KB`
+                            } • Uploaded {new Date(doc.uploaded_at || doc.created_at || '').toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleViewDocumentInternal({
+                            id: doc.id,
+                            name: doc.file_name,
+                            size: doc.file_size,
+                            type: doc.file_type,
+                            url: doc.download_url || (doc as any).file_url,
+                            uploadedAt: doc.uploaded_at || doc.created_at
+                          })}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={() => onDownloadDocument({
+                            id: doc.id,
+                            booking_id: booking.id,
+                            name: doc.file_name,
+                            size: doc.file_size,
+                            type: doc.file_type,
+                            url: (doc as any).file_url || (doc as any).download_url || doc.file_path
+                          })}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-4">No documents have been uploaded for this session yet.</p>
+                  <Button 
+                    onClick={() => setActiveTab('upload')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Documents
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Upload Documents Tab Content */}
+        {isClientView && activeTab === 'upload' && (
+          <div className="space-y-6">
+            <DocumentUpload
+              bookingId={booking.id}
+              onUploadSuccess={handleDocumentUploadSuccess}
+              onUploadError={handleDocumentUploadError}
+              title="Upload Additional Documents"
+              description="Upload any additional documents related to your consultation session. These will be reviewed by your RCIC before or during your session."
+            />
+            
+            {/* Quick Navigation */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h4 className="font-medium text-blue-900 mb-2">Quick Actions</h4>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab('documents')}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  View All Documents
+                </Button>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab('overview')}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-100"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Session Overview
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="mt-6 flex justify-end">

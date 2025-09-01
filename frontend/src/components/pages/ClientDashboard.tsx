@@ -280,6 +280,16 @@ export function ClientDashboard() {
     setSelectedSession(null)
   }
 
+  // Refresh bookings data after document upload
+  const refreshBookings = async () => {
+    try {
+      const updatedBookings = await bookingService.getBookings()
+      setBookings(updatedBookings)
+    } catch (error: any) {
+      console.error('Failed to refresh bookings:', error)
+    }
+  }
+
   // Handle booking actions
   const handleJoinSession = (bookingId: number) => {
     // TODO: Implement actual video call integration
@@ -1087,6 +1097,7 @@ export function ClientDashboard() {
         updatingStatus={null}
         onNotesUpdate={() => {}} // Clients can't update notes
         isClientView={true} // Add this prop to indicate client view
+        onDocumentUploadSuccess={refreshBookings} // Refresh bookings when documents are uploaded
       />
       
       {/* Toast Notifications */}
