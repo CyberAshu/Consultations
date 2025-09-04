@@ -290,21 +290,20 @@ export function BecomeConsultantPage() {
                   </svg>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                  Application Submitted Successfully!
+                  Thank You for Your Application!
                 </h2>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  Thank you for your interest in becoming a partner. We have received your initial application and will review it shortly.
+                  Thank you for expressing interest in becoming a Verified Partner with Immigration Connect. Your submission has been received successfully.
                 </p>
               </div>
               
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
-                <ul className="text-sm text-blue-800 space-y-1 text-left">
-                  <li>• Our team will review your initial application</li>
-                  <li>• If approved, we'll request additional information from you</li>
-                  <li>• You'll receive an email with a link to complete the remaining sections</li>
-                  <li>• Once all sections are complete, we'll review your full application</li>
-                </ul>
+                <p className="text-blue-800 text-sm text-left mb-4">
+                  We take onboarding seriously to ensure quality and compliance. Our team will now verify your initial details. Once verified, you will receive an email with further instructions to complete your application.
+                </p>
+                <p className="text-blue-800 text-sm text-left">
+                  We appreciate your patience and look forward to welcoming you soon.
+                </p>
               </div>
               
               <p className="text-sm text-gray-500">
@@ -331,21 +330,17 @@ export function BecomeConsultantPage() {
                   </svg>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                  Application Complete!
+                  Thank You for Submitting Your Full Application!
                 </h2>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  Thank you for completing all sections of your partner application. Our team will review your full application and get back to you soon.
+                  Your detailed application has been received. Our compliance and onboarding teams are currently reviewing your information. You can expect a response within 24 to 48 business hours. We may contact you if any supporting documents or clarifications are needed.
                 </p>
               </div>
               
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-blue-900 mb-2">Next Steps</h3>
-                <ul className="text-sm text-blue-800 space-y-1 text-left">
-                  <li>• Our team will review your complete application</li>
-                  <li>• We'll verify your credentials and documentation</li>
-                  <li>• You'll receive an email with our decision</li>
-                  <li>• If approved, you'll receive login credentials for the platform</li>
-                </ul>
+                <p className="text-blue-800 text-sm text-left">
+                  Thank you for your time and effort. You're one step closer to joining Immigration Connect!
+                </p>
               </div>
             </CardContent>
           </Card>

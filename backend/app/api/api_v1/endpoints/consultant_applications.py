@@ -287,25 +287,45 @@ async def create_consultant_application(
 
     # Send auto-response email
     EmailService.send_email(
-        subject="We've Received Your Application to Join [Platform]",
+        subject="Thank You for Your Interest in Joining Immigration Connect",
         recipient=email,
         body=f"""
 <html>
-<body>
-<p>Dear {full_legal_name},</p>
-<p>Thank you for submitting your application to join [Platform] as a licensed Canadian immigration consultant. We're excited about your interest in becoming part of our growing network of RCICs, and we appreciate the time and care you've taken to complete the application.</p>
-<p><strong>Application Details:</strong></p>
-<ul>
-<li><strong>Application ID:</strong> #{new_application.get('id', 'N/A')}</li>
-<li><strong>Full Name:</strong> {full_legal_name}</li>
-<li><strong>Email:</strong> {email}</li>
-<li><strong>RCIC License:</strong> {rcic_license_number}</li>
-<li><strong>Submission Date:</strong> {parsed_submission_date.strftime('%B %d, %Y') if parsed_submission_date else 'N/A'}</li>
-<li><strong>Status:</strong> Pending Review</li>
-</ul>
-<p>We will review your application and get back to you within 3-5 business days.</p>
-<p>Thank you for your interest in joining our platform.</p>
-<p>- Platform Team</p>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Thank You for Your Interest</p>
+    </div>
+    
+    <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2d3748; margin-top: 0;">Hi {full_legal_name.split()[0] if full_legal_name else 'there'},</h2>
+        
+        <p>Thank you for submitting your interest in becoming a Registered Consultant with Immigration Connect. We're excited to learn more about you.</p>
+        
+        <p>Our team is currently reviewing your information to confirm your RCIC status. Once verified, you will receive another email requesting the remaining details to proceed with your onboarding.</p>
+        
+        <p>We're committed to building a high-trust platform where consultants like you are respected, compensated fairly, and supported through technology.</p>
+        
+        <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
+            <p style="margin: 0; font-weight: bold;">Application ID:</p>
+            <p style="margin: 5px 0 0 0; color: #4299e1;">#{new_application.get('id', 'N/A')}</p>
+        </div>
+        
+        <p>If you have any questions in the meantime, feel free to contact us at support@immigrationconnect.com or visit our Help Center.</p>
+        
+        <p style="margin-top: 30px;">Warm regards,<br/>Immigration Connect Team</p>
+        
+        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
+        
+        <p style="color: #718096; font-size: 14px; text-align: center;">
+            <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #4299e1; text-decoration: none;">Website</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">Help Center</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">LinkedIn</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">Instagram</a>
+        </p>
+    </div>
+</div>
 </body>
 </html>
         """
@@ -376,6 +396,9 @@ def _send_credentials_to_consultant(db: Client, db_application: Dict[str, Any]) 
     Helper function to create Supabase user and send credentials to consultant
     Returns: {"success": bool, "message": str, "temp_password": str | None}
     """
+    # Import settings at the function level to ensure availability
+    from app.core.config import settings
+    
     # Generate temporary password
     temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
     
@@ -446,7 +469,6 @@ The Platform Team</p>
                     
                     # Method 2: Try with redirect URL if simple invite fails
                     try:
-                        from app.core.config import settings
                         redirect_url = f"{settings.FRONTEND_URL}/auth/callback" if settings.FRONTEND_URL else None
                         
                         if redirect_url:
@@ -624,20 +646,76 @@ The Platform Team</p>
             
             # Send credentials email
             email_sent = EmailService.send_email(
-                subject="Your RCIC Platform Login Credentials",
+                subject="Welcome to Immigration Connect – Your Consultant Account is Ready",
                 recipient=db_application.get('email'),
                 body=f"""
 <html>
-<body>
-<p>Dear {db_application.get('full_legal_name')},</p>
-<p>Here are your login credentials for the RCIC Platform:</p>
-<p><strong>Login Details:</strong><br/>
-Email: {db_application.get('email')}<br/>
-Temporary Password: {temp_password}<br/></p>
-<p>Please log in and complete your profile setup to start accepting client bookings.</p>
-<p><strong>Important:</strong> Please change your password after logging in for the first time.</p>
-<p>Best regards,<br/>
-- Platform Team</p>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Welcome to the Platform</p>
+    </div>
+    
+    <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2d3748; margin-top: 0;">Hi {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'},</h2>
+        
+        <p>Congratulations and welcome to Immigration Connect, we're thrilled to have you onboard as a Verified RCIC Partner. Your application has been successfully reviewed and approved by our compliance team. You are now officially part of our growing network of trusted immigration professionals dedicated to helping clients navigate Canadian immigration with clarity and confidence.</p>
+        
+        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
+            <h3 style="color: #0c4a6e; margin-top: 0;">Your Account Details</h3>
+            <p style="margin: 10px 0;">You can now log in and begin setting up your profile. Please use the temporary credentials below to access your consultant dashboard:</p>
+            <p style="margin: 10px 0;">• <strong>Login Email:</strong> {db_application.get('email')}</p>
+            <p style="margin: 10px 0;">• <strong>Temporary Password:</strong> {temp_password}</p>
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}/login" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Login to Your Portal
+                </a>
+            </div>
+            <p style="margin: 10px 0; font-size: 14px; color: #6b7280;">Once logged in, you'll be prompted to create a secure password of your own. Please complete this step right away to ensure continued access.</p>
+        </div>
+        
+        <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
+            <h3 style="color: #2d3748; margin-top: 0;">Next Steps: Set Up for Success</h3>
+            <p style="margin: 10px 0;">To make the most of your experience and start receiving leads, follow these onboarding steps:</p>
+            <ol style="margin: 10px 0; padding-left: 20px;">
+                <li><strong>Update Your Profile</strong><br/>Add your professional photo, bio, and languages spoken. Clients value transparency and background, this helps build trust.</li>
+                <li><strong>Add Immigration Expertise</strong><br/>Select the Canadian immigration services you offer (e.g., PR, Work Permits, Study Permits, Appeals).</li>
+                <li><strong>Services & Set Your Pricing</strong><br/>You can mark services as Active or Inactive anytime. Define your consultation fees for sessions. You'll be paid directly for all consultations.</li>
+                <li><strong>Sync Your Calendar</strong><br/>Connect your calendar to show your availability in real-time for bookings.</li>
+                <li><strong>Enable Payout Settings</strong><br/>Add your preferred payment details securely to receive client payments without delays.</li>
+                <li><strong>Explore Your Consultant Portal</strong><br/>Your dashboard includes tools to manage:<br/>○ Dashboard<br/>○ Your Session details<br/>○ Services<br/>○ Calendar<br/>○ Profile Update<br/>○ Analytics</li>
+            </ol>
+            <p style="margin: 10px 0; font-size: 14px; color: #6b7280;">You can even use this platform to manage your own private clients.</p>
+        </div>
+        
+        <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+            <h3 style="color: #92400e; margin-top: 0;">Need Help?</h3>
+            <p style="margin: 10px 0;">We're here to support you every step of the way.</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Visit our Help Center for tutorials and FAQs</li>
+                <li>Contact our support team anytime at support@immigrationconnect.com</li>
+                <li>Follow us on LinkedIn and Instagram for platform updates and community highlights</li>
+            </ul>
+        </div>
+        
+        <p>We're proud to partner with professionals like you. Together, we're redefining how clients access trusted immigration advice and ensuring that consultants like you are paid fairly, supported technologically, and empowered to grow.</p>
+        
+        <p style="margin-top: 30px;"><strong>Welcome aboard, {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'}.</strong></p>
+        <p>We look forward to seeing your success on Immigration Connect.</p>
+        
+        <p style="margin-top: 30px;">Warm regards,<br/>Immigration Connect Team</p>
+        
+        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
+        
+        <p style="color: #718096; font-size: 14px; text-align: center;">
+            <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #4299e1; text-decoration: none;">Website</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">Help Center</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">LinkedIn</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">Instagram</a>
+        </p>
+    </div>
+</div>
 </body>
 </html>
                 """
@@ -978,51 +1056,43 @@ def request_additional_sections(
         # Create the completion link
         completion_url = f"{settings.FRONTEND_URL}/become-partner?email={applicant_email}&application_id={application_id}"
         
-        subject = "Complete Your Partner Application - Additional Information Required"
+        subject = "Your RCIC Profile Has Been Verified – Next Steps"
         
         body = f"""
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">ImmigrationConnect</h1>
-                    <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Partner Application Update</p>
+                    <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+                    <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">RCIC Profile Verified</p>
                 </div>
                 
                 <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
-                    <h2 style="color: #2d3748; margin-top: 0;">Hello {applicant_name},</h2>
+                    <h2 style="color: #2d3748; margin-top: 0;">Hi {applicant_name.split()[0] if applicant_name else 'there'},</h2>
                     
-                    <p>Great news! We've reviewed your initial partner application and would like you to complete the remaining sections of your application.</p>
+                    <p>Thank you for your interest in Immigration Connect. We're pleased to inform you that your RCIC status has been successfully verified.</p>
                     
-                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
-                        <h3 style="margin-top: 0; color: #2d3748;">Next Steps:</h3>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>Click the button below to access your application</li>
-                            <li>Complete the remaining sections (Licensing, Practice Details, Expertise, etc.)</li>
-                            <li>Upload required documents</li>
-                            <li>Review and submit your complete application</li>
-                        </ul>
-                    </div>
+                    <p>To proceed, we kindly ask you to complete the full application by providing additional information through our secure portal.</p>
                     
                     <div style="text-align: center; margin: 30px 0;">
                         <a href="{completion_url}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                            Complete Your Application
+                            Complete Your Application Now
                         </a>
                     </div>
                     
-                    <p style="color: #718096; font-size: 14px;">
-                        <strong>Note:</strong> This link is unique to your application. Please do not share it with others.
-                    </p>
+                    <p>This form includes multiple sections and should take approximately 10–15 minutes to complete. Once submitted, our compliance team will review the details within 24 to 48 business hours.</p>
+                    
+                    <p>Should you have any questions, feel free to contact us at support@immigrationconnect.com.</p>
+                    
+                    <p style="margin-top: 30px;">Sincerely,<br/>Immigration Connect Team</p>
                     
                     <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
                     
-                    <p style="color: #718096; font-size: 14px; margin-bottom: 0;">
-                        If you have any questions or need assistance, please contact our support team.
-                    </p>
-                    
-                    <p style="color: #718096; font-size: 14px; margin-top: 10px;">
-                        Best regards,<br>
-                        The ImmigrationConnect Team
+                    <p style="color: #718096; font-size: 14px; text-align: center;">
+                        <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #4299e1; text-decoration: none;">Website</a> | 
+                        <a href="#" style="color: #4299e1; text-decoration: none;">Help Center</a> | 
+                        <a href="#" style="color: #4299e1; text-decoration: none;">LinkedIn</a> | 
+                        <a href="#" style="color: #4299e1; text-decoration: none;">Instagram</a>
                     </p>
                 </div>
             </div>
@@ -1227,6 +1297,57 @@ async def complete_additional_sections(
     )
     
     print(f"DEBUG: Updated application sections: {updated_application.get('section_1_completed')}, {updated_application.get('section_2_completed')}, {updated_application.get('section_3_completed')}, {updated_application.get('section_4_completed')}, {updated_application.get('section_5_completed')}, {updated_application.get('section_6_completed')}, {updated_application.get('section_7_completed')}")
+    
+    # Send EMAIL 3: Thank You + Review Notice after complete application submission
+    if digital_signature_name:  # This indicates the final submission
+        try:
+            applicant_email = db_application.get('email')
+            applicant_name = db_application.get('full_legal_name', 'Applicant')
+            
+            EmailService.send_email(
+                subject="Thank You – Your Application is Now Under Review",
+                recipient=applicant_email,
+                body=f"""
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Application Under Review</p>
+    </div>
+    
+    <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2d3748; margin-top: 0;">Hi {applicant_name.split()[0] if applicant_name else 'there'},</h2>
+        
+        <p>Thank you for completing your full application to join Immigration Connect. We've received your information and it is now under review by our compliance team.</p>
+        
+        <p>We aim to complete the review within 24 to 48 business hours. If any additional documentation is required, our team will reach out to you directly.</p>
+        
+        <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
+            <p style="margin: 0; font-weight: bold;">Application ID:</p>
+            <p style="margin: 5px 0 0 0; color: #4299e1;">#{application_id}</p>
+        </div>
+        
+        <p>In the meantime, if you have any questions, please don't hesitate to contact us at support@immigrationconnect.com.</p>
+        
+        <p style="margin-top: 30px;">Warm regards,<br/>Immigration Connect Team</p>
+        
+        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
+        
+        <p style="color: #718096; font-size: 14px; text-align: center;">
+            <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #4299e1; text-decoration: none;">Website</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">Help Center</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">LinkedIn</a> | 
+            <a href="#" style="color: #4299e1; text-decoration: none;">Instagram</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
+                """
+            )
+        except Exception as e:
+            print(f"Error sending review confirmation email: {str(e)}")
     
     return updated_application
 
