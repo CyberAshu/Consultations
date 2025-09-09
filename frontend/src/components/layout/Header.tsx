@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
-import { Menu, User, LogOut, ChevronDown, Lock } from 'lucide-react'
+import { Menu, User, LogOut, ChevronDown } from 'lucide-react'
 
 export function Header() {
   const navigate = useNavigate()
@@ -102,14 +102,7 @@ export function Header() {
     }
   }
 
-  const handleConsultantLink = (e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault()
-      // Directly redirect to login page without popup
-      navigate('/login')
-    }
-    // If user is logged in, the Link will work normally
-  }
+  // Removed authentication restriction - users can now access consultants page without login
 
   return (
     <header
@@ -154,15 +147,11 @@ export function Header() {
             </Link>
             <Link
               to="/consultants"
-              onClick={handleConsultantLink}
               className={`transition-all duration-300 hover:text-gray-600 font-medium ${
                 isActive("/consultants") ? "text-blue-600" : "text-gray-700"
-              } ${!user ? 'relative' : ''}`}
+              }`}
             >
-              <span className="flex items-center gap-1">
-                Find a Consultant
-                {!user && <Lock className="h-3 w-3 text-gray-400" />}
-              </span>
+              Find a Consultant
             </Link>
             <Link
               to="/faq"
@@ -273,13 +262,9 @@ export function Header() {
               </Link>
               <Link
                 to="/consultants"
-                onClick={handleConsultantLink}
                 className="text-gray-700 hover:text-blue-600 transition-colors duration-300 py-3 px-4 rounded-lg hover:bg-blue-50 font-medium text-left"
               >
-                <span className="flex items-center gap-2">
-                  Find a Consultant
-                  {!user && <Lock className="h-4 w-4 text-gray-400" />}
-                </span>
+                Find a Consultant
               </Link>
               <Link
                 to="/faq"

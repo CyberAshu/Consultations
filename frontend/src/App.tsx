@@ -58,13 +58,11 @@ function App() {
             </div>
           } />
           <Route path="/consultants" element={
-            <ProtectedRoute>
-              <div>
-                <Header />
-                <main><ConsultantsPage /></main>
-                <Footer />
-              </div>
-            </ProtectedRoute>
+            <div>
+              <Header />
+              <main><ConsultantsPage /></main>
+              <Footer />
+            </div>
           } />
           <Route path="/faq" element={
             <div>

@@ -53,9 +53,20 @@ class ConsultantService {
     return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services`);
   }
 
-  // Get only active services for public view (for booking)
+  // Get only active services for public view (for booking) - no authentication required
   async getActiveConsultantServices(consultantId: number): Promise<ConsultantServiceInDB[]> {
-    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services?active_only=true`);
+    return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services/active`);
+  }
+
+  // Get consultant services - public or authenticated based on user status
+  async getConsultantServicesPublic(consultantId: number, isAuthenticated: boolean = false): Promise<ConsultantServiceInDB[]> {
+    if (isAuthenticated) {
+      // Use authenticated endpoint for full access
+      return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services`);
+    } else {
+      // Use public endpoint for unauthenticated users
+      return apiGet<ConsultantServiceInDB[]>(`/consultants/${consultantId}/services/active`);
+    }
   }
 
   async createConsultantService(consultantId: number, serviceData: ConsultantServiceCreate): Promise<ConsultantServiceInDB> {

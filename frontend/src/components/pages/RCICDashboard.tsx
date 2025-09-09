@@ -127,9 +127,23 @@ export function RCICDashboard() {
       setProfileForm(prev => ({ ...prev, profile_image_url: res.url }))
       if (consultant) {
         const updated = await consultantService.updateConsultantProfile(consultant.id, { profile_image_url: res.url })
-        setConsultant(prev => (prev ? { ...prev, ...updated } as any : prev))
+        setConsultant(prev => (prev ? { ...prev, ...updated, profile_image_url: res.url } as any : prev))
+        
+        // Force refresh consultant data to ensure updated profile image appears everywhere
+        setTimeout(async () => {
+          try {
+            const refreshedConsultants = await consultantService.getConsultants()
+            const refreshedConsultant = refreshedConsultants.find(c => c.id === consultant.id)
+            if (refreshedConsultant) {
+              setConsultant(refreshedConsultant)
+              setProfileForm(prev => ({ ...prev, profile_image_url: refreshedConsultant.profile_image_url || '' }))
+            }
+          } catch (refreshError) {
+            console.warn('Failed to refresh consultant data:', refreshError)
+          }
+        }, 1000) // Small delay to ensure backend has processed the update
       }
-      setProfileSaveMessage('Profile image updated')
+      setProfileSaveMessage('Profile image updated successfully! Refreshing data...')
     } catch (e: any) {
       setProfileSaveMessage(e?.message || 'Image upload failed')
     } finally {

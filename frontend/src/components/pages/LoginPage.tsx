@@ -24,19 +24,30 @@ export function LoginPage() {
       const response = await authService.login({ email, password })
       
       // authService.login already handles storing user data and tokens
-      // Redirect based on role
-      switch (response.user.role) {
-        case 'admin':
-          navigate('/admin-dashboard')
-          break
-        case 'client':
-          navigate('/client-dashboard')
-          break
-        case 'rcic':
-          navigate('/rcic-dashboard')
-          break
-        default:
-          navigate('/')
+      
+      // Check for stored redirect URL
+      const redirectAfterLogin = localStorage.getItem('redirectAfterLogin')
+      
+      if (redirectAfterLogin) {
+        // Clear the stored redirect URL
+        localStorage.removeItem('redirectAfterLogin')
+        // Redirect to the stored page
+        navigate(redirectAfterLogin)
+      } else {
+        // Default redirect based on role
+        switch (response.user.role) {
+          case 'admin':
+            navigate('/admin-dashboard')
+            break
+          case 'client':
+            navigate('/client-dashboard')
+            break
+          case 'rcic':
+            navigate('/rcic-dashboard')
+            break
+          default:
+            navigate('/')
+        }
       }
     } catch (err: any) {
       const message = err?.message || ''

@@ -152,6 +152,32 @@ class StorageService:
                 detail=f"Error getting file URL: {str(e)}"
             )
     
+    def get_public_url(self, file_path: str) -> str:
+        """
+        Get public URL for profile images (use signed URL as fallback since bucket is private)
+        
+        Args:
+            file_path: Path to file in storage
+            
+        Returns:
+            Public/accessible URL for file access
+        """
+        try:
+            # For profile images, we'll use long-lived signed URLs since bucket is private
+            # This gives us 7 days of access which should be sufficient for profile images
+            if file_path.startswith('profile-images/'):
+                return self.get_file_url(file_path, expires_in=604800)  # 7 days
+            else:
+                # For other files, use regular signed URLs
+                return self.get_file_url(file_path, expires_in=3600)  # 1 hour
+                
+        except Exception as e:
+            print(f"Error getting public URL for {file_path}: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error getting file URL: {str(e)}"
+            )
+    
     def delete_file(self, file_path: str) -> bool:
         """
         Delete file from storage
@@ -195,7 +221,7 @@ class StorageService:
             create_response = self.supabase.storage.create_bucket(
                 self.bucket_name,
                 options={
-                    "public": False,  # Private bucket for security
+                    "public": True,  # Public bucket for profile images to be accessible
                     "allowedMimeTypes": [
                         "image/jpeg", 
                         "image/png", 

@@ -5,6 +5,7 @@ import { Button } from '../shared/Button'
 import { Badge } from '../ui/Badge'
 import { consultantService, Consultant } from '../../services'
 import ConsultantCardSkeleton from '../ui/ConsultantCardSkeleton'
+import { useAuthState } from '../../hooks/useAuthState'
 import {
   Star,
   MapPin,
@@ -18,6 +19,7 @@ import {
 
 export function ConsultantsPage() {
   const navigate = useNavigate()
+  const { isAuthenticated, loading: authLoading } = useAuthState()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLanguage, setSelectedLanguage] = useState("")
   const [selectedProvince, setSelectedProvince] = useState("")
@@ -94,7 +96,8 @@ export function ConsultantsPage() {
   const loadConsultantServices = async (consultantId: number) => {
     try {
       setServicesLoading(true)
-      const services = await consultantService.getConsultantServices(consultantId)
+      // Use public endpoint that works for both authenticated and unauthenticated users
+      const services = await consultantService.getConsultantServicesPublic(consultantId, isAuthenticated)
       setConsultantServices(services)
     } catch (error) {
       console.warn('Could not load services:', error)
@@ -285,13 +288,13 @@ export function ConsultantsPage() {
                     {consultant.profile_image_url ? (
                       <img 
                         src={consultant.profile_image_url} 
-                        alt={consultant.name}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        alt={isAuthenticated ? consultant.name : "Consultant"}
+                        className={`absolute inset-0 w-full h-full object-cover ${!isAuthenticated ? 'blur-md' : ''}`}
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                      <div className={`absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center ${!isAuthenticated ? 'blur-md' : ''}`}>
                         <div className="text-white text-4xl font-bold">
-                          {consultant.name.split(' ').map(n => n[0]).join('')}
+                          {isAuthenticated ? consultant.name.split(' ').map(n => n[0]).join('') : '?'}
                         </div>
                       </div>
                     )}
@@ -301,14 +304,14 @@ export function ConsultantsPage() {
                   <div className="p-6">
                     {/* Name & Title */}
                     <div className="text-center mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        {consultant.name}
+                      <h3 className={`text-xl font-semibold text-gray-900 mb-1 ${!isAuthenticated ? 'blur-sm' : ''}`}>
+                        {isAuthenticated ? consultant.name : 'Consultant Name'}
                       </h3>
                       <p className="text-gray-600 text-sm mb-2">
                         Licensed Immigration Consultant
                       </p>
-                      <p className="text-xs text-gray-500">
-                        RCIC #{consultant.rcic_number || 'N/A'}
+                      <p className={`text-xs text-gray-500 ${!isAuthenticated ? 'blur-sm' : ''}`}>
+                        RCIC #{isAuthenticated ? (consultant.rcic_number || 'N/A') : '••••••'}
                       </p>
                     </div>
 
@@ -400,12 +403,12 @@ export function ConsultantsPage() {
                   {selectedConsultant.profile_image_url ? (
                     <img 
                       src={selectedConsultant.profile_image_url} 
-                      alt={selectedConsultant.name}
-                      className="w-20 sm:w-24 h-20 sm:h-24 rounded-full object-cover"
+                      alt={isAuthenticated ? selectedConsultant.name : "Consultant"}
+                      className={`w-20 sm:w-24 h-20 sm:h-24 rounded-full object-cover ${!isAuthenticated ? 'blur-md' : ''}`}
                     />
                   ) : (
-                    <div className="w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold">
-                      {selectedConsultant.name.split(' ').map(n => n[0]).join('')}
+                    <div className={`w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold ${!isAuthenticated ? 'blur-md' : ''}`}>
+                      {isAuthenticated ? selectedConsultant.name.split(' ').map(n => n[0]).join('') : '?'}
                     </div>
                   )}
                   {selectedConsultant.availability_status === "available" && (
@@ -415,8 +418,12 @@ export function ConsultantsPage() {
                   )}
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <h4 className="text-xl sm:text-2xl font-light text-gray-900 mb-1">{selectedConsultant.name}</h4>
-                  <p className="text-blue-600 font-medium mb-2">RCIC License #{selectedConsultant.rcic_number || 'N/A'}</p>
+                  <h4 className={`text-xl sm:text-2xl font-light text-gray-900 mb-1 ${!isAuthenticated ? 'blur-sm' : ''}`}>
+                    {isAuthenticated ? selectedConsultant.name : 'Consultant Name'}
+                  </h4>
+                  <p className={`text-blue-600 font-medium mb-2 ${!isAuthenticated ? 'blur-sm' : ''}`}>
+                    RCIC License #{isAuthenticated ? (selectedConsultant.rcic_number || 'N/A') : '••••••'}
+                  </p>
                   {selectedConsultant.location && (
                     <div className="flex items-center justify-center sm:justify-start text-sm text-gray-600 mb-2">
                       <MapPin className="h-4 w-4 mr-1" />
@@ -469,17 +476,23 @@ export function ConsultantsPage() {
               <div className="mb-6">
                 {activeModalTab === 'bio' && (
                   <div>
-                    <p className="text-gray-700 leading-relaxed text-base">{selectedConsultant.bio}</p>
+                    <p className={`text-gray-700 leading-relaxed text-base ${!isAuthenticated ? 'blur-sm' : ''}`}>
+                      {isAuthenticated ? selectedConsultant.bio : 'This consultant has extensive experience in immigration consulting. Please login to view full bio and details.'}
+                    </p>
                     
                     {/* Additional Info */}
-                    <div className="mt-6 grid sm:grid-cols-2 gap-4">
+                    <div className={`mt-6 grid sm:grid-cols-2 gap-4 ${!isAuthenticated ? 'blur-sm' : ''}`}>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm font-medium text-gray-500 mb-1">Experience</div>
-                        <div className="text-lg font-semibold text-gray-900">{selectedConsultant.experience_years ? `${selectedConsultant.experience_years}+ years` : (selectedConsultant.experience || 'N/A')}</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                          {isAuthenticated ? (selectedConsultant.experience_years ? `${selectedConsultant.experience_years}+ years` : (selectedConsultant.experience || 'N/A')) : '••• years'}
+                        </div>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm font-medium text-gray-500 mb-1">Total Reviews</div>
-                        <div className="text-lg font-semibold text-green-600">{selectedConsultant.review_count || selectedConsultant.total_reviews || '0'}</div>
+                        <div className="text-lg font-semibold text-green-600">
+                          {isAuthenticated ? (selectedConsultant.review_count || selectedConsultant.total_reviews || '0') : '•••'}
+                        </div>
                       </div>
                     </div>
                     
@@ -556,13 +569,28 @@ export function ConsultantsPage() {
                                 </div>
                               </div>
                               <div className="text-right ml-6">
-                                <div className="text-2xl font-bold text-blue-600 mb-2">${service.price} CAD</div>
+                                <div className="text-2xl font-bold text-blue-600 mb-2">
+                                  {isAuthenticated 
+                                    ? `$${service.price} CAD` 
+                                    : service.price 
+                                      ? `$${Math.floor(service.price * 0.8)} - $${Math.ceil(service.price * 1.2)} CAD`
+                                      : '$150 - $300 CAD'
+                                  }
+                                </div>
                                 <Button 
                                   size="sm" 
                                   className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => navigate(`/book?rcic=${selectedConsultant.id}&service=${service.id}`)}
+                                  onClick={() => {
+                                    if (!isAuthenticated) {
+                                      // Store current page for redirect after login
+                                      localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search)
+                                      navigate('/login')
+                                    } else {
+                                      navigate(`/book?rcic=${selectedConsultant.id}&service=${service.id}`)
+                                    }
+                                  }}
                                 >
-                                  Book Now
+                                  {isAuthenticated ? 'Book Now' : 'Login to Book'}
                                 </Button>
                               </div>
                             </div>
@@ -612,10 +640,16 @@ export function ConsultantsPage() {
                   <Button 
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-lg py-3"
                     onClick={() => {
-                      navigate(`/book?rcic=${selectedConsultant.id}`)
+                      if (!isAuthenticated) {
+                        // Store current page for redirect after login
+                        localStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search)
+                        navigate('/login')
+                      } else {
+                        navigate(`/book?rcic=${selectedConsultant.id}`)
+                      }
                     }}
                   >
-                    Book Consultation
+                    {isAuthenticated ? 'Book Consultation' : 'Login to Book Consultation'}
                   </Button>
                 </div>
               </div>
