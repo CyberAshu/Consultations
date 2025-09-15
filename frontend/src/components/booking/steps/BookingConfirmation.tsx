@@ -19,6 +19,11 @@ import {
   Printer
 } from 'lucide-react'
 
+// Helper function to extract first name only
+const getFirstName = (fullName: string) => {
+  return fullName.split(' ')[0] || fullName
+}
+
 interface BookingConfirmationProps {
   bookingData: any
 }
@@ -41,7 +46,7 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
     if (navigator.share) {
       navigator.share({
         title: 'RCIC Consultation Booking',
-        text: `Booking confirmed for ${bookingData.service?.name} with ${bookingData.rcic?.name}`,
+        text: `Booking confirmed for ${bookingData.service?.name} with ${getFirstName(bookingData.rcic?.name || 'Consultant')}`,
         url: window.location.href
       })
     } else {
@@ -81,12 +86,12 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
             <div className="space-y-4">
               {/* RCIC Details */}
               <div className="flex items-center gap-4 p-4 bg-white rounded-lg border border-blue-200/50">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  {bookingData.rcic?.name?.split(' ').map((n: string) => n[0]).join('')}
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 blur-sm">
+                  {getFirstName(bookingData.rcic?.name || '').charAt(0) || 'N'}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{bookingData.rcic?.name}</h3>
-                  <p className="text-sm text-gray-600">License: {bookingData.rcic?.license}</p>
+                  <h3 className="font-semibold text-gray-900">{getFirstName(bookingData.rcic?.name || 'Consultant')}</h3>
+                  <p className="text-sm text-gray-600">Licensed Immigration Consultant</p>
                   <div className="flex items-center gap-1 mt-1">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="text-sm font-medium">{bookingData.rcic?.rating || 'N/A'}</span>

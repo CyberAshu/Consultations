@@ -24,6 +24,11 @@ import {
   Zap
 } from 'lucide-react'
 
+// Helper function to extract first name only
+const getFirstName = (fullName: string) => {
+  return fullName.split(' ')[0] || fullName
+}
+
 interface Consultant {
   id: number
   name: string
@@ -175,9 +180,17 @@ export function ConsultantProfilePage() {
                 <div className="flex flex-col md:flex-row md:items-start space-y-6 md:space-y-0 md:space-x-8">
                   {/* Profile Image */}
                   <div className="relative">
-                    <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-4xl font-bold">
-                      {consultant.name.split(' ').map((n: string) => n[0]).join('')}
-                    </div>
+                    {consultant.profileImage ? (
+                      <img 
+                        src={consultant.profileImage} 
+                        alt="Consultant"
+                        className="w-32 h-32 rounded-2xl object-cover blur-sm"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-4xl font-bold blur-sm">
+                        {getFirstName(consultant.name).charAt(0)}
+                      </div>
+                    )}
                     {consultant.availability === "Available today" && (
                       <div className="absolute -bottom-2 -right-2 bg-green-500 text-white text-sm font-medium px-3 py-1 rounded-full">
                         Available
@@ -187,8 +200,8 @@ export function ConsultantProfilePage() {
 
                   {/* Profile Info */}
                   <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{consultant.name}</h1>
-                    <p className="text-blue-600 font-semibold mb-3">RCIC #{consultant.rcicNumber}</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{getFirstName(consultant.name)}</h1>
+                    <p className="text-blue-600 font-semibold mb-3">Licensed Immigration Consultant</p>
                     
                     <div className="grid md:grid-cols-2 gap-4 mb-4">
                       <div className="flex items-center text-gray-600">
@@ -275,7 +288,7 @@ export function ConsultantProfilePage() {
               {activeTab === 'overview' && (
                 <Card>
                   <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About {consultant.name}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About {getFirstName(consultant.name)}</h2>
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">{consultant.bio}</p>
                   </CardContent>
                 </Card>

@@ -17,6 +17,11 @@ import {
   Clock,
 } from 'lucide-react'
 
+// Helper function to extract first name only
+const getFirstName = (fullName: string) => {
+  return fullName.split(' ')[0] || fullName
+}
+
 export function ConsultantsPage() {
   const navigate = useNavigate()
   const { isAuthenticated, loading: authLoading } = useAuthState()
@@ -288,13 +293,13 @@ export function ConsultantsPage() {
                     {consultant.profile_image_url ? (
                       <img 
                         src={consultant.profile_image_url} 
-                        alt={isAuthenticated ? consultant.name : "Consultant"}
-                        className={`absolute inset-0 w-full h-full object-cover ${!isAuthenticated ? 'blur-md' : ''}`}
+                        alt="Consultant"
+                        className="absolute inset-0 w-full h-full object-cover blur-sm"
                       />
                     ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center ${!isAuthenticated ? 'blur-md' : ''}`}>
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center blur-sm">
                         <div className="text-white text-4xl font-bold">
-                          {isAuthenticated ? consultant.name.split(' ').map(n => n[0]).join('') : '?'}
+                          {getFirstName(consultant.name).charAt(0)}
                         </div>
                       </div>
                     )}
@@ -304,14 +309,11 @@ export function ConsultantsPage() {
                   <div className="p-6">
                     {/* Name & Title */}
                     <div className="text-center mb-4">
-                      <h3 className={`text-xl font-semibold text-gray-900 mb-1 ${!isAuthenticated ? 'blur-sm' : ''}`}>
-                        {isAuthenticated ? consultant.name : 'Consultant Name'}
+                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                        {getFirstName(consultant.name)}
                       </h3>
                       <p className="text-gray-600 text-sm mb-2">
                         Licensed Immigration Consultant
-                      </p>
-                      <p className={`text-xs text-gray-500 ${!isAuthenticated ? 'blur-sm' : ''}`}>
-                        RCIC #{isAuthenticated ? (consultant.rcic_number || 'N/A') : '••••••'}
                       </p>
                     </div>
 
@@ -403,12 +405,12 @@ export function ConsultantsPage() {
                   {selectedConsultant.profile_image_url ? (
                     <img 
                       src={selectedConsultant.profile_image_url} 
-                      alt={isAuthenticated ? selectedConsultant.name : "Consultant"}
-                      className={`w-20 sm:w-24 h-20 sm:h-24 rounded-full object-cover ${!isAuthenticated ? 'blur-md' : ''}`}
+                      alt="Consultant"
+                      className="w-20 sm:w-24 h-20 sm:h-24 rounded-full object-cover blur-sm"
                     />
                   ) : (
-                    <div className={`w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold ${!isAuthenticated ? 'blur-md' : ''}`}>
-                      {isAuthenticated ? selectedConsultant.name.split(' ').map(n => n[0]).join('') : '?'}
+                    <div className="w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold blur-sm">
+                      {getFirstName(selectedConsultant.name).charAt(0)}
                     </div>
                   )}
                   {selectedConsultant.availability_status === "available" && (
@@ -418,11 +420,11 @@ export function ConsultantsPage() {
                   )}
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <h4 className={`text-xl sm:text-2xl font-light text-gray-900 mb-1 ${!isAuthenticated ? 'blur-sm' : ''}`}>
-                    {isAuthenticated ? selectedConsultant.name : 'Consultant Name'}
+                  <h4 className="text-xl sm:text-2xl font-light text-gray-900 mb-1">
+                    {getFirstName(selectedConsultant.name)}
                   </h4>
-                  <p className={`text-blue-600 font-medium mb-2 ${!isAuthenticated ? 'blur-sm' : ''}`}>
-                    RCIC License #{isAuthenticated ? (selectedConsultant.rcic_number || 'N/A') : '••••••'}
+                  <p className="text-blue-600 font-medium mb-2">
+                    Licensed Immigration Consultant
                   </p>
                   {selectedConsultant.location && (
                     <div className="flex items-center justify-center sm:justify-start text-sm text-gray-600 mb-2">

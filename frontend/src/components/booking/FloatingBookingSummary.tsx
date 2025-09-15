@@ -19,6 +19,11 @@ import {
   Plus
 } from 'lucide-react'
 
+// Helper function to extract first name only
+const getFirstName = (fullName: string) => {
+  return fullName.split(' ')[0] || fullName
+}
+
 interface FloatingBookingSummaryProps {
   bookingData: any
   currentStep: number
@@ -180,12 +185,12 @@ export function FloatingBookingSummary({
           {bookingData.rcic && (
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  {(bookingData.rcic?.name || '').split(' ').map((n: string) => n[0]).join('') || 'N/A'}
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm blur-sm">
+                  {getFirstName(bookingData.rcic?.name || '').charAt(0) || 'N'}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{bookingData.rcic?.name}</p>
-                  <p className="text-xs text-gray-600">{bookingData.rcic?.rcic_number || 'N/A'}</p>
+                  <p className="font-medium text-gray-900 text-sm">{getFirstName(bookingData.rcic?.name || 'Consultant')}</p>
+                  <p className="text-xs text-gray-600">Licensed Immigration Consultant</p>
                 </div>
               </div>
             </div>
@@ -269,14 +274,14 @@ export function FloatingBookingSummary({
           )}
 
           {/* Addons Info */}
-          {bookingData.addons && bookingData.addons.length > 0 && (
+          {bookingData.selectedAddons && bookingData.selectedAddons.length > 0 && (
             <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
               <div className="flex items-center gap-2 mb-2">
                 <Plus className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium text-orange-900">Add-ons ({bookingData.addons.length})</span>
+                <span className="text-sm font-medium text-orange-900">Add-ons ({bookingData.selectedAddons.length})</span>
               </div>
               <div className="space-y-1">
-                {bookingData.addons.map((addon: any) => (
+                {bookingData.selectedAddons.map((addon: any) => (
                   <div key={addon.id} className="flex justify-between items-center text-xs">
                     <span className="text-orange-700">{addon.name}</span>
                     <span className="font-medium text-orange-800">+${addon.price}</span>

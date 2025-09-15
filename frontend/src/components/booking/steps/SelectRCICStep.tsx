@@ -13,6 +13,11 @@ import {
   Minus
 } from 'lucide-react'
 
+// Helper function to extract first name only
+const getFirstName = (fullName: string) => {
+  return fullName.split(' ')[0] || fullName
+}
+
 interface SelectRCICStepProps {
   onDataChange: (data: any) => void
   prefilledRCIC?: string | null
@@ -268,12 +273,12 @@ export function SelectRCICStep({
                   <div className="flex flex-col sm:flex-row gap-6">
                     {/* Avatar & Basic Info */}
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0 shadow-lg">
-                        {(rcic?.name || '').split(' ').map((n: string) => n[0]).join('') || 'N/A'}
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0 shadow-lg blur-sm">
+                        {getFirstName(rcic?.name || '').charAt(0) || 'N'}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-bold text-gray-900 text-xl">{rcic?.name || 'N/A'}</h4>
+                          <h4 className="font-bold text-gray-900 text-xl">{getFirstName(rcic?.name || 'Consultant')}</h4>
                           {rcic.is_verified && (
                             <Badge className="bg-green-100 text-green-800 flex items-center gap-1 px-2 py-1">
                               <CheckCircle className="h-3 w-3" />
@@ -281,7 +286,7 @@ export function SelectRCICStep({
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-3 font-medium">License: {rcic?.rcic_number || 'N/A'}</p>
+                        <p className="text-sm text-gray-600 mb-3 font-medium">Licensed Immigration Consultant</p>
                         
                         {/* Rating & Reviews */}
                         <div className="flex items-center gap-6 mb-4">
@@ -498,8 +503,8 @@ export function SelectRCICStep({
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Selection Summary</h3>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-700">RCIC:</span>
-                <span className="text-gray-900">{selectedRCIC?.name || 'N/A'}</span>
+                <span className="font-medium text-gray-700">Consultant:</span>
+                <span className="text-gray-900">{getFirstName(selectedRCIC?.name || 'N/A')}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-medium text-gray-700">Service:</span>

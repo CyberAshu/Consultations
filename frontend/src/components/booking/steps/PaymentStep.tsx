@@ -13,6 +13,11 @@ import {
   Receipt
 } from 'lucide-react'
 
+// Helper function to extract first name only
+const getFirstName = (fullName: string) => {
+  return fullName.split(' ')[0] || fullName
+}
+
 interface PaymentStepProps {
   onDataChange: (data: any) => void
   bookingData: any
@@ -25,7 +30,9 @@ export function PaymentStep({ onDataChange, bookingData }: PaymentStepProps) {
   const [paymentData, setPaymentData] = useState<any>(null)
 
   // Calculate pricing breakdown
-  const subtotal = bookingData.service?.price || 0
+  const baseServicePrice = bookingData.calculatedPrice || bookingData.service?.price || 0
+  const addonsTotal = (bookingData.selectedAddons || []).reduce((sum: number, addon: any) => sum + (addon.price || 0), 0)
+  const subtotal = baseServicePrice + addonsTotal
   const platformFee = Math.round(subtotal * 0.05) // 5% platform fee
   const taxes = Math.round((subtotal + platformFee) * 0.13) // 13% HST
   const total = subtotal + platformFee + taxes
@@ -83,12 +90,12 @@ export function PaymentStep({ onDataChange, bookingData }: PaymentStepProps) {
           
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                {bookingData.rcic?.name?.split(' ').map((n: string) => n[0]).join('')}
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold blur-sm">
+                {getFirstName(bookingData.rcic?.name || '').charAt(0) || 'N'}
               </div>
               <div>
                 <p className="font-medium text-gray-900">{bookingData.service?.name}</p>
-                <p className="text-sm text-gray-600">with {bookingData.rcic?.name}</p>
+                <p className="text-sm text-gray-600">with {getFirstName(bookingData.rcic?.name || 'Consultant')}</p>
               </div>
             </div>
             
@@ -114,6 +121,28 @@ export function PaymentStep({ onDataChange, bookingData }: PaymentStepProps) {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-700">{bookingData.service?.name}</span>
+              <span className="font-medium">${baseServicePrice} CAD</span>
+            </div>
+            
+            {/* Show addons if any */}
+            {bookingData.selectedAddons && bookingData.selectedAddons.length > 0 && (
+              <div className="space-y-2 border-l-2 border-orange-200 pl-4">
+                <div className="text-sm font-medium text-orange-700">Add-ons:</div>
+                {bookingData.selectedAddons.map((addon: any) => (
+                  <div key={addon.id} className="flex justify-between items-center text-sm">
+                    <span className="text-orange-600">{addon.name}</span>
+                    <span className="text-orange-600">${addon.price} CAD</span>
+                  </div>
+                ))}
+                <div className="flex justify-between items-center text-sm font-medium border-t border-orange-200 pt-2">
+                  <span className="text-orange-700">Add-ons Subtotal:</span>
+                  <span className="text-orange-700">${addonsTotal} CAD</span>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-between items-center text-sm border-t pt-2">
+              <span className="text-gray-600">Services Subtotal:</span>
               <span className="font-medium">${subtotal} CAD</span>
             </div>
             
@@ -168,9 +197,18 @@ export function PaymentStep({ onDataChange, bookingData }: PaymentStepProps) {
                   <CreditCard className="h-5 w-5 text-gray-600" />
                   <span className="font-medium">Credit/Debit Card</span>
                   <div className="flex gap-2 ml-auto">
-                    <img src="/api/placeholder/30/20" alt="Visa" className="h-5" />
-                    <img src="/api/placeholder/30/20" alt="Mastercard" className="h-5" />
-                    <img src="/api/placeholder/30/20" alt="Amex" className="h-5" />
+                    {/* Visa */}
+                    <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
+                      VISA
+                    </div>
+                    {/* Mastercard */}
+                    <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                      MC
+                    </div>
+                    {/* Amex */}
+                    <div className="bg-green-600 text-white px-2 py-1 rounded text-xs font-bold">
+                      AMEX
+                    </div>
                   </div>
                 </label>
               </div>
