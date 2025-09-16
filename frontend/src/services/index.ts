@@ -10,6 +10,7 @@ export { blogService } from './blogService';
 export { featuresService } from './featuresService';
 export { newsletterService } from './newsletterService';
 export { consultantApplicationService } from './consultantApplicationService';
+export { intakeService } from './intakeService';
 
 // Re-export types for convenience
 export type {
@@ -37,3 +38,12 @@ export type {
   PaginationParams,
   SearchParams
 } from './types';
+
+// Export intake types from intakeService
+export type {
+  IntakeData,
+  IntakeSummary,
+  IntakeDocument,
+  IntakeUpdateRequest,
+  IntakeCompleteStageRequest
+} from './intakeService';

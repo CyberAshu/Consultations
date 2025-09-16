@@ -11,3 +11,4 @@ from .service_template import ServiceTemplate
 from .faq import FAQ
 from .payment import Payment, PaymentMethod, PaymentStatusExtended
 from .notification import Notification, NotificationType
+from .intake import ClientIntake, IntakeDocument, IntakeStatus

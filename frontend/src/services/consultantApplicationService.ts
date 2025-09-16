@@ -85,7 +85,7 @@ class ConsultantApplicationService {
   // Get document URL for viewing
   getDocumentUrl(filename: string): string {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
-    return `${baseUrl}/api/v1/consultant-applications/documents/${filename}`;
+    return `${baseUrl}/consultant-applications/documents/${filename}`;
   }
 
   // Request additional sections from applicant (Admin only)

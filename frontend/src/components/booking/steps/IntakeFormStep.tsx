@@ -11,8 +11,10 @@ import {
   Trash2,
   Eye,
   Info,
-  Shield
+  Shield,
+  RefreshCw
 } from 'lucide-react'
+import { intakeService } from '../../../services/intakeService'
 
 interface IntakeFormStepProps {
   onDataChange: (data: any) => void
@@ -25,6 +27,9 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([])
   const [formComplete, setFormComplete] = useState(false)
   const [optionalUploads, setOptionalUploads] = useState<any[]>([])
+  const [existingIntake, setExistingIntake] = useState<any>(null)
+  const [loadingIntake, setLoadingIntake] = useState(true)
+  const [showIntakeOption, setShowIntakeOption] = useState(false)
   
   // Form data states
   const [formData, setFormData] = useState({
@@ -36,8 +41,29 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
       studyPermit: false,
       workPermit: false,
       visitorVisa: false
-    }
+    },
+    useExistingIntake: false
   })
+
+  // Load existing intake data on component mount
+  useEffect(() => {
+    const loadExistingIntake = async () => {
+      try {
+        setLoadingIntake(true)
+        const intake = await intakeService.getMyIntakeSummary()
+        if (intake && intake.completion_percentage > 0) {
+          setExistingIntake(intake)
+          setShowIntakeOption(true)
+        }
+      } catch (error) {
+        console.log('No existing intake data found (this is normal for new users)')
+      } finally {
+        setLoadingIntake(false)
+      }
+    }
+    
+    loadExistingIntake()
+  }, [])
 
   useEffect(() => {
     onDataChange({
@@ -46,10 +72,11 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
         completed: formComplete,
         uploadedFiles: uploadedFiles,
         optionalUploads: optionalUploads,
-        formData: formData // 🔥 Add form data
+        formData: formData, // 🔥 Add form data
+        existingIntake: existingIntake // Pass existing intake info
       }
     })
-  }, [formMethod, formComplete, uploadedFiles, optionalUploads, formData, onDataChange])
+  }, [formMethod, formComplete, uploadedFiles, optionalUploads, formData, existingIntake, onDataChange])
 
   // Required documents based on service type
   const getRequiredDocuments = (serviceType: string) => {
@@ -176,18 +203,92 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
         </CardContent>
       </Card>
 
+      {/* Existing Intake Data Option */}
+      {showIntakeOption && existingIntake && (
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200/50 shadow-lg">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Existing Intake Data Found!</h3>
+            </div>
+            
+            <div className="bg-white/70 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="font-medium text-gray-900">Your Intake Progress</p>
+                  <p className="text-sm text-gray-600">{Math.round(existingIntake.completion_percentage)}% completed</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-green-600">
+                    {existingIntake.completed_stages?.length || 0}/12 stages
+                  </div>
+                  <div className="text-xs text-gray-500 capitalize">
+                    {existingIntake.status.replace('_', ' ')}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${existingIntake.completion_percentage}%` }}
+                />
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    // Use existing intake data - mark as complete
+                    setFormComplete(true)
+                    setFormData({
+                      immigrationStatus: 'from_intake',
+                      immigrationGoal: 'from_intake', 
+                      specificQuestions: 'Client has completed comprehensive intake form with detailed information.',
+                      previousApplications: { expressEntry: false, studyPermit: false, workPermit: false, visitorVisa: false },
+                      useExistingIntake: true
+                    })
+                  }}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Use My Intake Data
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                  onClick={() => window.open('/intake', '_blank')}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Update Intake
+                </Button>
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-3 text-center">
+                Using your intake data will provide your RCIC with comprehensive background information for a more effective consultation.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Form Method Selection - Simplified to only Quick Form */}
       <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
         <CardContent className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Intake Form</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {existingIntake ? 'Alternative: Quick Form' : 'Intake Form'}
+          </h3>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <div className="flex items-start gap-3">
               <FileText className="h-5 w-5 text-blue-600 mt-1" />
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">Quick Form</h4>
+                <h4 className="font-medium text-gray-900 mb-1">
+                  {existingIntake ? 'Quick Form (Alternative)' : 'Quick Form'}
+                </h4>
                 <p className="text-sm text-gray-600">
-                  Fill out a simplified intake form to help your RCIC prepare for your consultation.
+                  {existingIntake 
+                    ? 'You can still fill out this quick form instead of using your detailed intake data.'
+                    : 'Fill out a simplified intake form to help your RCIC prepare for your consultation.'}
                 </p>
               </div>
             </div>

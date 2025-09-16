@@ -22,6 +22,7 @@ import { FloatingBookingSummary } from '../booking/FloatingBookingSummary'
 import { ScrollToTop } from '../ui/ScrollToTop'
 import { bookingService } from '../../services/bookingService'
 import { consultantService } from '../../services/consultantService'
+import { intakeService } from '../../services/intakeService'
 import { CreateBookingRequest } from '../../services/types'
 
 export function BookingFlow() {

@@ -28,9 +28,11 @@ import {
 } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { authService } from '../../services/authService'
+import { intakeService } from '../../services/intakeService'
 import { Booking, User } from '../../services/types'
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
+import { useIntakeSummary } from '../../hooks/useIntake'
 
 export function ClientDashboard() {
   const navigate = useNavigate()
@@ -44,6 +46,9 @@ export function ClientDashboard() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [selectedSession, setSelectedSession] = useState<Booking | null>(null)
+  
+  // Load intake summary
+  const { summary: intakeSummary, loading: intakeLoading } = useIntakeSummary()
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -587,6 +592,55 @@ export function ClientDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Intake Progress Card */}
+            {intakeSummary && (
+              <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200/50 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Intake Progress</h3>
+                        <p className="text-gray-600 text-sm">Complete your intake for better service</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600">
+                        {Math.round(intakeSummary.completion_percentage)}%
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {intakeSummary.completed_stages?.length || 0} of 12 stages
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-gradient-to-r from-green-600 to-blue-600 h-3 rounded-full transition-all duration-300"
+                        style={{ width: `${intakeSummary.completion_percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Status: <span className="capitalize font-medium">{intakeSummary.status.replace('_', ' ')}</span>
+                    </div>
+                    <Button 
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => navigate(intakeSummary.status === 'completed' ? '/intake?review=true' : '/intake')}
+                    >
+                      {intakeSummary.status === 'completed' ? 'Review Intake' : 'Continue Intake'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Upcoming Sessions */}
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">

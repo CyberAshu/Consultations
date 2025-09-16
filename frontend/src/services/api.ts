@@ -54,23 +54,30 @@ export async function apiRequest<T>(
     
     if (!response.ok) {
       let errorMessage: any = `HTTP ${response.status}: ${response.statusText}`;
-      try {
-        const errorData = await response.json();
-        const detail = (errorData && errorData.detail) ?? (errorData && errorData.message);
-        if (typeof detail === 'string') {
-          errorMessage = detail;
-        } else if (Array.isArray(detail) && detail.length > 0) {
-          // FastAPI validation errors
-          const first = detail[0];
-          errorMessage = first?.msg || first?.message || JSON.stringify(first);
-        } else if (detail && typeof detail === 'object') {
-          errorMessage = detail.message || JSON.stringify(detail);
-        } else if (errorData && typeof errorData === 'object') {
-          errorMessage = errorData.message || JSON.stringify(errorData);
+      
+      // Handle rate limiting specifically
+      if (response.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment before trying again.';
+      } else {
+        try {
+          const errorData = await response.json();
+          const detail = (errorData && errorData.detail) ?? (errorData && errorData.message);
+          if (typeof detail === 'string') {
+            errorMessage = detail;
+          } else if (Array.isArray(detail) && detail.length > 0) {
+            // FastAPI validation errors
+            const first = detail[0];
+            errorMessage = first?.msg || first?.message || JSON.stringify(first);
+          } else if (detail && typeof detail === 'object') {
+            errorMessage = detail.message || JSON.stringify(detail);
+          } else if (errorData && typeof errorData === 'object') {
+            errorMessage = errorData.message || JSON.stringify(errorData);
+          }
+        } catch {
+          // If we can't parse error response, use default message
         }
-      } catch {
-        // If we can't parse error response, use default message
       }
+      
       if (typeof errorMessage !== 'string') {
         errorMessage = JSON.stringify(errorMessage);
       }
@@ -177,4 +184,14 @@ export const apiPostFormData = <T>(endpoint: string, formData: FormData, method:
       return response.text() as unknown as T;
     }
   });
+};
+
+// API object for services that expect a unified interface
+export const api = {
+  get: apiGet,
+  post: apiPost,
+  put: apiPut,
+  patch: apiPatch,
+  delete: apiDelete,
+  postFormData: apiPostFormData
 };

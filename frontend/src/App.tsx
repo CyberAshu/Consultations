@@ -20,8 +20,10 @@ import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
 import { BookingFlow } from './components/pages/BookingFlow';
+import { IntakeFlow } from './components/intake/IntakeFlow';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { GlobalDisclaimerModal, useGlobalDisclaimerModal } from './components/shared/GlobalDisclaimerModal';
+import { ScrollToTop } from './components/ui/ScrollToTop';
 
 function App() {
   const { isOpen: showGlobalDisclaimer, handleClose: handleCloseGlobalDisclaimer } = useGlobalDisclaimerModal();
@@ -132,7 +134,16 @@ function App() {
               <BookingFlow />
             </ProtectedRoute>
           } />
+          
+          {/* Intake flow without header/footer (clients only) */}
+          <Route path="/intake" element={
+            <ProtectedRoute allowedRoles={['client']}>
+              <IntakeFlow />
+            </ProtectedRoute>
+          } />
         </Routes>
+        {/* Global ScrollToTop button */}
+        <ScrollToTop />
       </div>
     </Router>
   );
