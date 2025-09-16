@@ -154,7 +154,7 @@ class StorageService:
     
     def get_public_url(self, file_path: str) -> str:
         """
-        Get public URL for profile images (use signed URL as fallback since bucket is private)
+        Get public URL for files. Profile images use true public URLs since bucket is public.
         
         Args:
             file_path: Path to file in storage
@@ -163,12 +163,14 @@ class StorageService:
             Public/accessible URL for file access
         """
         try:
-            # For profile images, we'll use long-lived signed URLs since bucket is private
-            # This gives us 7 days of access which should be sufficient for profile images
+            # For profile images, use direct public URLs since bucket is public
             if file_path.startswith('profile-images/'):
-                return self.get_file_url(file_path, expires_in=604800)  # 7 days
+                # Generate public URL directly
+                public_url = f"{self.supabase.url}/storage/v1/object/public/{self.bucket_name}/{file_path}"
+                print(f"Generated public URL for {file_path}: {public_url}")
+                return public_url
             else:
-                # For other files, use regular signed URLs
+                # For other files (like documents), use signed URLs for security
                 return self.get_file_url(file_path, expires_in=3600)  # 1 hour
                 
         except Exception as e:
