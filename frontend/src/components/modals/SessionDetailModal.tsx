@@ -9,9 +9,17 @@ import { DocumentUpload } from '../shared/DocumentUpload'
 import { intakeService, IntakeData } from '../../services/intakeService'
 import jsPDF from 'jspdf'
 
+// Enhanced booking interface with consultant and service details
+interface EnhancedBooking extends Booking {
+  consultant_name?: string
+  consultant_rcic_number?: string
+  service_name?: string
+  service_description?: string
+}
+
 interface SessionDetailModalProps {
   show: boolean
-  booking: Booking | null
+  booking: EnhancedBooking | null
   clientName: string
   onClose: () => void
   onStatusChange: (bookingId: number, newStatus: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'delayed' | 'rescheduled') => void
@@ -67,10 +75,18 @@ export function SessionDetailModal({
   React.useEffect(() => {
     setNotes(booking?.meeting_notes || '')
     
-    // Load documents with proper signed URLs when modal opens for ANY view
+    // Load documents and intake data when modal opens
     if (booking) {
-      loadBookingDocuments()
-      loadDetailedIntakeData()
+      // Load both intake data and documents
+      const loadData = async () => {
+        // First load documents with basic intake data
+        await loadBookingDocuments()
+        // Then load detailed intake data
+        await loadDetailedIntakeData()
+        // Finally reload documents with detailed intake data
+        await loadBookingDocuments()
+      }
+      loadData()
     }
   }, [booking])
 
@@ -81,8 +97,132 @@ export function SessionDetailModal({
     try {
       setDocumentsLoading(true)
       const documentsData = await bookingService.getBookingDocuments(booking.id)
-      console.log('📄 Loaded documents with signed URLs:', documentsData)
-      setDocuments(documentsData.documents || [])
+      console.log('📄 Loaded booking documents with signed URLs:', documentsData)
+      
+      let allDocuments = documentsData.documents || []
+      
+      // Also check for intake form documents
+      console.log('🔍 Checking for intake documents in parsedIntakeData:', {
+        hasData: !!parsedIntakeData,
+        hasUploadedFiles_camelCase: !!parsedIntakeData?.uploadedFiles,
+        uploadedFiles_length: Array.isArray(parsedIntakeData?.uploadedFiles) ? parsedIntakeData.uploadedFiles.length : 'not array',
+        hasUploadedFiles_underscore: !!parsedIntakeData?.uploaded_files,
+        uploaded_files_length: Array.isArray(parsedIntakeData?.uploaded_files) ? parsedIntakeData.uploaded_files.length : 'not array',
+        allKeys: parsedIntakeData ? Object.keys(parsedIntakeData) : 'no data',
+        // Show the uploadedFiles content
+        uploadedFilesContent: parsedIntakeData?.uploadedFiles
+      })
+      
+      // Check multiple possible intake document locations  
+      let intakeFiles = null
+      if (parsedIntakeData?.uploadedFiles && Array.isArray(parsedIntakeData.uploadedFiles)) {
+        intakeFiles = parsedIntakeData.uploadedFiles
+        console.log('✅ Found uploadedFiles (camelCase):', intakeFiles)
+      } else if (parsedIntakeData?.uploaded_files && Array.isArray(parsedIntakeData.uploaded_files)) {
+        intakeFiles = parsedIntakeData.uploaded_files
+        console.log('✅ Found uploaded_files (underscore):', intakeFiles)
+      } else if (parsedIntakeData?.documents && Array.isArray(parsedIntakeData.documents)) {
+        intakeFiles = parsedIntakeData.documents
+        console.log('✅ Found documents:', intakeFiles)
+      } else if (parsedIntakeData?.files && Array.isArray(parsedIntakeData.files)) {
+        intakeFiles = parsedIntakeData.files
+        console.log('✅ Found files:', intakeFiles)
+      }
+      
+      if (intakeFiles && intakeFiles.length > 0) {
+        console.log('📄 Found intake form documents:', intakeFiles)
+        
+        // Add intake documents to the list with a special flag
+        const intakeDocuments = intakeFiles.map((file: any, index: number) => {
+          console.log(`🔍 Processing intake file ${index}:`, file)
+          
+          return {
+            id: file.id || `intake_${index}`, // Use original ID if available
+            file_name: file.name || file.fileName || file.file_name || `Intake Document ${index + 1}`,
+            file_size: file.size || file.fileSize || file.file_size || 0,
+            file_type: file.type || file.fileType || file.file_type || 'application/octet-stream',
+            download_url: file.url || file.dataUrl || file.base64Content || file.download_url || null,
+            uploaded_at: file.uploadedAt || file.uploaded_at || booking.created_at,
+            created_at: file.uploadedAt || file.uploaded_at || booking.created_at,
+            source: 'intake_form', // Mark as intake document
+            is_intake_file: true, // Special flag for intake files
+            original_file_data: file, // Keep original data for debugging
+            ...file // Include all original properties
+          }
+        })
+        
+        allDocuments = [...allDocuments, ...intakeDocuments]
+        console.log('📄 Combined documents (booking + intake):', allDocuments)
+      }
+      
+      // Also check if we have detailed intake data with document names
+      // This will be available after loadDetailedIntakeData completes
+      if (detailedIntakeData?.docs_ready && Array.isArray(detailedIntakeData.docs_ready) && detailedIntakeData.docs_ready.length > 0) {
+        console.log('📄 Found document names from detailed intake (Stage 12):', detailedIntakeData.docs_ready)
+        
+        // Try to match document names with uploaded files
+        const matchedDocs = detailedIntakeData.docs_ready.map((docName: string, index: number) => {
+          // Try to find a matching uploaded file
+          const matchingFile = parsedIntakeData?.uploadedFiles?.find((file: any) => 
+            file.name?.toLowerCase().includes(docName.toLowerCase()) ||
+            docName.toLowerCase().includes(file.name?.toLowerCase().split('.')[0] || '')
+          )
+          
+          if (matchingFile) {
+            console.log(`✅ Matched "${docName}" with uploaded file:`, matchingFile)
+            return {
+              id: matchingFile.id || `intake_matched_${index}`,
+              file_name: `${matchingFile.name} (${docName})`,
+              file_size: matchingFile.size || 0,
+              file_type: matchingFile.type || 'application/octet-stream',
+              download_url: null, // File content not available for download
+              uploaded_at: matchingFile.uploadedAt || booking.created_at,
+              created_at: matchingFile.uploadedAt || booking.created_at,
+              source: 'intake_form',
+              is_intake_file: true,
+              matched_doc_name: docName,
+              original_file_data: matchingFile
+            }
+          } else {
+            console.log(`⚠️ Could not match "${docName}" with any uploaded file`)
+            return null
+          }
+        }).filter(Boolean)
+        
+        // Add matched documents to the list if we don't already have them
+        const existingIntakeIds = allDocuments.filter((doc: any) => doc.source === 'intake_form').map((doc: any) => doc.id)
+        const newMatchedDocs = matchedDocs.filter((doc: any) => doc && !existingIntakeIds.includes(doc.id))
+        
+        if (newMatchedDocs.length > 0) {
+          allDocuments = [...allDocuments, ...newMatchedDocs] as any[]
+          console.log('📄 Added matched documents from detailed intake:', newMatchedDocs)
+        }
+      } else {
+        console.log('🚨 No actual intake document files found')
+        console.log('📋 Available data structure for debugging:', {
+          parsedIntakeData: parsedIntakeData ? Object.keys(parsedIntakeData) : null,
+          education_work_keys: parsedIntakeData?.education_work ? Object.keys(parsedIntakeData.education_work) : null,
+          goals_timeline_keys: parsedIntakeData?.goals_timeline ? Object.keys(parsedIntakeData.goals_timeline) : null,
+          formData_keys: parsedIntakeData?.formData ? Object.keys(parsedIntakeData.formData) : null,
+          // Check if there are any file-like objects in nested structures
+          nestedCheck: parsedIntakeData ? JSON.stringify(parsedIntakeData, (key, value) => {
+            // Look for objects that might contain file data
+            if (typeof value === 'object' && value && (
+              value.hasOwnProperty('name') || 
+              value.hasOwnProperty('fileName') ||
+              value.hasOwnProperty('size') ||
+              value.hasOwnProperty('type') ||
+              value.hasOwnProperty('dataUrl') ||
+              value.hasOwnProperty('base64')
+            )) {
+              return `[POTENTIAL FILE OBJECT: ${Object.keys(value).join(', ')}]`
+            }
+            return value
+          }, 2) : null
+        })
+      }
+      
+      setDocuments(allDocuments)
     } catch (error) {
       console.error('Error loading documents:', error)
       // Fallback to original documents if API fails
@@ -610,19 +750,27 @@ export function SessionDetailModal({
     doc.save(fileName)
   }
 
-  if (!show || !booking) return null
-
-  // Parse intake form data if it's a string (JSON)
-  let parsedIntakeData = booking.intake_form_data
-  if (typeof booking.intake_form_data === 'string') {
-    try {
-      parsedIntakeData = JSON.parse(booking.intake_form_data)
-      console.log('✅ SessionDetailModal: Parsed intake data:', parsedIntakeData)
-    } catch (error) {
-      console.error('❌ SessionDetailModal: Failed to parse intake form JSON:', error)
-      console.log('Raw string data:', booking.intake_form_data)
+  // Parse intake form data at component level so it's accessible everywhere
+  const parseIntakeData = () => {
+    if (!booking?.intake_form_data) return null
+    
+    let parsedData = booking.intake_form_data
+    if (typeof booking.intake_form_data === 'string') {
+      try {
+        parsedData = JSON.parse(booking.intake_form_data)
+        console.log('✅ SessionDetailModal: Parsed intake data:', parsedData)
+      } catch (error) {
+        console.error('❌ SessionDetailModal: Failed to parse intake form JSON:', error)
+        console.log('Raw string data:', booking.intake_form_data)
+        return null
+      }
     }
+    return parsedData
   }
+  
+  const parsedIntakeData = parseIntakeData()
+  
+  if (!show || !booking) return null
 
   // 🔥 ADDITIONAL NESTED JSON PARSING
   // Some fields might still be JSON strings even after initial parsing
@@ -914,7 +1062,7 @@ export function SessionDetailModal({
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Session Details</h2>
-            <p className="text-sm text-gray-600">{clientName} - {booking.service_type || `Service #${booking.service_id}`}</p>
+            <p className="text-sm text-gray-600">{clientName} - {booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
           </div>
           <Button variant="outline" onClick={onClose} size="sm">
             <X className="h-4 w-4" />
@@ -949,7 +1097,7 @@ export function SessionDetailModal({
             {/* Client Information Section */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 mb-6">
               <h3 className="text-lg font-semibold text-blue-900 mb-4">Client Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex items-center gap-3">
               <User className="h-5 w-5 text-blue-600" />
               <div>
@@ -960,8 +1108,15 @@ export function SessionDetailModal({
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm font-medium text-gray-700">Client ID</p>
-                <p className="text-gray-900 font-mono text-sm">{booking.client_id}</p>
+                <p className="text-sm font-medium text-gray-700">Email</p>
+                <p className="text-gray-900 text-sm">{parsedIntakeData?.personal_info?.email || 'Not provided'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <User className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-gray-700">Phone</p>
+                <p className="text-gray-900 text-sm">{parsedIntakeData?.personal_info?.phone || 'Not provided'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -1210,7 +1365,7 @@ export function SessionDetailModal({
               <FileText className="h-5 w-5 text-emerald-600" />
               <div>
                 <p className="text-sm font-medium text-gray-700">Service Type</p>
-                <p className="text-gray-900">{booking.service_type || `Service #${booking.service_id}`}</p>
+                <p className="text-gray-900">{booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -1337,12 +1492,17 @@ export function SessionDetailModal({
               </div>
             ) : (
               <div className="space-y-2">
-                {documents.map((doc) => (
+                {documents.map((doc: any) => (
                   <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-green-600" />
                       <div>
-                        <p className="font-medium text-green-800">{doc.file_name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-green-800">{doc.file_name || doc.name}</p>
+                          {doc.source === 'intake_form' && (
+                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Intake Form</span>
+                          )}
+                        </div>
                         <p className="text-xs text-green-600">
                           {(doc.file_size || 0) / 1024 / 1024 > 1 
                             ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
@@ -1413,12 +1573,17 @@ export function SessionDetailModal({
               
               {documents.length > 0 ? (
                 <div className="space-y-3">
-                  {documents.map((doc) => (
+                  {documents.map((doc: any) => (
                     <div key={doc.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-green-200 shadow-sm">
                       <div className="flex items-center gap-3">
                         <FileText className="h-5 w-5 text-green-600" />
                         <div>
-                          <p className="font-medium text-gray-900">{doc.file_name}</p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium text-gray-900">{doc.file_name || doc.name}</p>
+                            {doc.source === 'intake_form' && (
+                              <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Intake Form</span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600">
                             {(doc.file_size || 0) / 1024 / 1024 > 1 
                               ? `${((doc.file_size || 0) / 1024 / 1024).toFixed(2)} MB`
@@ -1556,13 +1721,6 @@ export function SessionDetailModal({
                       </div>
                     </div>
 
-                    {/* Raw Data Debug (for development) */}
-                    <details className="bg-gray-50 rounded p-3">
-                      <summary className="text-sm text-gray-700 cursor-pointer">Show Raw Intake Data (Debug)</summary>
-                      <pre className="text-xs text-gray-600 mt-2 whitespace-pre-wrap overflow-auto max-h-60">
-                        {JSON.stringify(detailedIntakeData, null, 2)}
-                      </pre>
-                    </details>
                   </div>
                 )
               })() : hasIntakeForm ? (() => {
@@ -1661,15 +1819,6 @@ export function SessionDetailModal({
                         </ul>
                       </div>
                       
-                      {/* Show raw data for debugging */}
-                      <details className="mt-4">
-                        <summary className="text-sm text-amber-700 cursor-pointer hover:text-amber-800">Show Available Data (Debug)</summary>
-                        <div className="mt-2 bg-gray-100 rounded p-3">
-                          <pre className="text-xs text-gray-600 whitespace-pre-wrap overflow-auto max-h-60">
-                            {JSON.stringify(parsedIntakeData, null, 2)}
-                          </pre>
-                        </div>
-                      </details>
                     </div>
                   </div>
                 )
@@ -1745,70 +1894,111 @@ export function SessionDetailModal({
               </div>
             </div>
             <div className="p-4 max-h-[calc(90vh-120px)] overflow-y-auto">
-              {selectedDocument.type?.startsWith('image/') ? (
-                <img 
-                  src={selectedDocument.url || `data:${selectedDocument.type};base64,${selectedDocument.content}`} 
-                  alt={selectedDocument.name}
-                  className="max-w-full h-auto rounded shadow-lg"
-                  onError={(e) => {
-                    console.error('Image failed to load:', e)
-                    e.currentTarget.style.display = 'none'
-                    if (e.currentTarget.nextSibling) {
-                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'block'
-                    }
-                  }}
-                />
-              ) : selectedDocument.type === 'application/pdf' ? (
-                <iframe 
-                  src={selectedDocument.url || `data:${selectedDocument.type};base64,${selectedDocument.content}`}
-                  className="w-full h-[calc(90vh-200px)] border rounded"
-                  title={selectedDocument.name}
-                />
-              ) : selectedDocument.type?.startsWith('text/') ? (
-                <div className="bg-gray-50 rounded p-4">
-                  <pre className="text-sm whitespace-pre-wrap">
-                    {selectedDocument.content || 'Content not available'}
-                  </pre>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">This file type cannot be previewed.</p>
-                  <div className="flex gap-2 justify-center">
-                    <Button 
-                      onClick={() => handleOpenInNewTab(selectedDocument)}
-                    >
-                      Open in New Tab
-                    </Button>
-                    <Button 
-                      onClick={() => handleDownloadDocumentInternal(selectedDocument)}
-                      variant="outline"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download to View
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Error fallback for images */}
-              <div style={{display: 'none'}} className="text-center py-8">
-                <p className="text-red-600 mb-4">Failed to load image preview.</p>
-                <div className="flex gap-2 justify-center">
-                  <Button 
-                    onClick={() => handleOpenInNewTab(selectedDocument)}
-                  >
-                    Try Opening in New Tab
-                  </Button>
-                  <Button 
-                    onClick={() => handleDownloadDocumentInternal(selectedDocument)}
-                    variant="outline"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download File
-                  </Button>
-                </div>
-              </div>
+              {(() => {
+                // Create safe data URL or use direct URL
+                const createSafeDataUrl = (type: string, content: string) => {
+                  if (!content || content === 'undefined' || content === 'null') {
+                    return null
+                  }
+                  return `data:${type};base64,${content}`
+                }
+                
+                const imageUrl = selectedDocument.url || createSafeDataUrl(selectedDocument.type, selectedDocument.content)
+                
+                if (selectedDocument.type?.startsWith('image/')) {
+                  if (!imageUrl) {
+                    return (
+                      <div className="text-center py-8">
+                        <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 mb-4">Image preview not available.</p>
+                        <p className="text-sm text-gray-500 mb-4">The image data may be corrupted or unavailable.</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button 
+                            onClick={() => handleOpenInNewTab(selectedDocument)}
+                          >
+                            Try Opening in New Tab
+                          </Button>
+                          <Button 
+                            onClick={() => handleDownloadDocumentInternal(selectedDocument)}
+                            variant="outline"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download File
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  }
+                  
+                  return (
+                    <img 
+                      src={imageUrl} 
+                      alt={selectedDocument.name}
+                      className="max-w-full h-auto rounded shadow-lg"
+                      onError={(e) => {
+                        console.error('Image failed to load:', e)
+                        console.error('Attempted URL:', imageUrl)
+                        console.error('Document data:', selectedDocument)
+                        e.currentTarget.style.display = 'none'
+                        if (e.currentTarget.nextSibling) {
+                          (e.currentTarget.nextSibling as HTMLElement).style.display = 'block'
+                        }
+                      }}
+                    />
+                  )
+                } else if (selectedDocument.type === 'application/pdf') {
+                  const pdfUrl = selectedDocument.url || createSafeDataUrl(selectedDocument.type, selectedDocument.content)
+                  if (!pdfUrl) {
+                    return (
+                      <div className="text-center py-8">
+                        <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 mb-4">PDF preview not available.</p>
+                        <Button onClick={() => handleDownloadDocumentInternal(selectedDocument)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download PDF
+                        </Button>
+                      </div>
+                    )
+                  }
+                  
+                  return (
+                    <iframe 
+                      src={pdfUrl}
+                      className="w-full h-[calc(90vh-200px)] border rounded"
+                      title={selectedDocument.name}
+                    />
+                  )
+                } else if (selectedDocument.type?.startsWith('text/')) {
+                  return (
+                    <div className="bg-gray-50 rounded p-4">
+                      <pre className="text-sm whitespace-pre-wrap">
+                        {selectedDocument.content || 'Content not available'}
+                      </pre>
+                    </div>
+                  )
+                } else {
+                  return (
+                    <div className="text-center py-8">
+                      <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-4">This file type cannot be previewed.</p>
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          onClick={() => handleOpenInNewTab(selectedDocument)}
+                        >
+                          Open in New Tab
+                        </Button>
+                        <Button 
+                          onClick={() => handleDownloadDocumentInternal(selectedDocument)}
+                          variant="outline"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download to View
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                }
+              })()}
             </div>
           </div>
         </div>

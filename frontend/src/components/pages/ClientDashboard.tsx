@@ -29,15 +29,161 @@ import {
 import { bookingService } from '../../services/bookingService'
 import { authService } from '../../services/authService'
 import { intakeService } from '../../services/intakeService'
-import { Booking, User } from '../../services/types'
+import { consultantService } from '../../services/consultantService'
+import { serviceTemplateService } from '../../services/serviceTemplateService'
+import { Booking, User, Consultant, ServiceTemplate } from '../../services/types'
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 import { useIntakeSummary } from '../../hooks/useIntake'
 
+// Enhanced booking interface with consultant and service details
+interface EnhancedBooking extends Booking {
+  consultant_name?: string
+  consultant_rcic_number?: string
+  service_name?: string
+  service_description?: string
+}
+
+// Function to enhance bookings with consultant and service details
+const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<EnhancedBooking[]> => {
+  console.log('📊 Enhancing booking data with consultant and service details...')
+  
+  // Get unique consultant IDs and consultant service IDs (these are what booking.service_id refers to)
+  const consultantIds = Array.from(new Set(bookings.map(b => b.consultant_id)))
+  const consultantServiceIds = Array.from(new Set(bookings.map(b => b.service_id).filter(Boolean)))
+  
+  console.log('🔍 Found consultant IDs:', consultantIds)
+  console.log('🔍 Found consultant service IDs:', consultantServiceIds)
+  console.log('🔍 Sample booking data:', bookings[0])
+  
+  // Create lookup maps for our enhanced data
+  const consultantMap = new Map<number, Consultant>()
+  const consultantServicesMap = new Map<number, any>() // Maps consultant service ID to service data
+  const serviceTemplateMap = new Map<number, ServiceTemplate>()
+  
+  try {
+    // 1. Fetch all consultants
+    console.log('📡 Step 1: Fetching consultants...')
+    const consultantResults = await Promise.allSettled(
+      consultantIds.map(async (id) => {
+        try {
+          return await consultantService.getConsultantById(id)
+        } catch (error) {
+          console.warn(`Failed to fetch consultant ${id}:`, error)
+          return null
+        }
+      })
+    )
+    
+    // Build consultant lookup map
+    consultantResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        consultantMap.set(consultantIds[index], result.value)
+      }
+    })
+    
+    console.log(`✅ Loaded ${consultantMap.size} consultants`)
+    
+    // 2. Fetch consultant services for each consultant to build service lookup
+    console.log('📡 Step 2: Fetching consultant services...')
+    const allConsultantServices: any[] = []
+    
+    for (const consultantId of consultantIds) {
+      try {
+        const services = await consultantService.getActiveConsultantServices(consultantId)
+        console.log(`📋 Consultant ${consultantId} has ${services.length} services:`, services.map(s => ({ id: s.id, name: s.name, templateId: s.service_template_id })))
+        services.forEach(service => {
+          consultantServicesMap.set(service.id, service)
+          allConsultantServices.push(service)
+        })
+      } catch (error) {
+        console.warn(`Failed to fetch services for consultant ${consultantId}:`, error)
+      }
+    }
+    
+    console.log(`✅ Loaded ${consultantServicesMap.size} consultant services`)
+    
+    // 3. Get unique service template IDs from consultant services
+    const serviceTemplateIds = Array.from(
+      new Set(
+        allConsultantServices
+          .map(service => service.service_template_id)
+          .filter(Boolean)
+      )
+    )
+    
+    console.log('🔍 Found service template IDs to fetch:', serviceTemplateIds)
+    
+    // 4. Fetch service templates
+    if (serviceTemplateIds.length > 0) {
+      console.log('📡 Step 3: Fetching service templates...')
+      const templateResults = await Promise.allSettled(
+        serviceTemplateIds.map(async (id) => {
+          try {
+            console.log(`🔄 Fetching service template ${id}...`)
+            const template = await serviceTemplateService.getServiceTemplateById(id)
+            console.log(`✅ Service template ${id} loaded:`, template)
+            return template
+          } catch (error: any) {
+            console.error(`❌ Failed to fetch service template ${id}:`, error)
+            return null
+          }
+        })
+      )
+      
+      // Build service template lookup map
+      templateResults.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          serviceTemplateMap.set(serviceTemplateIds[index], result.value)
+        }
+      })
+    }
+    
+    console.log('✅ Enhanced data loaded:', {
+      consultants: consultantMap.size,
+      consultantServices: consultantServicesMap.size,
+      serviceTemplates: serviceTemplateMap.size
+    })
+    
+  } catch (error) {
+    console.error('❌ Error during data enhancement:', error)
+  }
+  
+  // 5. Enhance each booking with the resolved data
+  return bookings.map((booking): EnhancedBooking => {
+    const consultant = consultantMap.get(booking.consultant_id)
+    const consultantService = booking.service_id ? consultantServicesMap.get(booking.service_id) : null
+    const serviceTemplate = consultantService?.service_template_id 
+      ? serviceTemplateMap.get(consultantService.service_template_id) 
+      : null
+    
+    // Use service template name if available, otherwise fallback to consultant service name or default
+    const serviceName = serviceTemplate?.name || consultantService?.name || `Service #${booking.service_id}`
+    const serviceDescription = serviceTemplate?.default_description || consultantService?.description
+    
+    console.log(`🔍 Booking ${booking.id} enhancement:`, {
+      booking_service_id: booking.service_id,
+      consultant_service_found: !!consultantService,
+      consultant_service_name: consultantService?.name,
+      service_template_id: consultantService?.service_template_id,
+      service_template_found: !!serviceTemplate,
+      final_service_name: serviceName
+    })
+    
+    return {
+      ...booking,
+      consultant_name: consultant?.name || `RCIC #${consultant?.rcic_number || booking.consultant_id}`,
+      consultant_rcic_number: consultant?.rcic_number,
+      service_name: serviceName,
+      service_description: serviceDescription
+    }
+  })
+}
+
 export function ClientDashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [bookings, setBookings] = useState<Booking[]>([])
+  const [bookings, setBookings] = useState<EnhancedBooking[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,7 +191,7 @@ export function ClientDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [showSummaryModal, setShowSummaryModal] = useState(false)
-  const [selectedSession, setSelectedSession] = useState<Booking | null>(null)
+  const [selectedSession, setSelectedSession] = useState<EnhancedBooking | null>(null)
   
   // Load intake summary
   const { summary: intakeSummary, loading: intakeLoading } = useIntakeSummary()
@@ -93,7 +239,22 @@ export function ClientDashboard() {
         
         // Fetch user's bookings
         const userBookings = await bookingService.getBookings()
-        setBookings(userBookings)
+        console.log('🚀 Raw booking data from API:', userBookings)
+        
+        // Log each booking's service information
+        userBookings.forEach((booking, index) => {
+          console.log(`📋 Booking ${index + 1}:`, {
+            id: booking.id,
+            service_id: booking.service_id,
+            service_type: booking.service_type,
+            consultant_id: booking.consultant_id,
+            all_fields: Object.keys(booking)
+          })
+        })
+        
+        // Enhance bookings with consultant and service details
+        const enhancedBookings = await enhanceBookingsWithDetails(userBookings)
+        setBookings(enhancedBookings)
         
         // Try to get fresh user data from API
         try {
@@ -186,7 +347,7 @@ export function ClientDashboard() {
     (booking.documents || []).map(doc => ({
       ...doc,
       booking_id: booking.id,
-      booking_service: booking.service_type || `Service #${booking.service_id}`,
+      booking_service: booking.service_name || booking.service_type || `Service #${booking.service_id}`,
       booking_date: booking.booking_date || booking.scheduled_date
     }))
   )
@@ -194,7 +355,7 @@ export function ClientDashboard() {
   // Get intake forms from bookings
   const intakeForms = bookings.filter(booking => booking.intake_form_data).map(booking => ({
     id: booking.id,
-    service: booking.service_type || `Service #${booking.service_id}`,
+    service: booking.service_name || booking.service_type || `Service #${booking.service_id}`,
     date: booking.booking_date || booking.scheduled_date || new Date().toISOString(),
     data: booking.intake_form_data
   }))
@@ -271,12 +432,16 @@ export function ClientDashboard() {
   }
 
   const handleViewSummary = (session: Booking) => {
-    setSelectedSession(session)
+    // Find the enhanced booking from our state using the booking ID
+    const enhancedBooking = bookings.find(b => b.id === session.id) || session as EnhancedBooking
+    setSelectedSession(enhancedBooking)
     setShowSummaryModal(true)
   }
 
   const handleBookingRowClick = (session: Booking) => {
-    setSelectedSession(session)
+    // Find the enhanced booking from our state using the booking ID
+    const enhancedBooking = bookings.find(b => b.id === session.id) || session as EnhancedBooking
+    setSelectedSession(enhancedBooking)
     setShowSummaryModal(true)
   }
 
@@ -289,7 +454,8 @@ export function ClientDashboard() {
   const refreshBookings = async () => {
     try {
       const updatedBookings = await bookingService.getBookings()
-      setBookings(updatedBookings)
+      const enhancedBookings = await enhanceBookingsWithDetails(updatedBookings)
+      setBookings(enhancedBookings)
     } catch (error: any) {
       console.error('Failed to refresh bookings:', error)
     }
@@ -309,7 +475,8 @@ export function ClientDashboard() {
         await bookingService.updateBooking(bookingId, { status: 'rescheduled' })
         // Refresh bookings
         const updatedBookings = await bookingService.getBookings()
-        setBookings(updatedBookings)
+        const enhancedBookings = await enhanceBookingsWithDetails(updatedBookings)
+        setBookings(enhancedBookings)
         toasts.success('Booking Rescheduled', 'Your booking has been rescheduled successfully.')
       } catch (error: any) {
         toasts.error('Reschedule Failed', error.message || 'Failed to reschedule booking')
@@ -324,7 +491,8 @@ export function ClientDashboard() {
         await bookingService.updateBooking(bookingId, { status: 'cancelled' })
         // Refresh bookings
         const updatedBookings = await bookingService.getBookings()
-        setBookings(updatedBookings)
+        const enhancedBookings = await enhanceBookingsWithDetails(updatedBookings)
+        setBookings(enhancedBookings)
         toasts.success('Booking Cancelled', 'Your booking has been cancelled successfully.')
       } catch (error: any) {
         toasts.error('Cancellation Failed', error.message || 'Failed to cancel booking')
@@ -657,8 +825,8 @@ export function ClientDashboard() {
                       <div key={session.id} className="border border-blue-200/50 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h4 className="font-medium text-gray-900">{session.service_type}</h4>
-                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <h4 className="font-medium text-gray-900">{session.service_name || 'Consultation Service'}</h4>
+                            <p className="text-sm text-gray-600">{session.consultant_name}</p>
                             <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                               <Clock className="h-4 w-4" />
                               {date} at {time}
@@ -771,8 +939,8 @@ export function ClientDashboard() {
                       <div key={session.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleBookingRowClick(session)}>
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium text-gray-900">{session.service_type}</h4>
-                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <h4 className="font-medium text-gray-900">{session.service_name || 'Consultation Service'}</h4>
+                            <p className="text-sm text-gray-600">{session.consultant_name}</p>
                             <p className="text-sm text-gray-500">{date} at {time}</p>
                           </div>
                           <Badge className={getStatusBadgeClass(session.status)}>
@@ -826,8 +994,8 @@ export function ClientDashboard() {
                         const { date, time } = formatDateTime(safeDateTime)
                         return (
                           <tr key={session.id} className="border-b cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleBookingRowClick(session)}>
-                            <td className="p-3 font-medium">{session.service_type}</td>
-                            <td className="p-3">Consultant ID: {session.consultant_id}</td>
+                            <td className="p-3 font-medium">{session.service_name || 'Consultation Service'}</td>
+                            <td className="p-3">{session.consultant_name}</td>
                             <td className="p-3">{date} {time}</td>
                             <td className="p-3">
                               <Badge className={getStatusBadgeClass(session.status)}>
@@ -880,8 +1048,8 @@ export function ClientDashboard() {
                       <div key={session.id} className="bg-gray-50 rounded-xl p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleBookingRowClick(session)}>
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium text-gray-900">{session.service_type}</h4>
-                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <h4 className="font-medium text-gray-900">{session.service_name || 'Consultation Service'}</h4>
+                            <p className="text-sm text-gray-600">{session.consultant_name}</p>
                             <p className="text-sm text-gray-500">{date} at {time}</p>
                           </div>
                           <Badge className={getStatusBadgeClass(session.status)}>
@@ -928,8 +1096,8 @@ export function ClientDashboard() {
                         const { date, time } = formatDateTime(safeDateTime)
                         return (
                           <tr key={session.id} className="border-b cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleBookingRowClick(session)}>
-                            <td className="p-3 font-medium">{session.service_type}</td>
-                            <td className="p-3">Consultant ID: {session.consultant_id}</td>
+                            <td className="p-3 font-medium">{session.service_name || 'Consultation Service'}</td>
+                            <td className="p-3">{session.consultant_name}</td>
                             <td className="p-3">{date} {time}</td>
                             <td className="p-3">
                               <Badge className={getStatusBadgeClass(session.status)}>
