@@ -694,67 +694,60 @@ export function SessionDetailModal({
 
   // Export as PDF (lazy loaded)
   const exportToPDF = async (intakeData: IntakeData) => {
-    try {
-      // Lazy load jsPDF only when needed
-      const jsPDF = (await import('jspdf')).default
-      
-      const doc = new jsPDF()
-      const qaText = formatIntakeAsQA(intakeData)
-      const lines = qaText.split('\n')
-      
-      let yPosition = 20
-      const lineHeight = 6
-      const pageHeight = 280
-      
-      // Set default font
-      doc.setFont('helvetica')
-      doc.setFontSize(10)
-      
-      lines.forEach((line) => {
-        // Check if we need a new page
-        if (yPosition > pageHeight) {
-          doc.addPage()
-          yPosition = 20
-        }
-        
-        // Handle different line types with better styling
-        if (line.includes('=== ') && line.includes(' ===')) {
-          doc.setFontSize(14)
-          doc.setFont('helvetica', 'bold')
-        } else if (line.includes('--- ') && line.includes(' ---')) {
-          doc.setFontSize(12)
-          doc.setFont('helvetica', 'bold')
-        } else if (line.startsWith('Q')) {
-          doc.setFontSize(10)
-          doc.setFont('helvetica', 'bold')
-        } else if (line.startsWith('A:')) {
-          doc.setFontSize(10)
-          doc.setFont('helvetica', 'normal')
-        } else {
-          doc.setFontSize(10)
-          doc.setFont('helvetica', 'normal')
-        }
-        
-        // Split long lines to fit page width
-        const maxWidth = 180
-        const splitLines = doc.splitTextToSize(line, maxWidth)
-        
-        splitLines.forEach((splitLine: string) => {
-          if (yPosition > pageHeight) {
-            doc.addPage()
-            yPosition = 20
-          }
-          doc.text(splitLine, 20, yPosition)
-          yPosition += lineHeight
-        })
-      })
-      
-      // Save the PDF
-      const fileName = `${intakeData.full_name || 'Client'}_Intake_Form_${new Date().toISOString().split('T')[0]}.pdf`
-      doc.save(fileName)
-    } catch (error) {
-      console.error('Failed to load PDF library:', error)
-      alert('Failed to export PDF. Please try again.')
+    // For now, show the data as text since jsPDF is removed to reduce bundle size
+    const qaText = formatIntakeAsQA(intakeData)
+    
+    // Create a new window with the formatted text
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${intakeData.full_name || 'Client'} - Intake Form</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 40px;
+                line-height: 1.6;
+              }
+              h1 {
+                color: #333;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+              }
+              h2 {
+                color: #666;
+                margin-top: 30px;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 5px;
+              }
+              .question {
+                font-weight: bold;
+                margin-top: 15px;
+              }
+              .answer {
+                margin-bottom: 10px;
+                padding-left: 20px;
+              }
+              @media print {
+                body { margin: 20px; }
+              }
+            </style>
+          </head>
+          <body>
+            <h1>${intakeData.full_name || 'Client'} - Intake Form</h1>
+            <pre style="white-space: pre-wrap; font-family: inherit;">${qaText}</pre>
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+    } else {
+      alert('Please allow popups to export the intake form')
     }
   }
 
