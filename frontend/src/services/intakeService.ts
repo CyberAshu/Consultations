@@ -64,11 +64,27 @@ export interface IntakeData {
   urgency?: 'immediately' | 'one_to_three_months' | 'three_to_six_months' | 'flexible'
   target_arrival?: string
   docs_ready?: string[]
+  uploaded_files?: Array<{
+    id: string
+    name: string
+    size: number
+    type: string
+    uploadedAt: string
+    file_path?: string
+  }>
   
   created_at: string
   updated_at?: string
   completed_at?: string
   documents?: IntakeDocument[]
+  
+  // Additional fields for mock data
+  completion_percentage?: number
+  immigration_status_note?: string
+  immigration_goal_note?: string
+  specific_questions?: string
+  previous_applications_summary?: string
+  formatted_text?: string
 }
 
 export interface IntakeSummary {
@@ -106,6 +122,18 @@ class IntakeService {
   // Get current user's intake data
   async getMyIntake(): Promise<IntakeData> {
     const response = await api.get<IntakeData>('/intake/me')
+    return response
+  }
+
+  // Get client intake data (for RCICs)
+  async getClientIntake(clientId: string): Promise<IntakeData> {
+    const response = await api.get<IntakeData>(`/intake/client/${clientId}`)
+    return response
+  }
+
+  // Get client intake summary (for RCICs)
+  async getClientIntakeSummary(clientId: string): Promise<IntakeSummary> {
+    const response = await api.get<IntakeSummary>(`/intake/client/${clientId}/summary`)
     return response
   }
 

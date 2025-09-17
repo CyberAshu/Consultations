@@ -4,10 +4,11 @@ from supabase import Client
 from pydantic import BaseModel
 
 from app.api import deps
-from app.crud import crud_booking, crud_consultant
+from app.crud import crud_booking, crud_consultant, crud_intake
 from app.schemas.booking import BookingInDB, BookingCreate, BookingUpdate, BookingDocumentCreate
 from app.models.booking import BookingStatus, PaymentStatus
 from app.utils.email_service import EmailService
+from app.services.intake_extraction_service import intake_extraction_service
 
 router = APIRouter()
 
@@ -225,6 +226,19 @@ def create_booking_with_duration(
     if not duration_option:
         raise HTTPException(status_code=404, detail="Duration option not found")
     
+    # Extract intake data for this client
+    intake_data = None
+    extracted_intake = None
+    try:
+        intake_data = crud_intake.intake.get_by_client_id(db, current_user["id"])
+        if intake_data:
+            extracted_intake = intake_extraction_service.extract_intake_summary(intake_data)
+            print(f"✅ BookingAPI: Extracted intake data for client {current_user['id']}")
+        else:
+            print(f"⚠️ BookingAPI: No intake data found for client {current_user['id']}")
+    except Exception as e:
+        print(f"⚠️ BookingAPI: Failed to extract intake data: {str(e)}")
+    
     # Create booking with duration-based pricing
     booking_data = {
         "client_id": current_user["id"],
@@ -233,7 +247,7 @@ def create_booking_with_duration(
         "booking_date": booking_request.booking_date,
         "timezone": booking_request.timezone,
         "total_amount": pricing["price"],
-        "intake_form_data": booking_request.intake_form_data or {},
+        "intake_form_data": extracted_intake or booking_request.intake_form_data or {"summary": "No intake data available"},
         "duration_option_id": booking_request.duration_option_id,
     }
     

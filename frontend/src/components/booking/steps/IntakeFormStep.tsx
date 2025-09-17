@@ -31,17 +31,8 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
   const [loadingIntake, setLoadingIntake] = useState(true)
   const [showIntakeOption, setShowIntakeOption] = useState(false)
   
-  // Form data states
+  // Form data state - simplified
   const [formData, setFormData] = useState({
-    immigrationStatus: '',
-    immigrationGoal: '',
-    specificQuestions: '',
-    previousApplications: {
-      expressEntry: false,
-      studyPermit: false,
-      workPermit: false,
-      visitorVisa: false
-    },
     useExistingIntake: false
   })
 
@@ -54,9 +45,19 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
         if (intake && intake.completion_percentage > 0) {
           setExistingIntake(intake)
           setShowIntakeOption(true)
+          // Auto-complete form if user has intake data
+          setFormComplete(true)
+          setFormData({ useExistingIntake: true })
+        } else {
+          // No intake data, but still allow to proceed
+          setFormComplete(true) // Allow booking completion
+          setFormData({ useExistingIntake: false })
         }
       } catch (error) {
         console.log('No existing intake data found (this is normal for new users)')
+        // Allow to proceed even without intake
+        setFormComplete(true)
+        setFormData({ useExistingIntake: false })
       } finally {
         setLoadingIntake(false)
       }
@@ -151,24 +152,6 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const handleFormComplete = () => {
-    // Validate required fields before marking as complete
-    if (!formData.immigrationStatus) {
-      alert('Please select your current immigration status')
-      return
-    }
-    if (!formData.immigrationGoal) {
-      alert('Please select your primary immigration goal')
-      return
-    }
-    if (!formData.specificQuestions?.trim()) {
-      alert('Please describe your specific questions or concerns')
-      return
-    }
-    
-    // All validations passed, mark form as complete
-    setFormComplete(true)
-  }
 
   return (
     <div className="space-y-6">
@@ -203,250 +186,97 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
         </CardContent>
       </Card>
 
-      {/* Existing Intake Data Option */}
-      {showIntakeOption && existingIntake && (
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200/50 shadow-lg">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Existing Intake Data Found!</h3>
-            </div>
-            
-            <div className="bg-white/70 rounded-lg p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="font-medium text-gray-900">Your Intake Progress</p>
-                  <p className="text-sm text-gray-600">{Math.round(existingIntake.completion_percentage)}% completed</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-green-600">
-                    {existingIntake.completed_stages?.length || 0}/12 stages
-                  </div>
-                  <div className="text-xs text-gray-500 capitalize">
-                    {existingIntake.status.replace('_', ' ')}
-                  </div>
-                </div>
+      {/* Intake Step Completion Status */}
+      {formComplete && (
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-300/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div>
+                <h4 className="font-medium text-green-900">
+                  ✅ Intake Step Complete
+                </h4>
+                <p className="text-sm text-green-700">
+                  {formData.useExistingIntake 
+                    ? 'Using your existing intake data for this consultation.' 
+                    : 'Ready to proceed with booking - intake information will be collected as needed.'}
+                </p>
               </div>
-              
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div 
-                  className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${existingIntake.completion_percentage}%` }}
-                />
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={() => {
-                    // Use existing intake data - mark as complete
-                    setFormComplete(true)
-                    setFormData({
-                      immigrationStatus: 'from_intake',
-                      immigrationGoal: 'from_intake', 
-                      specificQuestions: 'Client has completed comprehensive intake form with detailed information.',
-                      previousApplications: { expressEntry: false, studyPermit: false, workPermit: false, visitorVisa: false },
-                      useExistingIntake: true
-                    })
-                  }}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Use My Intake Data
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50"
-                  onClick={() => window.open('/intake', '_blank')}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Update Intake
-                </Button>
-              </div>
-              
-              <p className="text-xs text-gray-500 mt-3 text-center">
-                Using your intake data will provide your RCIC with comprehensive background information for a more effective consultation.
-              </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Form Method Selection - Simplified to only Quick Form */}
-      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-        <CardContent className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {existingIntake ? 'Alternative: Quick Form' : 'Intake Form'}
-          </h3>
-          
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-blue-600 mt-1" />
+      {/* Existing Intake Data Display */}
+      {showIntakeOption && existingIntake && (
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium text-gray-900 mb-1">
-                  {existingIntake ? 'Quick Form (Alternative)' : 'Quick Form'}
-                </h4>
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <h4 className="font-medium text-gray-900">Intake Data Available</h4>
+                </div>
                 <p className="text-sm text-gray-600">
-                  {existingIntake 
-                    ? 'You can still fill out this quick form instead of using your detailed intake data.'
-                    : 'Fill out a simplified intake form to help your RCIC prepare for your consultation.'}
+                  {Math.round(existingIntake.completion_percentage)}% completed • {existingIntake.completed_stages?.length || 0}/12 stages
                 </p>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Embedded Form - Always Show */}
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-          <CardContent className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Intake Form</h3>
-            
-            <form className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Immigration Status
-                  </label>
-                  <select 
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.immigrationStatus}
-                    onChange={(e) => setFormData(prev => ({...prev, immigrationStatus: e.target.value}))}
-                  >
-                    <option value="">Select status</option>
-                    <option value="visitor">Visitor</option>
-                    <option value="student">International Student</option>
-                    <option value="worker">Temporary Worker</option>
-                    <option value="permanent-resident">Permanent Resident</option>
-                    <option value="citizen">Canadian Citizen</option>
-                    <option value="outside-canada">Outside Canada</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Primary Immigration Goal
-                  </label>
-                  <select 
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.immigrationGoal}
-                    onChange={(e) => setFormData(prev => ({...prev, immigrationGoal: e.target.value}))}
-                  >
-                    <option value="">Select goal</option>
-                    <option value="express-entry">Express Entry (PR)</option>
-                    <option value="pnp">Provincial Nominee Program</option>
-                    <option value="study-permit">Study Permit</option>
-                    <option value="work-permit">Work Permit</option>
-                    <option value="family-sponsorship">Family Sponsorship</option>
-                    <option value="visitor-visa">Visitor Visa</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Specific Questions or Concerns
-                </label>
-                <textarea
-                  rows={4}
-                  placeholder="Please describe your specific questions or what you'd like to discuss during the consultation..."
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData.specificQuestions}
-                  onChange={(e) => setFormData(prev => ({...prev, specificQuestions: e.target.value}))}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Previous Immigration Applications
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      className="text-blue-600"
-                      checked={formData.previousApplications.expressEntry}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev, 
-                        previousApplications: {
-                          ...prev.previousApplications, 
-                          expressEntry: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span className="text-sm">Express Entry profile submitted</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      className="text-blue-600"
-                      checked={formData.previousApplications.studyPermit}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev, 
-                        previousApplications: {
-                          ...prev.previousApplications, 
-                          studyPermit: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span className="text-sm">Previous study permit applications</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      className="text-blue-600"
-                      checked={formData.previousApplications.workPermit}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev, 
-                        previousApplications: {
-                          ...prev.previousApplications, 
-                          workPermit: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span className="text-sm">Previous work permit applications</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      className="text-blue-600"
-                      checked={formData.previousApplications.visitorVisa}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev, 
-                        previousApplications: {
-                          ...prev.previousApplications, 
-                          visitorVisa: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span className="text-sm">Previous visitor visa applications</span>
-                  </label>
-                </div>
-              </div>
-
-              <Button
-                type="button"
-                onClick={handleFormComplete}
-                className={`w-full transition-all ${formComplete 
-                  ? 'bg-green-600 hover:bg-green-700 ring-2 ring-green-300' 
-                  : 'bg-green-600 hover:bg-green-700'
-                }`}
-                disabled={formComplete}
+              <Button 
+                variant="outline"
+                size="sm"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                onClick={() => window.open('/intake', '_blank')}
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {formComplete ? 'Form Completed ✓' : 'Complete Form'}
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Update
               </Button>
-              
-              {formComplete && (
-                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Form completed successfully! You can now proceed to the next step.</span>
-                  </div>
-                </div>
-              )}
-            </form>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-3">
+              <div 
+                className="bg-gradient-to-r from-green-500 to-blue-500 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${existingIntake.completion_percentage}%` }}
+              />
+            </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Intake Form Information */}
+      {!showIntakeOption && (
+        <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/50">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <AlertCircle className="h-6 w-6 text-amber-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Complete Your Intake Form</h3>
+            </div>
+            <p className="text-amber-800 mb-4">
+              We need your intake information for this consultation. Please complete our detailed intake form to help your RCIC provide the best possible guidance.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => window.open('/intake', '_blank')}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Complete Intake Form
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setFormComplete(true)
+                  setFormData({
+                    useExistingIntake: false
+                  })
+                }}
+                className="border-amber-300 text-amber-700 hover:bg-amber-50"
+              >
+                Skip for Now
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
 
       {/* Required Documents Upload */}
       <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">

@@ -298,21 +298,13 @@ export function BookingFlow() {
         const intakeForm = bookingData.intakeForm
         if (!intakeForm) return false;
         
-        // Must have completed the form
+        // Must have completed the form (this is automatically set to true in our new flow)
         if (!intakeForm.completed) return false;
         
-        // Must have filled basic form data
-        const formData = intakeForm.formData
-        if (!formData) return false;
-        
-        // Check if required fields are filled
-        const hasRequiredData = (
-          formData.immigrationStatus && 
-          formData.immigrationGoal && 
-          formData.specificQuestions?.trim()
-        )
-        
-        return hasRequiredData;
+        // With our new simplified flow, if form is marked completed, we can proceed
+        // The intake data extraction happens on the backend automatically
+        console.log('✅ Step 4 validation passed - intake form completed:', intakeForm.completed);
+        return true;
       }
       default: {
         return false;

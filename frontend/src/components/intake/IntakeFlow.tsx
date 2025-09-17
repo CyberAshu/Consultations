@@ -22,6 +22,7 @@ import { Stage10History } from './stages/Stage10History'
 import { Stage11Interest } from './stages/Stage11Interest'
 import { Stage12Timeline } from './stages/Stage12Timeline'
 import { useScrollToTop } from '../ui/ScrollToTop'
+import { ProgressDialog } from './ProgressDialog'
 
 export function IntakeFlow() {
   const navigate = useNavigate()
@@ -32,6 +33,7 @@ export function IntakeFlow() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showProgressDialog, setShowProgressDialog] = useState(false)
 
   // Stage data for current stage
   const [stageData, setStageData] = useState<Record<string, any>>({})
@@ -442,6 +444,14 @@ export function IntakeFlow() {
                   }
                 </p>
               </div>
+              <Button 
+                variant="outline"
+                onClick={() => setShowProgressDialog(true)}
+                className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-white/90"
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Progress</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -627,6 +637,15 @@ export function IntakeFlow() {
           )}
         </div>
       </div>
+      
+      {/* Progress Dialog */}
+      <ProgressDialog
+        isOpen={showProgressDialog}
+        onClose={() => setShowProgressDialog(false)}
+        intake={intake}
+        onNavigateToStage={(stage) => setCurrentStage(stage)}
+        currentStage={currentStage}
+      />
     </div>
   )
 }
