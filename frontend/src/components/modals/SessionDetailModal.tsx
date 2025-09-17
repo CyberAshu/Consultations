@@ -7,7 +7,7 @@ import { bookingService } from '../../services/bookingService'
 import { SessionNotesSection } from '../sessionNotes/SessionNotesSection'
 import { DocumentUpload } from '../shared/DocumentUpload'
 import { intakeService, IntakeData } from '../../services/intakeService'
-import jsPDF from 'jspdf'
+// Lazy load jsPDF to reduce bundle size
 
 // Enhanced booking interface with consultant and service details
 interface EnhancedBooking extends Booking {
@@ -692,62 +692,70 @@ export function SessionDetailModal({
     URL.revokeObjectURL(url)
   }
 
-  // Export as PDF
-  const exportToPDF = (intakeData: IntakeData) => {
-    const doc = new jsPDF()
-    const qaText = formatIntakeAsQA(intakeData)
-    const lines = qaText.split('\n')
-    
-    let yPosition = 20
-    const lineHeight = 6
-    const pageHeight = 280
-    
-    // Set default font
-    doc.setFont('helvetica')
-    doc.setFontSize(10)
-    
-    lines.forEach((line) => {
-      // Check if we need a new page
-      if (yPosition > pageHeight) {
-        doc.addPage()
-        yPosition = 20
-      }
+  // Export as PDF (lazy loaded)
+  const exportToPDF = async (intakeData: IntakeData) => {
+    try {
+      // Lazy load jsPDF only when needed
+      const jsPDF = (await import('jspdf')).default
       
-      // Handle different line types with better styling
-      if (line.includes('=== ') && line.includes(' ===')) {
-        doc.setFontSize(14)
-        doc.setFont('helvetica', 'bold')
-      } else if (line.includes('--- ') && line.includes(' ---')) {
-        doc.setFontSize(12)
-        doc.setFont('helvetica', 'bold')
-      } else if (line.startsWith('Q')) {
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'bold')
-      } else if (line.startsWith('A:')) {
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-      } else {
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-      }
+      const doc = new jsPDF()
+      const qaText = formatIntakeAsQA(intakeData)
+      const lines = qaText.split('\n')
       
-      // Split long lines to fit page width
-      const maxWidth = 180
-      const splitLines = doc.splitTextToSize(line, maxWidth)
+      let yPosition = 20
+      const lineHeight = 6
+      const pageHeight = 280
       
-      splitLines.forEach((splitLine: string) => {
+      // Set default font
+      doc.setFont('helvetica')
+      doc.setFontSize(10)
+      
+      lines.forEach((line) => {
+        // Check if we need a new page
         if (yPosition > pageHeight) {
           doc.addPage()
           yPosition = 20
         }
-        doc.text(splitLine, 20, yPosition)
-        yPosition += lineHeight
+        
+        // Handle different line types with better styling
+        if (line.includes('=== ') && line.includes(' ===')) {
+          doc.setFontSize(14)
+          doc.setFont('helvetica', 'bold')
+        } else if (line.includes('--- ') && line.includes(' ---')) {
+          doc.setFontSize(12)
+          doc.setFont('helvetica', 'bold')
+        } else if (line.startsWith('Q')) {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'bold')
+        } else if (line.startsWith('A:')) {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+        } else {
+          doc.setFontSize(10)
+          doc.setFont('helvetica', 'normal')
+        }
+        
+        // Split long lines to fit page width
+        const maxWidth = 180
+        const splitLines = doc.splitTextToSize(line, maxWidth)
+        
+        splitLines.forEach((splitLine: string) => {
+          if (yPosition > pageHeight) {
+            doc.addPage()
+            yPosition = 20
+          }
+          doc.text(splitLine, 20, yPosition)
+          yPosition += lineHeight
+        })
       })
-    })
-    
-    // Save the PDF
-    const fileName = `${intakeData.full_name || 'Client'}_Intake_Form_${new Date().toISOString().split('T')[0]}.pdf`
-    doc.save(fileName)
+      
+      // Save the PDF
+      const fileName = `${intakeData.full_name || 'Client'}_Intake_Form_${new Date().toISOString().split('T')[0]}.pdf`
+      doc.save(fileName)
+    } catch (error) {
+      console.error('Failed to load PDF library:', error)
+      alert('Failed to export PDF. Please try again.')
+    }
   }
 
   // Parse intake form data at component level so it's accessible everywhere
