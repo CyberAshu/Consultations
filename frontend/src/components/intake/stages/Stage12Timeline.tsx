@@ -32,7 +32,7 @@ export function Stage12Timeline({ data, onChange, intake, onSave, saving }: Inta
     }
     
     loadExistingDocuments()
-  }, [])
+  }, [onChange])
 
   const handleFieldChange = (field: string, value: any) => {
     onChange({ [field]: value })
@@ -67,7 +67,7 @@ export function Stage12Timeline({ data, onChange, intake, onSave, saving }: Inta
         setTimeout(() => handleFileUpload(file), index * 500) // Stagger uploads
       })
     }
-  }, [])
+  }, [data, onChange])
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()

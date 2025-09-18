@@ -28,7 +28,7 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
   const [formComplete, setFormComplete] = useState(false)
   const [optionalUploads, setOptionalUploads] = useState<any[]>([])
   const [existingIntake, setExistingIntake] = useState<any>(null)
-  const [loadingIntake, setLoadingIntake] = useState(true)
+  const [, setLoadingIntake] = useState(true) // loadingIntake removed - not used
   const [showIntakeOption, setShowIntakeOption] = useState(false)
   
   // Form data state - simplified
@@ -54,7 +54,7 @@ export function IntakeFormStep({ onDataChange, service, currentData }: IntakeFor
           setFormData({ useExistingIntake: false })
         }
       } catch (error) {
-        console.log('No existing intake data found (this is normal for new users)')
+        // No existing intake data found (this is normal for new users)
         // Allow to proceed even without intake
         setFormComplete(true)
         setFormData({ useExistingIntake: false })

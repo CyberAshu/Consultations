@@ -4,10 +4,8 @@ import {
   Upload, 
   FileText, 
   Trash2, 
-  CheckCircle, 
   AlertCircle, 
-  Loader,
-  X 
+  Loader 
 } from 'lucide-react'
 import { apiPostFormData } from '../../services/api'
 
