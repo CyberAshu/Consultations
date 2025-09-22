@@ -287,21 +287,21 @@ async def create_consultant_application(
 
     # Send auto-response email
     EmailService.send_email(
-        subject="Thank You for Your Interest in Joining Immigration Connect",
+subject="Thank You for Your Interest in Joining Immig Wise",
         recipient=email,
         body=f"""
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+<h1 style="color: white; margin: 0; font-size: 24px;">Immig Wise</h1>
         <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Thank You for Your Interest</p>
     </div>
     
     <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2d3748; margin-top: 0;">Hi {full_legal_name.split()[0] if full_legal_name else 'there'},</h2>
         
-        <p>Thank you for submitting your interest in becoming a Registered Consultant with Immigration Connect. We're excited to learn more about you.</p>
+Thank you for submitting your interest in becoming a Registered Consultant with Immig Wise. We're excited to learn more about you.
         
         <p>Our team is currently reviewing your information to confirm your RCIC status. Once verified, you will receive another email requesting the remaining details to proceed with your onboarding.</p>
         
@@ -314,7 +314,7 @@ async def create_consultant_application(
         
         <p>If you have any questions in the meantime, feel free to contact us at support@immigrationconnect.com or visit our Help Center.</p>
         
-        <p style="margin-top: 30px;">Warm regards,<br/>Immigration Connect Team</p>
+<p style="margin-top: 30px;">Warm regards,<br/>Immig Wise Team</p>
         
         <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
         
@@ -646,21 +646,21 @@ The Platform Team</p>
             
             # Send credentials email
             email_sent = EmailService.send_email(
-                subject="Welcome to Immigration Connect – Your Consultant Account is Ready",
+subject="Welcome to Immig Wise – Your Consultant Account is Ready",
                 recipient=db_application.get('email'),
                 body=f"""
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
         <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Welcome to the Platform</p>
     </div>
     
     <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2d3748; margin-top: 0;">Hi {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'},</h2>
         
-        <p>Congratulations and welcome to Immigration Connect, we're thrilled to have you onboard as a Verified RCIC Partner. Your application has been successfully reviewed and approved by our compliance team. You are now officially part of our growing network of trusted immigration professionals dedicated to helping clients navigate Canadian immigration with clarity and confidence.</p>
+        <p>Congratulations and welcome to ImmigWise, we're thrilled to have you onboard as a Verified RCIC Partner. Your application has been successfully reviewed and approved by our compliance team. You are now officially part of our growing network of trusted immigration professionals dedicated to helping clients navigate Canadian immigration with clarity and confidence.</p>
         
         <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
             <h3 style="color: #0c4a6e; margin-top: 0;">Your Account Details</h3>
@@ -702,9 +702,9 @@ The Platform Team</p>
         <p>We're proud to partner with professionals like you. Together, we're redefining how clients access trusted immigration advice and ensuring that consultants like you are paid fairly, supported technologically, and empowered to grow.</p>
         
         <p style="margin-top: 30px;"><strong>Welcome aboard, {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'}.</strong></p>
-        <p>We look forward to seeing your success on Immigration Connect.</p>
+        <p>We look forward to seeing your success on ImmigWise.</p>
         
-        <p style="margin-top: 30px;">Warm regards,<br/>Immigration Connect Team</p>
+        <p style="margin-top: 30px;">Warm regards,<br/>ImmigWise Team</p>
         
         <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
         
@@ -1063,14 +1063,14 @@ def request_additional_sections(
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+                    <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
                     <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">RCIC Profile Verified</p>
                 </div>
                 
                 <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
                     <h2 style="color: #2d3748; margin-top: 0;">Hi {applicant_name.split()[0] if applicant_name else 'there'},</h2>
                     
-                    <p>Thank you for your interest in Immigration Connect. We're pleased to inform you that your RCIC status has been successfully verified.</p>
+                    <p>Thank you for your interest in ImmigWise. We're pleased to inform you that your RCIC status has been successfully verified.</p>
                     
                     <p>To proceed, we kindly ask you to complete the full application by providing additional information through our secure portal.</p>
                     
@@ -1084,7 +1084,7 @@ def request_additional_sections(
                     
                     <p>Should you have any questions, feel free to contact us at support@immigrationconnect.com.</p>
                     
-                    <p style="margin-top: 30px;">Sincerely,<br/>Immigration Connect Team</p>
+                    <p style="margin-top: 30px;">Sincerely,<br/>ImmigWise Team</p>
                     
                     <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
                     
@@ -1312,14 +1312,14 @@ async def complete_additional_sections(
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
         <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Application Under Review</p>
     </div>
     
     <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2d3748; margin-top: 0;">Hi {applicant_name.split()[0] if applicant_name else 'there'},</h2>
         
-        <p>Thank you for completing your full application to join Immigration Connect. We've received your information and it is now under review by our compliance team.</p>
+        <p>Thank you for completing your full application to join ImmigWise. We've received your information and it is now under review by our compliance team.</p>
         
         <p>We aim to complete the review within 24 to 48 business hours. If any additional documentation is required, our team will reach out to you directly.</p>
         
@@ -1330,7 +1330,7 @@ async def complete_additional_sections(
         
         <p>In the meantime, if you have any questions, please don't hesitate to contact us at support@immigrationconnect.com.</p>
         
-        <p style="margin-top: 30px;">Warm regards,<br/>Immigration Connect Team</p>
+        <p style="margin-top: 30px;">Warm regards,<br/>ImmigWise Team</p>
         
         <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
         

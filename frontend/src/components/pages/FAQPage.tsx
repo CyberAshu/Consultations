@@ -324,7 +324,7 @@ export function FAQPage() {
                   <h4 className="text-xl font-semibold text-gray-900 mb-2">Email Support</h4>
                   <p className="text-gray-600 mb-4 font-light">Get detailed answers to your questions</p>
                   <a
-                    href="mailto:support@immigrationconnect.ca"
+                    href="mailto:info@immigwise.com"
                     className="inline-block bg-black text-white font-medium py-3 px-8 rounded-full hover:bg-gray-800 transition-all duration-300"
                   >
                     Email Us

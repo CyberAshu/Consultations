@@ -231,7 +231,7 @@ class UserCreationService:
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
         <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Account Setup Required</p>
     </div>
     
@@ -254,7 +254,7 @@ class UserCreationService:
                 Click "Sign Up" and register with this email: <strong>{user_email}</strong>
             </li>
             <li><strong>Contact Support:</strong><br/>
-                Email us at <a href="mailto:support@immigrationconnect.com" style="color: #4299e1;">support@immigrationconnect.com</a> with:
+                Email us at <a href="mailto:info@immigwise.com" style="color: #4299e1;">info@immigwise.com</a> with:
                 <ul>
                     <li>Your email address: {user_email}</li>
                     <li>Application ID: #{application_data.get('id', 'N/A')}</li>
@@ -272,7 +272,7 @@ class UserCreationService:
         
         <p>We apologize for this extra step and appreciate your understanding. We're excited to have you on the platform!</p>
         
-        <p style="margin-top: 30px;">Warm regards,<br/>The Immigration Connect Team</p>
+        <p style="margin-top: 30px;">Warm regards,<br/>The ImmigWise Team</p>
     </div>
 </div>
 </body>
@@ -298,21 +298,21 @@ class UserCreationService:
         # This ensures consistency with the templates you've already approved
         
         EmailService.send_email(
-            subject="Welcome to Immigration Connect – Your Consultant Account is Ready",
+            subject="Welcome to ImmigWise – Your Consultant Account is Ready",
             recipient=user_email,
             body=f"""
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
         <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Welcome to the Platform</p>
     </div>
     
     <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
         <h2 style="color: #2d3748; margin-top: 0;">Hi {first_name},</h2>
         
-        <p>Congratulations and welcome to Immigration Connect! Your RCIC application has been successfully approved.</p>
+        <p>Congratulations and welcome to ImmigWise! Your RCIC application has been successfully approved.</p>
         
         <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
             <h3 style="color: #0c4a6e; margin-top: 0;">Your Account Details</h3>
@@ -326,7 +326,7 @@ class UserCreationService:
             <p style="margin: 10px 0; font-size: 14px; color: #6b7280;">Please change your password upon first login.</p>
         </div>
         
-        <p>Best regards,<br/>The Immigration Connect Team</p>
+        <p>Best regards,<br/>The ImmigWise Team</p>
     </div>
 </div>
 </body>
@@ -341,14 +341,14 @@ class UserCreationService:
         first_name = application_data.get('full_legal_name', '').split()[0] if application_data.get('full_legal_name') else 'there'
         
         EmailService.send_email(
-            subject="Immigration Connect - Account Invitation Sent",
+            subject="ImmigWise - Account Invitation Sent",
             recipient=user_email,
             body=f"""
 <html>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">Immigration Connect</h1>
+        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
         <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Account Invitation</p>
     </div>
     
@@ -366,10 +366,10 @@ class UserCreationService:
         </ol>
         
         <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0;"><strong>Note:</strong> If you don't receive the invitation email within 10 minutes, please contact support at support@immigrationconnect.com</p>
+            <p style="margin: 0;"><strong>Note:</strong> If you don't receive the invitation email within 10 minutes, please contact support at info@immigwise.com</p>
         </div>
         
-        <p>Best regards,<br/>The Immigration Connect Team</p>
+        <p>Best regards,<br/>The ImmigWise Team</p>
     </div>
 </div>
 </body>

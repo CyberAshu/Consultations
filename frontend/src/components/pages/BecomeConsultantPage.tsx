@@ -293,7 +293,7 @@ export function BecomeConsultantPage() {
                   Thank You for Your Application!
                 </h2>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  Thank you for expressing interest in becoming a Verified Partner with Immigration Connect. Your submission has been received successfully.
+Thank you for expressing interest in becoming a Verified Partner with ImmigWise. Your submission has been received successfully.
                 </p>
               </div>
               
@@ -339,7 +339,7 @@ export function BecomeConsultantPage() {
               
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <p className="text-blue-800 text-sm text-left">
-                  Thank you for your time and effort. You're one step closer to joining Immigration Connect!
+Thank you for your time and effort. You're one step closer to joining ImmigWise!
                 </p>
               </div>
             </CardContent>

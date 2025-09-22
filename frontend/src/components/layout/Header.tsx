@@ -119,11 +119,11 @@ export function Header() {
             <div className="relative w-10 h-10">
               <div className="absolute inset-0 rounded-lg bg-gray-600 shadow-lg group-hover:shadow-xl transition-all duration-300"></div>
               <div className="absolute inset-1 rounded-lg bg-white flex items-center justify-center">
-                <span className="text-gray-600 font-black text-lg">IC</span>
+                <span className="text-gray-600 font-black text-lg">IW</span>
               </div>
             </div>
             <span className="font-black text-2xl text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
-              ImmigrationConnect
+              ImmigWise
             </span>
           </Link>
 

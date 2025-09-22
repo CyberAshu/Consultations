@@ -73,9 +73,9 @@ export function Footer() {
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center space-x-2 mb-4">
               <div className="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">IC</span>
+                <span className="text-white font-bold text-lg">IW</span>
               </div>
-              <span className="font-bold text-xl text-gray-800">ImmigrationConnect</span>
+              <span className="font-bold text-xl text-gray-800">ImmigWise</span>
             </Link>
             <p className="text-gray-600 text-sm leading-relaxed">
               The easiest way to get licensed Canadian immigration help—no stress, no surprises.
@@ -108,7 +108,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Support</h3>
             <ul className="space-y-3">
               <li><Link to="/faq" className="text-gray-600 hover:text-blue-600 transition-colors">FAQs</Link></li>
-              <li><a href="mailto:support@immigrationconnect.com" className="text-gray-600 hover:text-blue-600 transition-colors">Contact Us</a></li>
+              <li><a href="mailto:info@immigwise.com" className="text-gray-600 hover:text-blue-600 transition-colors">Contact Us</a></li>
               <li><Link to="/privacy-policy" className="text-gray-600 hover:text-blue-600 transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms-of-use" className="text-gray-600 hover:text-blue-600 transition-colors">Terms of Use</Link></li>
             </ul>
@@ -119,7 +119,7 @@ export function Footer() {
         <hr className="my-8 border-gray-300" />
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">&copy; 2024 ImmigrationConnect. All rights reserved.</p>
+<p className="text-sm text-gray-600">&copy; 2025 ImmigWise. All rights reserved.</p>
           <p className="text-xs text-gray-500 mt-2 max-w-3xl mx-auto">
             Disclaimer: This platform is not a law firm and does not offer legal advice or representation. All
             immigration consultations are conducted by independently contracted, licensed RCICs

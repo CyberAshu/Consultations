@@ -318,7 +318,7 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
             <div className="space-y-3 text-sm">
               <div>
                 <p className="font-medium text-gray-900">Technical Support</p>
-                <p className="text-gray-600">support@rcicplatform.com</p>
+                <p className="text-gray-600">info@immigwise.com</p>
                 <p className="text-gray-600">1-800-RCIC-HELP</p>
               </div>
               
@@ -331,7 +331,7 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
             <Button
               variant="outline"
               className="w-full mt-4"
-              onClick={() => window.open('mailto:support@rcicplatform.com')}
+              onClick={() => window.open('mailto:info@immigwise.com')}
             >
               <Mail className="h-4 w-4 mr-2" />
               Contact Support

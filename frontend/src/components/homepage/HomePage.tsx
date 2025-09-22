@@ -349,7 +349,7 @@ useEffect(() => {
         <div className="px-[5dvw] md:px-0 transition-all duration-700 ease-out transform w-[95%] md:w-[44%]" style={{opacity: 1, transform: 'translateY(0px)'}}>
           <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">SERVICES</h2>
           <h1 className="text-4xl md:text-5xl font-light mb-4">Book with Confidence. Pay Only for What You Need</h1>
-          <p className="text-gray-600 font-light mb-8">Immigration Connect empowers you to book trusted Canadian immigration experts on demand from anywhere in the world.</p>
+<p className="text-gray-600 font-light mb-8">ImmigWise empowers you to book trusted Canadian immigration experts on demand from anywhere in the world.</p>
           <div className="w-fit">
             <Button 
               className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors font-light lg:block hidden hover:cursor-pointer"
@@ -428,13 +428,13 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* Why ImmigrationConnect Section - Modern & Responsive */}
+{/* Why ImmigWise Section - Modern & Responsive */}
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-base font-semibold text-blue-600 tracking-wider uppercase">Our Advantage</h2>
             <h3 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 tracking-tight">
-              Why ImmigrationConnect?
+Why ImmigWise?
             </h3>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-500">
               We provide a streamlined, transparent, and secure platform to connect with licensed immigration experts.

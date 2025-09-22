@@ -243,7 +243,7 @@ export function PrivacyPolicyPage() {
                     <div className="flex items-center text-sm text-gray-700">
                       <Mail className="h-4 w-4 mr-2 text-blue-600" />
                       <span className="font-medium">Email:</span>
-                      <span className="ml-2">privacy@immigrationplatform.com</span>
+                      <span className="ml-2">info@immigwise.com</span>
                     </div>
                     <div className="flex items-center text-sm text-gray-700">
                       <Calendar className="h-4 w-4 mr-2 text-blue-600" />
