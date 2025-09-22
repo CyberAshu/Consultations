@@ -24,9 +24,14 @@ import {
   Zap
 } from 'lucide-react'
 
-// Helper function to extract first name only
-const getFirstName = (fullName: string) => {
-  return fullName.split(' ')[0] || fullName
+// Helper: display as "First L." (last name initial)
+const getDisplayName = (fullName: string) => {
+  if (!fullName) return ''
+  const parts = fullName.trim().split(/\s+/)
+  const first = parts[0] || ''
+  const last = parts.length > 1 ? parts[parts.length - 1] : ''
+  const lastInitial = last ? `${last.charAt(0).toUpperCase()}.` : ''
+  return lastInitial ? `${first} ${lastInitial}` : first
 }
 
 interface Consultant {
@@ -188,7 +193,7 @@ export function ConsultantProfilePage() {
                       />
                     ) : (
                       <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-4xl font-bold blur-sm">
-                        {getFirstName(consultant.name).charAt(0)}
+{(consultant.name || '').trim().charAt(0)}
                       </div>
                     )}
                     {consultant.availability === "Available today" && (
@@ -200,7 +205,7 @@ export function ConsultantProfilePage() {
 
                   {/* Profile Info */}
                   <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{getFirstName(consultant.name)}</h1>
+<h1 className="text-3xl font-bold text-gray-900 mb-2">{getDisplayName(consultant.name)}</h1>
                     <p className="text-blue-600 font-semibold mb-3">Licensed Immigration Consultant</p>
                     
                     <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -263,9 +268,9 @@ export function ConsultantProfilePage() {
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8">
                 {[
-                  { id: 'overview', label: 'Overview', icon: User },
-                  { id: 'services', label: 'Services & Pricing', icon: DollarSign },
-                  { id: 'reviews', label: 'Reviews', icon: MessageCircle }
+                  { id: 'overview', label: 'Description / Bio', icon: User },
+                  { id: 'reviews', label: 'Reviews', icon: MessageCircle },
+                  { id: 'services', label: 'Services & Pricing', icon: DollarSign }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -288,7 +293,7 @@ export function ConsultantProfilePage() {
               {activeTab === 'overview' && (
                 <Card>
                   <CardContent className="p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About {getFirstName(consultant.name)}</h2>
+<h2 className="text-2xl font-bold text-gray-900 mb-4">About {getDisplayName(consultant.name)}</h2>
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">{consultant.bio}</p>
                   </CardContent>
                 </Card>

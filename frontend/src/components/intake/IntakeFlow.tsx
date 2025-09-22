@@ -22,7 +22,7 @@ import { Stage10History } from './stages/Stage10History'
 import { Stage11Interest } from './stages/Stage11Interest'
 import { Stage12Timeline } from './stages/Stage12Timeline'
 import { useScrollToTop } from '../ui/ScrollToTop'
-import { ProgressDialog } from './ProgressDialog'
+import { FloatingIntakeProgress } from './FloatingIntakeProgress'
 
 export function IntakeFlow() {
   const navigate = useNavigate()
@@ -33,7 +33,7 @@ export function IntakeFlow() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showProgressDialog, setShowProgressDialog] = useState(false)
+  const [showFloatingProgress, setShowFloatingProgress] = useState(true)
 
   // Stage data for current stage
   const [stageData, setStageData] = useState<Record<string, any>>({})
@@ -46,10 +46,6 @@ export function IntakeFlow() {
   useScrollToTop(currentStage)
 
   // Memoized calculations (must be before early returns)
-  const stageInfo = useMemo(() => {
-    return intakeService.getStageInfo(currentStage)
-  }, [currentStage])
-  
   // Calculate completed stages count reactively (independent calculation)
   const completedStagesCount = useMemo(() => {
     if (!intake?.completed_stages || !Array.isArray(intake.completed_stages)) return 0
@@ -325,14 +321,9 @@ export function IntakeFlow() {
     }
   }
 
-  const handleNext = async () => {
-    try {
-      await saveStageData()
-      if (currentStage < 12) {
-        setCurrentStage(currentStage + 1)
-      }
-    } catch (err) {
-      // Error is already handled in saveStageData
+  const handleSkip = () => {
+    if (currentStage < 12) {
+      setCurrentStage(currentStage + 1)
     }
   }
 
@@ -444,45 +435,11 @@ export function IntakeFlow() {
                   }
                 </p>
               </div>
-              <Button 
-                variant="outline"
-                onClick={() => setShowProgressDialog(true)}
-                className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-white/90"
-              >
-                <CheckCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Progress</span>
-              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Progress indicator */}
-      <div className="bg-white/60 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {stageInfo.title}
-            </h2>
-            <span className="text-sm text-gray-500">
-              {isFullyCompleted ? '12 of 12 completed' : `${completedStagesCount} of 12 completed`}
-            </span>
-          </div>
-          <p className="text-gray-600 text-sm mb-4">{stageInfo.description}</p>
-          
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                isFullyCompleted 
-                  ? 'bg-gradient-to-r from-green-600 to-emerald-600'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600'
-              }`}
-              style={{ width: `${isFullyCompleted ? 100 : completionPercentage}%` }}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Stage content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -525,58 +482,53 @@ export function IntakeFlow() {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={handleNext}
+                      onClick={handleSkip}
                       disabled={currentStage === 12}
                       className="flex items-center gap-2"
                     >
-                      Next
+                      Skip
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                     
                     {!isReviewMode && (
-                      <Button
-                        onClick={() => completeStage()}
-                        disabled={!canProceedToNext() || saving}
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                        title={!canProceedToNext() ? 'Please fill in all required fields' : 'Complete this stage'}
-                      >
-                        {saving ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                            Completing...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4" />
-                            {currentStage === 12 ? 'Complete Intake' : 'Complete Stage'}
-                          </>
-                        )}
-                      </Button>
-                    )}
-                    
-                    {/* Show validation errors for debugging */}
-                    {!isReviewMode && currentStage === 12 && !canProceedToNext() && (
-                      <div className="text-xs text-red-600 mt-1 space-y-1">
-                        <div>Missing: {(() => {
-                          const relevantData = getRelevantStageData(currentStage, stageData)
-                          const validation = intakeService.validateStageData(currentStage, relevantData)
-                          return validation.errors.join(', ')
-                        })()}</div>
-                        
-                        {/* Force complete option for Stage 12 */}
+                      currentStage === 12 && isFullyCompleted ? (
+                        <Button
+                          onClick={() => navigate('/client-dashboard')}
+                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Go to Dashboard
+                        </Button>
+                      ) : (
                         <Button
                           onClick={() => {
-                            // Force complete by bypassing validation
-                            completeStage(true)
+                            if (currentStage === 12) {
+                              completeStage().then(() => {
+                                navigate('/client-dashboard')
+                              }).catch(() => { /* errors handled inside completeStage */ })
+                            } else {
+                              completeStage()
+                            }
                           }}
-                          disabled={saving}
-                          variant="outline"
-                          className="text-xs h-6 px-2 py-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+                          disabled={!canProceedToNext() || saving}
+                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                          title={!canProceedToNext() ? 'Please fill in all required fields' : (currentStage === 12 ? 'Finish intake' : 'Complete and go to next stage')}
                         >
-                          Force Complete Anyway
+                          {saving ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                              Completing...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              {currentStage === 12 ? 'Finish Intake' : 'Next'}
+                            </>
+                          )}
                         </Button>
-                      </div>
+                      )
                     )}
+                    
                   </div>
                 </div>
               </div>
@@ -584,30 +536,6 @@ export function IntakeFlow() {
           </Card>
 
 
-          {/* Simple completion section for Stage 12 */}
-          {!isReviewMode && currentStage === 12 && !isFullyCompleted && (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-semibold text-blue-900">Ready to Complete?</h4>
-                    <p className="text-sm text-blue-700">
-                      {stageData.urgency ? 
-                        'You\'ve selected your timeline. Click to finish your intake!' : 
-                        'Please select your timeline urgency above first.'}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => completeStage(true)}
-                    disabled={saving || !stageData.urgency}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {saving ? 'Completing...' : 'Finish Intake'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Completion message */}
           {isFullyCompleted && (
@@ -638,14 +566,15 @@ export function IntakeFlow() {
         </div>
       </div>
       
-      {/* Progress Dialog */}
-      <ProgressDialog
-        isOpen={showProgressDialog}
-        onClose={() => setShowProgressDialog(false)}
+      {/* Floating Intake Progress */}
+      <FloatingIntakeProgress
         intake={intake}
-        onNavigateToStage={(stage) => setCurrentStage(stage)}
         currentStage={currentStage}
+        isVisible={showFloatingProgress && !isFullyCompleted}
+        onClose={() => setShowFloatingProgress(false)}
+        onNavigateToStage={(stage) => setCurrentStage(stage)}
       />
+
     </div>
   )
 }

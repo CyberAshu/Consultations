@@ -17,9 +17,14 @@ import {
   Clock,
 } from 'lucide-react'
 
-// Helper function to extract first name only
-const getFirstName = (fullName: string) => {
-  return fullName.split(' ')[0] || fullName
+// Helper: display as "First L." (last name initial)
+const getDisplayName = (fullName: string) => {
+  if (!fullName) return ''
+  const parts = fullName.trim().split(/\s+/)
+  const first = parts[0] || ''
+  const last = parts.length > 1 ? parts[parts.length - 1] : ''
+  const lastInitial = last ? `${last.charAt(0).toUpperCase()}.` : ''
+  return lastInitial ? `${first} ${lastInitial}` : first
 }
 
 export function ConsultantsPage() {
@@ -299,7 +304,7 @@ export function ConsultantsPage() {
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center blur-sm">
                         <div className="text-white text-4xl font-bold">
-                          {getFirstName(consultant.name).charAt(0)}
+{(consultant.name || '').trim().charAt(0)}
                         </div>
                       </div>
                     )}
@@ -310,7 +315,7 @@ export function ConsultantsPage() {
                     {/* Name & Title */}
                     <div className="text-center mb-4">
                       <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        {getFirstName(consultant.name)}
+{getDisplayName(consultant.name)}
                       </h3>
                       <p className="text-gray-600 text-sm mb-2">
                         Licensed Immigration Consultant
@@ -410,7 +415,7 @@ export function ConsultantsPage() {
                     />
                   ) : (
                     <div className="w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold blur-sm">
-                      {getFirstName(selectedConsultant.name).charAt(0)}
+{(selectedConsultant.name || '').trim().charAt(0)}
                     </div>
                   )}
                   {selectedConsultant.availability_status === "available" && (
@@ -421,7 +426,7 @@ export function ConsultantsPage() {
                 </div>
                 <div className="flex-1 text-center sm:text-left">
                   <h4 className="text-xl sm:text-2xl font-light text-gray-900 mb-1">
-                    {getFirstName(selectedConsultant.name)}
+{getDisplayName(selectedConsultant.name)}
                   </h4>
                   <p className="text-blue-600 font-medium mb-2">
                     Licensed Immigration Consultant
@@ -455,8 +460,8 @@ export function ConsultantsPage() {
                 <nav className="-mb-px flex space-x-8">
                   {[
                     { id: 'bio', label: 'Description / Bio', icon: User },
-                    { id: 'services', label: 'Services & Pricing', icon: DollarSign },
-                    { id: 'reviews', label: 'Reviews', icon: MessageCircle }
+                    { id: 'reviews', label: 'Reviews', icon: MessageCircle },
+                    { id: 'services', label: 'Services & Pricing', icon: DollarSign }
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -478,22 +483,22 @@ export function ConsultantsPage() {
               <div className="mb-6">
                 {activeModalTab === 'bio' && (
                   <div>
-                    <p className={`text-gray-700 leading-relaxed text-base ${!isAuthenticated ? 'blur-sm' : ''}`}>
-                      {isAuthenticated ? selectedConsultant.bio : 'This consultant has extensive experience in immigration consulting. Please login to view full bio and details.'}
+<p className="text-gray-700 leading-relaxed text-base">
+                      {selectedConsultant.bio || 'No bio provided yet.'}
                     </p>
                     
                     {/* Additional Info */}
-                    <div className={`mt-6 grid sm:grid-cols-2 gap-4 ${!isAuthenticated ? 'blur-sm' : ''}`}>
+<div className="mt-6 grid sm:grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm font-medium text-gray-500 mb-1">Experience</div>
                         <div className="text-lg font-semibold text-gray-900">
-                          {isAuthenticated ? (selectedConsultant.experience_years ? `${selectedConsultant.experience_years}+ years` : (selectedConsultant.experience || 'N/A')) : '••• years'}
+                          {selectedConsultant.experience_years ? `${selectedConsultant.experience_years}+ years` : (selectedConsultant.experience || 'N/A')}
                         </div>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm font-medium text-gray-500 mb-1">Total Reviews</div>
                         <div className="text-lg font-semibold text-green-600">
-                          {isAuthenticated ? (selectedConsultant.review_count || selectedConsultant.total_reviews || '0') : '•••'}
+                          {selectedConsultant.review_count || selectedConsultant.total_reviews || '0'}
                         </div>
                       </div>
                     </div>
