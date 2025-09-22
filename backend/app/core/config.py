@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     
     # Application
     API_V1_STR: str = "/api/v1"
-PROJECT_NAME: str = "ImmigWise API"
+    PROJECT_NAME: str = "ImmigWise API"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
     FRONTEND_URL: Optional[str]
     
@@ -26,7 +26,7 @@ PROJECT_NAME: str = "ImmigWise API"
     SMTP_USER: str
     SMTP_PASSWORD: str
     FROM_EMAIL: Optional[str] = None
-FROM_NAME: Optional[str] = "ImmigWise Team"
+    FROM_NAME: Optional[str] = "ImmigWise Team"
     
     # Stripe
     STRIPE_PUBLISHABLE_KEY: Optional[str] = None
