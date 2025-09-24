@@ -1,4 +1,26 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+// Normalize API base URL
+// - In production, prefer relative "/api/v1" to avoid CORS/mixed-content issues
+// - If an absolute HTTP URL is provided for the same host while page is HTTPS, upgrade to HTTPS
+let API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || '/api/v1').trim();
+
+try {
+  if (typeof window !== 'undefined') {
+    // If base is absolute and uses http while page is https, and host matches, upgrade to https
+    if (API_BASE_URL.startsWith('http://') && window.location.protocol === 'https:') {
+      const u = new URL(API_BASE_URL);
+      const pageHost = window.location.hostname.replace(/^www\./, '');
+      const apiHost = u.hostname.replace(/^www\./, '');
+      if (apiHost === pageHost) {
+        u.protocol = 'https:';
+        API_BASE_URL = u.origin + u.pathname.replace(/\/$/, '');
+      }
+    }
+    // Ensure no trailing slash at end (endpoints already start with "/")
+    API_BASE_URL = API_BASE_URL.replace(/\/$/, '');
+  }
+} catch (_) {
+  // If URL parsing fails (e.g., in SSR), keep as-is
+}
 
 export interface ApiResponse<T> {
   data?: T;
@@ -195,3 +217,6 @@ export const api = {
   delete: apiDelete,
   postFormData: apiPostFormData
 };
+
+// Export normalized base URL for other modules (SSE, polling, etc.)
+export { API_BASE_URL };

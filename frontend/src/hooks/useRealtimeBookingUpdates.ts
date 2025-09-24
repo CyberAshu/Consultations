@@ -114,8 +114,9 @@ export function useRealtimeBookingUpdates(
         // Poll each booking individually
         for (const booking of bookings) {
           // Use the same URL pattern as the API service
-          const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
-          const url = `${API_BASE_URL}/events/booking-status/${booking.id}`;
+      // Reuse normalized API base URL from api.ts to avoid mixed content
+      const { API_BASE_URL } = await import('../services/api');
+      const url = `${API_BASE_URL}/events/booking-status/${booking.id}`;
           console.log(`🔍 Polling booking ${booking.id} at: ${url}`);
           
           const response = await fetch(url, {
@@ -172,7 +173,8 @@ export function useRealtimeBookingUpdates(
       console.log('🔑 Token available, attempting SSE connection...')
       // Note: EventSource doesn't support custom headers directly
       // We need to pass the token as a query parameter or use a different approach
-      const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+      // Reuse normalized API base URL from api.ts to avoid mixed content
+      const { API_BASE_URL } = await import('../services/api');
       const sseUrl = `${API_BASE_URL}/events/booking-updates?token=${encodeURIComponent(token)}`
       console.log('🌐 SSE URL:', sseUrl)
       const eventSource = new EventSource(sseUrl)
@@ -296,7 +298,7 @@ export function useBookingStatusPolling(
         const token = authService.getToken()
         if (!token) return
 
-        const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+        const { API_BASE_URL } = await import('../services/api');
         const response = await fetch(`${API_BASE_URL}/events/booking-status/${bookingId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
