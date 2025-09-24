@@ -9,7 +9,8 @@ class ConsultantApplicationService {
 
   // Create a complete consultant application
   async createApplication(applicationData: FormData): Promise<ConsultantApplication> {
-    return apiPostFormData<ConsultantApplication>('/consultant-applications', applicationData);
+    // Trailing slash to match FastAPI route and avoid 307
+    return apiPostFormData<ConsultantApplication>('/consultant-applications/', applicationData);
   }
 
   // Get all consultant applications (admin only)
@@ -18,7 +19,8 @@ class ConsultantApplicationService {
     limit?: number; 
     status?: string; 
   }): Promise<ConsultantApplication[]> {
-    return apiGet<ConsultantApplication[]>('/consultant-applications', filters);
+    // Trailing slash to match FastAPI route and avoid 307
+    return apiGet<ConsultantApplication[]>('/consultant-applications/', filters);
   }
 
   // Get application statistics (admin only)

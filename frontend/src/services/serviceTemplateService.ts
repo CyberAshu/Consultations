@@ -4,7 +4,8 @@ import { ServiceTemplate, ServiceDurationOption, ServiceDurationOptionCreate, Se
 class ServiceTemplateService {
   // Get all active service templates
   async getServiceTemplates(): Promise<ServiceTemplate[]> {
-    return apiGet<ServiceTemplate[]>('/service-templates');
+    // Trailing slash to match FastAPI route and avoid 307
+    return apiGet<ServiceTemplate[]>('/service-templates/');
   }
 
   // Get service template by ID
@@ -14,7 +15,8 @@ class ServiceTemplateService {
 
   // Admin only: Create new service template
   async createServiceTemplate(templateData: Partial<ServiceTemplate>): Promise<ServiceTemplate> {
-    return apiPost<ServiceTemplate>('/service-templates', templateData);
+    // Trailing slash to match FastAPI route and avoid 307
+    return apiPost<ServiceTemplate>('/service-templates/', templateData);
   }
 
   // Admin only: Update service template
@@ -36,7 +38,8 @@ class ServiceTemplateService {
 
   // Admin only: Create new duration option
   async createDurationOption(optionData: ServiceDurationOptionCreate): Promise<ServiceDurationOption> {
-    return apiPost<ServiceDurationOption>('/service-duration-options', optionData);
+    // Trailing slash to match FastAPI route and avoid 307
+    return apiPost<ServiceDurationOption>('/service-duration-options/', optionData);
   }
 
   // Admin only: Update duration option

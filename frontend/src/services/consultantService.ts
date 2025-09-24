@@ -25,7 +25,8 @@ class ConsultantService {
 
   // Create new consultant
   async createConsultant(data: Partial<Consultant>): Promise<Consultant> {
-    return apiPost<Consultant>('/consultants', data);
+    // Trailing slash to match FastAPI route and avoid 307
+    return apiPost<Consultant>('/consultants/', data);
   }
 
   // Update consultant information
