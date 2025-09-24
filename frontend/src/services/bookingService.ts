@@ -21,7 +21,8 @@ interface PriceResponse {
 class BookingService {
   // Get user's bookings
   async getBookings(): Promise<Booking[]> {
-    return apiGet<Booking[]>('/bookings');
+    // Use trailing slash to match FastAPI route and avoid 307 redirects
+    return apiGet<Booking[]>('/bookings/');
   }
 
   // Get specific booking by ID
@@ -37,7 +38,8 @@ class BookingService {
   // Create a new booking with optional duration
   async createBooking(bookingData: CreateBookingRequest, duration?: number): Promise<Booking> {
     const payload = duration ? { ...bookingData, duration } : bookingData;
-    return apiPost<Booking>('/bookings', payload);
+    // Use trailing slash to match FastAPI route and avoid 307 redirects
+    return apiPost<Booking>('/bookings/', payload);
   }
 
   // Update booking information

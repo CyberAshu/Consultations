@@ -84,8 +84,11 @@ class ConsultantApplicationService {
 
   // Get document URL for viewing
   getDocumentUrl(filename: string): string {
-    const baseUrl = process.env.REACT_APP_API_BASE_URL;
-    return `${baseUrl}/consultant-applications/documents/${filename}`;
+    // Use normalized API base URL to avoid mixed content/CORS issues
+    // Import lazily to avoid circular dependencies in some bundlers
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { API_BASE_URL } = require('./api');
+    return `${API_BASE_URL}/consultant-applications/documents/${filename}`;
   }
 
   // Request additional sections from applicant (Admin only)
