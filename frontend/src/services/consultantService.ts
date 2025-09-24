@@ -14,7 +14,8 @@ import {
 class ConsultantService {
   // Get list of consultants with optional filters
   async getConsultants(filters: ConsultantFilters = {}): Promise<Consultant[]> {
-    return apiGet<Consultant[]>('/consultants', filters);
+    // Use trailing slash to match FastAPI route mounted at "/consultants/" and avoid 307 redirects
+    return apiGet<Consultant[]>('/consultants/', filters);
   }
 
   // Get consultant details by ID

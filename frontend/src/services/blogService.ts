@@ -8,7 +8,7 @@ import {
 class BlogService {
   // Get list of blog posts with optional filters
   async getBlogPosts(filters: BlogFilters = {}): Promise<BlogPost[]> {
-    return apiGet<BlogPost[]>('/blogs', filters);
+    return apiGet<BlogPost[]>('/blogs/', filters);
   }
 
   // Search blog posts
@@ -23,7 +23,7 @@ class BlogService {
 
   // Create new blog post
   async createBlogPost(postData: CreateBlogPostRequest): Promise<BlogPost> {
-    return apiPost<BlogPost>('/blogs', postData);
+    return apiPost<BlogPost>('/blogs/', postData);
   }
 
   // Update blog post
