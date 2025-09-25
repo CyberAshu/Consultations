@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../ui/Card'
-import { ChevronDown, HelpCircle } from 'lucide-react'
+import { ChevronDown, HelpCircle, Search, Filter } from 'lucide-react'
 import { featuresService, FAQ } from '../../services'
 
 export function FAQPage() {
   const [openFaq, setOpenFaq] = useState<string | number | null>(null)
   const [faqs, setFaqs] = useState<FAQ[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const loadAllFAQs = async () => {
@@ -23,93 +25,54 @@ export function FAQPage() {
     loadAllFAQs();
   }, []);
 
-  const staticFaqs = [
-    {
-      category: "Getting Started",
-      questions: [
-        {
-          question: "Who are your consultants?",
-          answer:
-            "All our consultants are licensed RCICs (Regulated Canadian Immigration Consultants) verified by the College of Immigration and Citizenship Consultants (CICC). Each consultant displays their license number and has been vetted for experience and professionalism.",
-        },
-        {
-          question: "How do I book a consultation?",
-          answer:
-            "Simply browse our consultant directory, select a consultant that matches your needs, choose your preferred time slot, and complete the secure payment process. You'll receive a confirmation email with your meeting details.",
-        },
-        {
-          question: "What payment methods do you accept?",
-          answer:
-            "We accept all major credit cards (Visa, Mastercard, American Express) and PayPal. All payments are processed securely through our encrypted payment system.",
-        },
-      ],
-    },
-    {
-      category: "Consultations",
-      questions: [
-        {
-          question: "How do I cancel or reschedule?",
-          answer:
-            "You can cancel or reschedule up to 24 hours before your appointment through your booking confirmation email or by contacting our support team. Cancellations made less than 24 hours in advance may be subject to a fee.",
-        },
-        {
-          question: "Do I need to upload anything?",
-          answer:
-            "For simple consultations, no uploads are required. For file reviews, you'll upload documents after booking to ensure your consultant is prepared. We'll provide a secure upload link and checklist of required documents.",
-        },
-        {
-          question: "What happens during the consultation?",
-          answer:
-            "You'll meet with your chosen RCIC via secure video call. They'll review your situation, answer your questions, and provide expert guidance tailored to your immigration goals. Sessions are confidential and professional.",
-        },
-        {
-          question: "Can I get a recording of my session?",
-          answer:
-            "For privacy and confidentiality reasons, we don't provide session recordings. However, you can purchase a session summary email for $25 CAD that includes key points and recommendations discussed.",
-        },
-      ],
-    },
-    {
-      category: "Pricing & Billing",
-      questions: [
-        {
-          question: "Are there any hidden fees?",
-          answer:
-            "No hidden fees ever. Our pricing is completely transparent - you pay exactly what's listed for each service. The only additional costs are optional add-ons like session summaries or follow-up appointments.",
-        },
-        {
-          question: "Do you offer refunds?",
-          answer:
-            "Refunds are available for cancellations made more than 24 hours in advance. If you're unsatisfied with your consultation, please contact our support team within 48 hours to discuss resolution options.",
-        },
-        {
-          question: "Can I purchase multiple sessions at once?",
-          answer:
-            "Yes! We offer a 3-session bundle for $150 CAD (three 30-minute sessions), which provides savings compared to booking individually. Bundles must be used within 6 months of purchase.",
-        },
-      ],
-    },
-    {
-      category: "Technical Support",
-      questions: [
-        {
-          question: "What if I have technical issues during my call?",
-          answer:
-            "Our support team is available during all consultation hours to help with technical issues. If technical problems prevent your consultation, we'll reschedule at no additional cost.",
-        },
-        {
-          question: "What platform do you use for video calls?",
-          answer:
-            "We use secure, PIPEDA-compliant video conferencing technology. You'll receive a meeting link that works in any modern web browser - no software download required.",
-        },
-        {
-          question: "Is my information secure?",
-          answer:
-            "Absolutely. We use bank-level encryption for all data transmission and storage. Your personal information and documents are protected according to Canadian privacy laws and are never shared without your consent.",
-        },
-      ],
-    },
-  ]
+  // Group FAQs by category
+  const groupedFaqs = React.useMemo(() => {
+    const grouped: { [key: string]: FAQ[] } = {}
+    faqs.forEach(faq => {
+      const category = faq.category || 'General'
+      if (!grouped[category]) {
+        grouped[category] = []
+      }
+      grouped[category].push(faq)
+    })
+    return grouped
+  }, [faqs])
+
+  // Get categories for tabs
+  const categories = React.useMemo(() => {
+    const cats = Object.keys(groupedFaqs)
+    return ['all', ...cats]
+  }, [groupedFaqs])
+
+  // Filter FAQs based on active category and search query
+  const filteredFaqs = React.useMemo(() => {
+    let filtered = faqs
+    
+    // Filter by category
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter(faq => faq.category === activeCategory)
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter(faq => 
+        faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    
+    return filtered
+  }, [faqs, activeCategory, searchQuery])
+
+  const getCategoryDisplayName = (category: string) => {
+    if (category === 'all') return 'All Questions'
+    return category
+  }
+
+  const getCategoryCount = (category: string) => {
+    if (category === 'all') return faqs.length
+    return groupedFaqs[category]?.length || 0
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -146,158 +109,176 @@ export function FAQPage() {
               <span className="block font-semibold text-blue-400">Asked Questions</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-100 mb-8 font-light leading-relaxed max-w-2xl mx-auto drop-shadow-md">
-              Everything you need to know about our platform and services.
+              Helping you feel confident, secure, and informed.
+            </p>
+            <p className="text-lg text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed font-light drop-shadow-md">
+              We know that navigating the immigration process can be overwhelming especially when you're
+              booking a consultation that could affect your future. This FAQ is designed to ease your
+              concerns, answer common questions, and guide you through how the platform works so you
+              can move forward with confidence.
             </p>
           </div>
         </div>
       </section>
 
       {/* FAQ Content */}
-      <section className="py-16 md:py-24 bg-white">
+      <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             {loading ? (
               // Loading skeleton
-              Array.from({ length: 4 }).map((_, categoryIndex) => (
-                <div key={categoryIndex} className="mb-12">
-                  <div className="h-8 bg-gray-300 rounded w-1/3 mb-8 animate-pulse"></div>
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, faqIndex) => (
-                      <div key={faqIndex} className="border border-gray-200 rounded-2xl p-6 bg-gray-100 animate-pulse">
-                        <div className="h-6 bg-gray-300 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                      </div>
-                    ))}
-                  </div>
+              <div className="space-y-8">
+                <div className="flex flex-wrap gap-4 mb-8">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-200 rounded-full w-32 animate-pulse"></div>
+                  ))}
                 </div>
-              ))
+                <div className="space-y-4">
+                  {Array.from({ length: 6 }).map((_, faqIndex) => (
+                    <div key={faqIndex} className="border border-gray-200 rounded-xl p-6 bg-white animate-pulse">
+                      <div className="h-6 bg-gray-300 rounded w-3/4 mb-3"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
               <>
-                {/* API FAQs Section */}
-                {faqs.length > 0 && (
-                  <div className="mb-12">
-                    <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
-                      <HelpCircle className="h-6 w-6 text-blue-600" />
-                      Common Questions
-                    </h2>
-                    <div className="space-y-4">
-{faqs.map((faq, faqIndex) => (
-                        <Card
-                          key={faq.id}
-                          className={`border shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden ${
-                            openFaq === faq.id 
-                              ? 'border-blue-300 bg-white shadow-xl' 
-                              : 'border-gray-200 bg-white hover:border-gray-300'
-                          }`}
-                        >
-                          <CardContent className="p-0">
+                {/* Search and Filter Section */}
+                <div className="mb-12">
+                  <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8">
+                    {/* Search Bar */}
+                    <div className="relative mb-6">
+                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                      <input
+                        type="text"
+                        placeholder="Search for questions..."
+                        className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    
+                    {/* Category Tabs */}
+                    <div className="border-b border-gray-100 -mx-6 md:-mx-8 px-6 md:px-8">
+                      <div className="flex flex-wrap gap-2 md:gap-4 pb-4">
+                        {categories.map((category) => {
+                          const isActive = activeCategory === category
+                          const count = getCategoryCount(category)
+                          
+                          return (
                             <button
-                              className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
-                                openFaq === faq.id 
-                                  ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
-                                  : 'hover:bg-gray-50'
+                              key={category}
+                              onClick={() => setActiveCategory(category)}
+                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                                isActive
+                                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                               }`}
-                              onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
                             >
-                              <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
+                              <span>{getCategoryDisplayName(category)}</span>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                isActive
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-200 text-gray-500'
+                              }`}>
+                                {count}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* FAQ Items */}
+                <div className="space-y-4">
+                  {filteredFaqs.length === 0 ? (
+                    <div className="text-center py-16">
+                      <HelpCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">No questions found</h3>
+                      <p className="text-gray-500">
+                        {searchQuery 
+                          ? `No questions match "${searchQuery}"` 
+                          : 'No questions in this category'}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredFaqs.map((faq) => (
+                      <Card
+                        key={faq.id}
+                        className={`border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden bg-white ${
+                          openFaq === faq.id 
+                            ? 'ring-2 ring-blue-500 shadow-xl' 
+                            : 'hover:shadow-lg'
+                        }`}
+                      >
+                        <CardContent className="p-0">
+                          <button
+                            className={`w-full p-6 md:p-8 text-left flex items-start justify-between transition-all duration-300 group ${
+                              openFaq === faq.id 
+                                ? 'bg-gradient-to-r from-blue-50 via-blue-50 to-transparent border-b border-blue-100' 
+                                : 'hover:bg-gray-50'
+                            }`}
+                            onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                  openFaq === faq.id
+                                    ? 'bg-blue-200 text-blue-800'
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {faq.category}
+                                </span>
+                              </div>
+                              <h3 className={`font-semibold text-lg md:text-xl pr-4 transition-colors duration-300 leading-relaxed ${
                                 openFaq === faq.id 
                                   ? 'text-blue-700' 
                                   : 'text-gray-900 group-hover:text-blue-600'
                               }`}>
                                 {faq.question}
-                              </span>
-                              <div className={`p-2 rounded-full transition-all duration-300 ${
-                                openFaq === faq.id 
-                                  ? 'bg-blue-200 text-blue-700' 
-                                  : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
-                              }`}>
-                                <ChevronDown
-                                  className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
-                                    openFaq === faq.id ? "rotate-180" : ""
-                                  }`}
-                                />
-                              </div>
-                            </button>
-                            {openFaq === faq.id && (
-                              <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
-                                <div className="pt-4">
-                                  <p className="text-gray-700 leading-relaxed text-base">
+                              </h3>
+                            </div>
+                            <div className={`p-3 rounded-full transition-all duration-300 flex-shrink-0 ml-4 ${
+                              openFaq === faq.id 
+                                ? 'bg-blue-200 text-blue-700' 
+                                : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
+                            }`}>
+                              <ChevronDown
+                                className={`h-5 w-5 transition-all duration-300 ${
+                                  openFaq === faq.id ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+                          </button>
+                          {openFaq === faq.id && (
+                            <div className="px-6 md:px-8 pb-6 md:pb-8 bg-gradient-to-b from-blue-50/50 to-white border-t border-blue-100/50">
+                              <div className="pt-6">
+                                <div className="prose prose-gray max-w-none">
+                                  <p className="text-gray-700 leading-relaxed text-base md:text-lg mb-0">
                                     {faq.answer}
                                   </p>
                                 </div>
                               </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+                
+                {/* Show results count */}
+                {filteredFaqs.length > 0 && (
+                  <div className="text-center mt-12 pt-8 border-t border-gray-200">
+                    <p className="text-gray-500 text-sm">
+                      Showing {filteredFaqs.length} of {faqs.length} questions
+                      {searchQuery && ` for "${searchQuery}"`}
+                    </p>
                   </div>
                 )}
-
-                {/* Static FAQs by Category */}
-                {staticFaqs.map((category, categoryIndex) => (
-                  <div key={categoryIndex} className="mb-12">
-                    <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-8 flex items-center gap-3">
-                      <HelpCircle className="h-6 w-6 text-blue-600" />
-                      {category.category}
-                    </h2>
-
-                    <div className="space-y-4">
-                      {category.questions.map((faq, faqIndex) => {
-                        const globalIndex = `static-${categoryIndex}-${faqIndex}`
-                        return (
-                          <Card
-                            key={faqIndex}
-                            className={`border shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden ${
-                              openFaq === globalIndex 
-                                ? 'border-blue-300 bg-white shadow-xl' 
-                                : 'border-gray-200 bg-white hover:border-gray-300'
-                            }`}
-                          >
-                            <CardContent className="p-0">
-                              <button
-                                className={`w-full p-6 text-left flex items-center justify-between transition-all duration-300 group rounded-t-lg ${
-                                  openFaq === globalIndex 
-                                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200' 
-                                    : 'hover:bg-gray-50'
-                                }`}
-                                onClick={() => setOpenFaq(openFaq === globalIndex ? null : globalIndex)}
-                              >
-                                <span className={`font-semibold text-lg pr-4 transition-colors duration-300 ${
-                                  openFaq === globalIndex 
-                                    ? 'text-blue-700' 
-                                    : 'text-gray-900 group-hover:text-blue-600'
-                                }`}>
-                                  {faq.question}
-                                </span>
-                                <div className={`p-2 rounded-full transition-all duration-300 ${
-                                  openFaq === globalIndex 
-                                    ? 'bg-blue-200 text-blue-700' 
-                                    : 'bg-gray-100 text-gray-500 group-hover:bg-blue-100 group-hover:text-blue-600'
-                                }`}>
-                                  <ChevronDown
-                                    className={`h-5 w-5 transition-all duration-300 flex-shrink-0 ${
-                                      openFaq === globalIndex ? "rotate-180" : ""
-                                    }`}
-                                  />
-                                </div>
-                              </button>
-                              {openFaq === globalIndex && (
-                                <div className="px-6 pb-6 bg-gradient-to-b from-blue-50 to-white border-t border-blue-100 animate-fade-in">
-                                  <div className="pt-4">
-                                    <p className="text-gray-700 leading-relaxed text-base">
-                                      {faq.answer}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
               </>
             )}
           </div>
@@ -309,28 +290,43 @@ export function FAQPage() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="mb-12">
-              <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">NEED HELP?</h2>
+              <h2 className="text-sm text-gray-800 font-light mb-4 uppercase tracking-wide">STILL HAVE QUESTIONS?</h2>
               <h3 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-8 leading-tight">
-                Still have <em className="font-light italic text-blue-600">Questions?</em>
+                Our support team is <em className="font-light italic text-blue-600">here to help</em>
               </h3>
               <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed font-light">
-                Our support team is here to help. Contact us and we'll get back to you within 24 hours.
+                We're here to help before, during, and after your session.
               </p>
             </div>
             
             <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-                <div className="text-center flex-1">
-                  <h4 className="text-xl font-semibold text-gray-900 mb-2">Email Support</h4>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="text-center">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-2">📧 Email Support</h4>
                   <p className="text-gray-600 mb-4 font-light">Get detailed answers to your questions</p>
                   <a
-                    href="mailto:info@immigwise.com"
+                    href="mailto:support@immigwise.com"
                     className="inline-block bg-black text-white font-medium py-3 px-8 rounded-full hover:bg-gray-800 transition-all duration-300"
                   >
-                    Email Us
+                    support@immigwise.com
                   </a>
                 </div>
-                <div className="hidden sm:block w-px h-20 bg-gray-200"></div>
+                <div className="text-center">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-2">💬 Live Chat</h4>
+                  <p className="text-gray-600 mb-4 font-light">Monday to Friday, 9am–6pm (EST)</p>
+                  <div className="text-sm text-gray-500 font-medium">
+                    Available on our platform
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-8 pt-8 border-t border-gray-200 text-center">
+                <p className="text-gray-600 font-light">
+                  🔍 Visit our Help Center for tutorials and more information
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Let's make immigration guidance accessible, secure, and human together.
+                </p>
               </div>
             </div>
           </div>
