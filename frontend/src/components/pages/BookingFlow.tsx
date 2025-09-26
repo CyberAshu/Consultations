@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '../shared/Button'
-import { Card, CardContent } from '../ui/Card'
-import { Badge } from '../ui/Badge'
 import { 
   ArrowLeft, 
   ArrowRight, 
   CheckCircle, 
-  Clock, 
   DollarSign, 
   FileText, 
   Calendar,
@@ -21,9 +18,6 @@ import { BookingConfirmation } from '../booking/steps/BookingConfirmation'
 import { FloatingBookingSummary } from '../booking/FloatingBookingSummary'
 import { ScrollToTop } from '../ui/ScrollToTop'
 import { bookingService } from '../../services/bookingService'
-import { consultantService } from '../../services/consultantService'
-import { intakeService } from '../../services/intakeService'
-import { CreateBookingRequest } from '../../services/types'
 
 export function BookingFlow() {
   const navigate = useNavigate()
@@ -146,17 +140,6 @@ export function BookingFlow() {
                           bookingData.service.selected_duration_id ||
                           bookingData.service.selectedDurationId;
     
-    console.log('🔍 Extracting booking IDs:', {
-      serviceId,
-      durationOptionId,
-      serviceObject: bookingData.service,
-      rcicId: bookingData.rcic.id,
-      allServiceKeys: Object.keys(bookingData.service),
-      serviceValues: Object.entries(bookingData.service).filter(([key, value]) => 
-        key.toLowerCase().includes('duration') || key.toLowerCase().includes('option')
-      ),
-      isLegacyService: !durationOptionId && bookingData.service.duration
-    });
     
     if (!serviceId) {
       throw new Error(`Missing service ID: ${serviceId}`);
@@ -178,9 +161,6 @@ export function BookingFlow() {
       intake_form_data: bookingData.intakeForm,
     }
 
-    console.log('Creating booking with data:', bookingRequest)
-    console.log('Service object:', bookingData.service)
-    console.log('RCIC object:', bookingData.rcic)
 
     const createdBooking = await bookingService.createBookingWithDuration(bookingRequest)
 
@@ -192,32 +172,12 @@ export function BookingFlow() {
         ...(Array.isArray(intake.optionalUploads) ? intake.optionalUploads : [])
       ]
 
-      console.log('🔍 BookingFlow: Starting file upload process...')
-      console.log('🔍 BookingFlow: Total files to upload:', allFiles.length)
-      console.log('🔍 BookingFlow: intake object structure:', intake)
-      console.log('🔍 BookingFlow: uploadedFiles array:', intake.uploadedFiles)
-      console.log('🔍 BookingFlow: optionalUploads array:', intake.optionalUploads)
-      console.log('🔍 BookingFlow: allFiles array:', allFiles)
       
       for (const f of allFiles) {
-        console.log('🔍 BookingFlow: Processing file:', {
-          id: f.id,
-          name: f.name,
-          size: f.size,
-          type: f.type,
-          hasFile: !!f.file,
-          fileType: f.file ? f.file.constructor.name : 'No file',
-          isFileInstance: f.file instanceof File,
-          fileObject: f.file,
-          entireFileObject: f
-        })
-        
         // Fix: Check if f.file exists and is a File instance
         if (f && f.file && f.file instanceof File) {
-          console.log('✅ BookingFlow: Uploading file:', f.name)
           try {
-            const uploadResult = await bookingService.uploadBookingDocument(createdBooking.id, f.file)
-            console.log('✅ BookingFlow: File uploaded successfully:', uploadResult)
+await bookingService.uploadBookingDocument(createdBooking.id, f.file)
           } catch (fileUploadError) {
             console.error('❌ BookingFlow: Failed to upload file:', f.name, fileUploadError)
             // Continue with other files even if one fails
@@ -251,13 +211,6 @@ export function BookingFlow() {
   }, [])
 
   const canProceed = () => {
-    console.log('🔍 canProceed check:', {
-      currentStep,
-      bookingData: bookingData,
-      rcic: bookingData.rcic,
-      service: bookingData.service
-    });
-    
     switch (currentStep) {
       case 1: {
         const hasRCIC = !!bookingData.rcic;
@@ -272,16 +225,6 @@ export function BookingFlow() {
           // Alternative formats
           (service.serviceId && service.id)
         );
-        
-        console.log('🔍 Step 1 validation:', {
-          hasRCIC,
-          hasService,
-          serviceData: service,
-          serviceId: service?.serviceId || service?.id,
-          durationOptionId: service?.durationOptionId,
-          serviceName: service?.serviceName || service?.name,
-          fullServiceObject: service
-        });
         
         return hasRCIC && hasService;
       }
@@ -303,7 +246,6 @@ export function BookingFlow() {
         
         // With our new simplified flow, if form is marked completed, we can proceed
         // The intake data extraction happens on the backend automatically
-        console.log('✅ Step 4 validation passed - intake form completed:', intakeForm.completed);
         return true;
       }
       default: {

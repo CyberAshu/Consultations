@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
-import { Input } from '../../ui/Input'
 import { GraduationCap, Info, Award, FileCheck, BookOpen } from 'lucide-react'
 import { IntakeStageProps } from './IntakeStage'
 import { intakeService } from '../../../services/intakeService'
@@ -8,11 +7,9 @@ import { intakeService } from '../../../services/intakeService'
 export function Stage4Education({ data, onChange, intake, onSave, saving }: IntakeStageProps) {
   const options = intakeService.getStageOptions()
   const [showECAProvider, setShowECAProvider] = useState(false)
-  const [showECAResult, setShowECAResult] = useState(false)
 
   useEffect(() => {
     setShowECAProvider(data.eca_status === 'yes')
-    setShowECAResult(data.eca_status === 'yes')
   }, [data.eca_status])
 
   const handleFieldChange = (field: string, value: any) => {

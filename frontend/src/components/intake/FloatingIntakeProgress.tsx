@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { Card, CardContent } from '../ui/Card'
 import { Button } from '../shared/Button'
 import { intakeService } from '../../services/intakeService'
@@ -52,15 +52,15 @@ export function FloatingIntakeProgress({
     }
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       const newX = Math.max(0, Math.min(window.innerWidth - 320, e.clientX - dragOffset.x))
       const newY = Math.max(0, Math.min(window.innerHeight - 400, e.clientY - dragOffset.y))
       setPosition({ x: newX, y: newY })
     }
-  }
+  }, [isDragging, dragOffset])
 
-  const handleMouseUp = () => setIsDragging(false)
+  const handleMouseUp = useCallback(() => setIsDragging(false), [])
 
   useEffect(() => {
     if (isDragging) {
@@ -71,7 +71,7 @@ export function FloatingIntakeProgress({
         document.removeEventListener('mouseup', handleMouseUp)
       }
     }
-  }, [isDragging, dragOffset])
+  }, [isDragging, dragOffset, handleMouseMove, handleMouseUp])
 
   // Auto-position for mobile
   useEffect(() => {

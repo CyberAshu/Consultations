@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../ui/Card'
-import { ChevronDown, HelpCircle, Search, Filter } from 'lucide-react'
+import { ChevronDown, HelpCircle, Search } from 'lucide-react'
 import { featuresService, FAQ } from '../../services'
 
 export function FAQPage() {

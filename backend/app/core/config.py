@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: Optional[str] = None
     
+    # Daily.co Video API
+    DAILY_API_KEY: Optional[str] = None
+    BACKEND_URL: Optional[str] = None
+    
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True

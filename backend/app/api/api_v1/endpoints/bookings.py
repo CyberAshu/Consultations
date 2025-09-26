@@ -4,17 +4,58 @@ from supabase import Client
 from pydantic import BaseModel
 
 from app.api import deps
-from app.crud import crud_booking, crud_consultant, crud_intake
+from app.crud import crud_booking
+from app.crud.crud_consultant import consultant as crud_consultant
 from app.schemas.booking import BookingInDB, BookingCreate, BookingUpdate, BookingDocumentCreate
 from app.models.booking import BookingStatus, PaymentStatus
 from app.utils.email_service import EmailService
 from app.services.intake_extraction_service import intake_extraction_service
+from app.services.daily_service import daily_service
+from app.db.supabase import get_supabase_admin
+from datetime import datetime
 
 router = APIRouter()
 
+async def send_booking_confirmation_email(db: Client, booking: dict) -> bool:
+    """
+    Send booking confirmation email to client.
+    Note: Meeting room URL will be provided when consultant creates the room.
+    """
+    try:
+        admin_db = get_supabase_admin()
+        client_resp = admin_db.auth.admin.get_user_by_id(booking["client_id"])
+        client_user = getattr(client_resp, "user", None)
+        client_email = getattr(client_user, "email", None)
+        
+        if not client_email:
+            return False
+        
+        consultant = crud_consultant.get(db, consultant_id=booking["consultant_id"])
+        if not consultant:
+            return False
+        
+        service_response = db.table("consultant_services").select("name").eq("id", booking["service_id"]).execute()
+        service_name = service_response.data[0]["name"] if service_response.data else "Consultation"
+        
+        EmailService.send_booking_confirmation(
+            recipient_email=client_email,
+            booking_data=booking,
+            consultant_data=consultant,
+            client_name=client_email.split("@")[0],
+            meeting_url=booking.get("meeting_url")
+        )
+        
+        return True
+        
+    except Exception as e:
+        # Log error but don't fail booking creation
+        print(f"Warning: Email sending failed for booking {booking['id']}: {str(e)}")
+        return False
+
+
 class PriceRequest(BaseModel):
     service_id: int
-    duration_option_id: int  # New: specific duration option ID instead of arbitrary minutes
+    duration_option_id: int 
 
 class PriceResponse(BaseModel):
     price: float
@@ -34,7 +75,6 @@ def calculate_price(
     from app.crud.crud_consultant_service_pricing import consultant_service_pricing
     from app.crud.crud_service_duration_option import service_duration_option
     
-    # Get the pricing set by RCIC for this service and duration
     pricing = consultant_service_pricing.get_price_by_duration(
         db, 
         consultant_service_id=price_request.service_id,
@@ -182,7 +222,7 @@ class NewBookingRequest(BaseModel):
 
 
 @router.post("/create-with-duration", response_model=BookingInDB)
-def create_booking_with_duration(
+async def create_booking_with_duration(
     *,
     db: Client = Depends(deps.get_db),
     booking_request: NewBookingRequest,
@@ -257,7 +297,10 @@ def create_booking_with_duration(
         booking_create = BookingCreate(**booking_data)
         booking = crud_booking.create_booking(db=db, obj_in=booking_create)
         
-        # Sanitize booking data to handle null values
+        try:
+            await send_booking_confirmation_email(db, booking)
+        except Exception as e:
+            pass
         return sanitize_booking_data([booking])[0]
     
     except Exception as e:
@@ -317,31 +360,23 @@ async def upload_booking_document(
     """
     from app.services.storage_service import storage_service
     
-    print(f"🔍 BookingAPI: Document upload request for booking {booking_id}")
-    print(f"🔍 BookingAPI: File: {file.filename}, Size: {file.size}, Type: {file.content_type}")
-    print(f"🔍 BookingAPI: User: {current_user['id']} ({current_user['role']})")
+    # Document upload for booking
     
     booking = crud_booking.get_booking(db=db, booking_id=booking_id)
     if not booking:
-        print(f"❌ BookingAPI: Booking {booking_id} not found")
         raise HTTPException(status_code=404, detail="Booking not found")
     
     # Check permissions
     if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
-        print(f"❌ BookingAPI: Permission denied - client {current_user['id']} cannot access booking for client {booking['client_id']}")
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
-    print(f"✅ BookingAPI: Permission check passed")
     
     # Upload file to Supabase Storage
     try:
-        print(f"🔄 BookingAPI: Starting file upload to storage...")
         file_path = await storage_service.upload_file(
             file=file,
             folder=f"bookings/{booking_id}",
             prefix="doc"
         )
-        print(f"✅ BookingAPI: File uploaded to storage at: {file_path}")
         
         # Note: file.read() has already been called in storage_service.upload_file()
         # We need to get the file size differently or calculate it before upload
@@ -352,7 +387,6 @@ async def upload_booking_document(
         if hasattr(file, 'seek'):
             await file.seek(0)
             
-        print(f"🔍 BookingAPI: Creating database record...")
         # Create database record with storage path
         document_data = BookingDocumentCreate(
             booking_id=booking_id,
@@ -363,9 +397,8 @@ async def upload_booking_document(
         )
         
         document = crud_booking.create_booking_document(db=db, obj_in=document_data)
-        print(f"✅ BookingAPI: Database record created with ID: {document['id']}")
         
-        result = {
+        return {
             "id": document["id"],
             "booking_id": document["booking_id"],
             "file_name": document["file_name"],
@@ -375,13 +408,8 @@ async def upload_booking_document(
             "uploaded_at": document["uploaded_at"],
             "message": "File uploaded successfully"
         }
-        print(f"✅ BookingAPI: Document upload completed successfully")
-        return result
         
     except Exception as e:
-        print(f"❌ BookingAPI: Document upload failed: {type(e).__name__}: {str(e)}")
-        import traceback
-        print(f"❌ BookingAPI: Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to upload document: {str(e)}"

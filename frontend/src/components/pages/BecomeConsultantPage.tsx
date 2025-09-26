@@ -8,7 +8,7 @@ import { ConsultantApplication } from '../../services/types';
 export function BecomeConsultantPage() {
   const [currentStep, setCurrentStep] = useState<'initial' | 'additional' | 'complete'>('initial');
   const [applicationId, setApplicationId] = useState<number | null>(null);
-  const [existingApplication, setExistingApplication] = useState<ConsultantApplication | null>(null);
+  const [existingApplication, setExistingApplication] = useState<ConsultantApplication | null>(null); // used to prefill and navigation
   
   const [formData, setFormData] = useState({
     // Section 1: Personal & Contact Information

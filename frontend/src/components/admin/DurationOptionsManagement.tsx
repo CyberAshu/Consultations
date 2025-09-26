@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Button } from '../shared/Button'
@@ -77,7 +77,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
   }
 
   // Load service templates
-  const loadServiceTemplates = async () => {
+  const loadServiceTemplates = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -98,7 +98,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   // Load duration options for selected template
   const loadDurationOptions = async (templateId: number) => {
@@ -117,7 +117,7 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
 
   useEffect(() => {
     loadServiceTemplates()
-  }, [])
+  }, [loadServiceTemplates])
 
   useEffect(() => {
     if (selectedTemplate) {

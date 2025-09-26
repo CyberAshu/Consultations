@@ -1,14 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { Button } from '../shared/Button'
 import { 
   Clock, 
-  User, 
   MapPin, 
   Shield, 
   Minimize2, 
-  Maximize2, 
   X,
   Receipt,
   Calendar,
@@ -55,17 +53,17 @@ export function FloatingBookingSummary({
     }
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       const newX = Math.max(0, Math.min(window.innerWidth - 320, e.clientX - dragOffset.x))
       const newY = Math.max(0, Math.min(window.innerHeight - 400, e.clientY - dragOffset.y))
       setPosition({ x: newX, y: newY })
     }
-  }
+  }, [isDragging, dragOffset])
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false)
-  }
+  }, [])
 
   useEffect(() => {
     if (isDragging) {
@@ -76,7 +74,7 @@ export function FloatingBookingSummary({
         document.removeEventListener('mouseup', handleMouseUp)
       }
     }
-  }, [isDragging, dragOffset])
+  }, [isDragging, handleMouseMove, handleMouseUp])
 
   // Auto-position for mobile
   useEffect(() => {

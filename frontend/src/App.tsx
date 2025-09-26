@@ -21,6 +21,7 @@ import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
 import { BookingFlow } from './components/pages/BookingFlow';
 import { IntakeFlow } from './components/intake/IntakeFlow';
+import { MeetingPage } from './components/pages/MeetingPage';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { GlobalDisclaimerModal, useGlobalDisclaimerModal } from './components/shared/GlobalDisclaimerModal';
 import { ScrollToTop } from './components/ui/ScrollToTop';
@@ -139,6 +140,13 @@ function App() {
           <Route path="/intake" element={
             <ProtectedRoute allowedRoles={['client']}>
               <IntakeFlow />
+            </ProtectedRoute>
+          } />
+          
+          {/* Video meeting route without header/footer */}
+          <Route path="/meeting/:bookingId" element={
+            <ProtectedRoute>
+              <MeetingPage />
             </ProtectedRoute>
           } />
         </Routes>

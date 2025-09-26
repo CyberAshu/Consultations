@@ -34,8 +34,8 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
   // Generate confirmation number
   const confirmationNumber = 'RCIC-' + Math.random().toString(36).substr(2, 9).toUpperCase()
 
-  // Mock Zoom link
-  const zoomLink = 'https://zoom.us/j/123456789'
+  // Check if meeting URL exists from booking data
+  const meetingUrl = bookingData.meeting_url || null
 
   const handleAddToCalendar = () => {
     // In a real app, this would generate a calendar file or use calendar APIs
@@ -137,19 +137,36 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
                   <Video className="h-5 w-5 text-blue-600" />
                   <h4 className="font-medium text-gray-900">Meeting Details</h4>
                 </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  Join your consultation using the link below:
-                </p>
-                <Button
-                  onClick={() => window.open(zoomLink, '_blank')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 mb-2"
-                >
-                  <Video className="h-4 w-4 mr-2" />
-                  Join Zoom Meeting
-                </Button>
-                <p className="text-xs text-gray-500 text-center">
-                  Meeting ID: 123-456-789
-                </p>
+                {meetingUrl ? (
+                  <>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Join your consultation using the link below:
+                    </p>
+                    <Button
+                      onClick={() => navigate(`/meeting/${bookingData.booking_id || bookingData.id}`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 mb-2"
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Join Video Meeting
+                    </Button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Video meeting room has been created
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Your meeting room will be created before your session.
+                    </p>
+                    <div className="w-full bg-gray-100 text-gray-600 text-center py-3 px-4 rounded-md mb-2">
+                      <Video className="h-4 w-4 mr-2 inline" />
+                      Meeting room will be available soon
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">
+                      You'll receive an email with the meeting link
+                    </p>
+                  </>
+                )}
               </div>
 
               {/* Payment Summary */}

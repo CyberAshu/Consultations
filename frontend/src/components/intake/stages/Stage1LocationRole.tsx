@@ -1,7 +1,5 @@
 import React from 'react'
 import { Card, CardContent } from '../../ui/Card'
-import { Input } from '../../ui/Input'
-import { Button } from '../../shared/Button'
 import { MapPin, User, Info } from 'lucide-react'
 import { IntakeStageProps } from './IntakeStage'
 import { intakeService } from '../../../services/intakeService'

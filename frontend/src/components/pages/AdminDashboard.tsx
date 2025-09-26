@@ -24,7 +24,6 @@ import {
   Check,
   X,
   Upload,
-  Download,
   Save,
   Trash2,
   Paperclip,
@@ -37,11 +36,9 @@ export function AdminDashboard() {
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
   const [consultantApplications, setConsultantApplications] = useState<any[]>([])
-  const [applicationStats, setApplicationStats] = useState<any>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [adminNotes, setAdminNotes] = useState('')
   const [newNote, setNewNote] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 

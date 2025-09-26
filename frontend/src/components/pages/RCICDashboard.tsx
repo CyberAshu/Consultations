@@ -8,50 +8,100 @@ import { Calendar, Clock, User, FileText, Settings, DollarSign, LogOut, ArrowLef
 import { bookingService } from '../../services/bookingService'
 import { consultantService } from '../../services/consultantService'
 import { serviceTemplateService } from '../../services/serviceTemplateService'
+import { authService } from '../../services/authService'
 import { useAuth } from '../../hooks/useAuth'
-import { Booking, Consultant, ConsultantServiceInDB, ServiceTemplate } from '../../services/types'
+import { Booking, Consultant, ServiceTemplate } from '../../services/types'
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 import { ServicesTableView } from '../rcic/ServicesTableView'
+
+// Enhanced booking interface with service details (similar to ClientDashboard)
+interface EnhancedBooking extends Booking {
+  service_name?: string
+  service_description?: string
+}
+
+// Function to enhance bookings with service details for RCIC
+const enhanceRCICBookingsWithDetails = async (bookings: Booking[], consultantId: number): Promise<EnhancedBooking[]> => {
+  if (!consultantId || bookings.length === 0) return bookings as EnhancedBooking[]
+  
+  try {
+    // Get all consultant services for this RCIC
+    const consultantServices = await consultantService.getActiveConsultantServices(consultantId)
+    const consultantServicesMap = new Map<number, any>()
+    const serviceTemplateMap = new Map<number, ServiceTemplate>()
+    
+    // Build consultant services lookup
+    consultantServices.forEach(service => {
+      consultantServicesMap.set(service.id, service)
+    })
+    
+    // Get unique service template IDs
+    const serviceTemplateIds = Array.from(
+      new Set(
+        consultantServices
+          .map(service => service.service_template_id)
+          .filter(Boolean)
+      )
+    )
+    
+    // Fetch service templates if available
+    if (serviceTemplateIds.length > 0) {
+      const templateResults = await Promise.allSettled(
+        serviceTemplateIds.map(async (id) => {
+          try {
+            return id ? await serviceTemplateService.getServiceTemplateById(id) : null
+          } catch (error) {
+            return null
+          }
+        })
+      )
+      
+      // Build service template lookup map
+      templateResults.forEach((result, index) => {
+        const templateId = serviceTemplateIds[index]
+        if (result.status === 'fulfilled' && result.value && templateId) {
+          serviceTemplateMap.set(templateId, result.value)
+        }
+      })
+    }
+    
+    // Enhance each booking with service details
+    return bookings.map((booking): EnhancedBooking => {
+      const consultantService = booking.service_id ? consultantServicesMap.get(booking.service_id) : null
+      const serviceTemplate = consultantService?.service_template_id 
+        ? serviceTemplateMap.get(consultantService.service_template_id) 
+        : null
+      
+      // Use service template name if available, otherwise fallback to consultant service name or default
+      const serviceName = serviceTemplate?.name || consultantService?.name || `Service #${booking.service_id}`
+      const serviceDescription = serviceTemplate?.default_description || consultantService?.description
+      
+      return {
+        ...booking,
+        service_name: serviceName,
+        service_description: serviceDescription
+      }
+    })
+    
+  } catch (error) {
+    // Return original bookings if enhancement fails
+    return bookings as EnhancedBooking[]
+  }
+}
 
 export function RCICDashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
+  const [bookings, setBookings] = useState<EnhancedBooking[]>([])
   const [initialBookingsLoaded, setInitialBookingsLoaded] = useState(false)
-  const [refreshingBookings, setRefreshingBookings] = useState(false)
   const [consultant, setConsultant] = useState<Consultant | null>(null)
-  const [services, setServices] = useState<ConsultantServiceInDB[]>([])
-  const [servicesLoading, setServicesLoading] = useState(false)
-  const [servicesError, setServicesError] = useState<string | null>(null)
-  const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
-  const [templatesLoading, setTemplatesLoading] = useState(false)
-  const [templatesError, setTemplatesError] = useState<string | null>(null)
-  const [isAdding, setIsAdding] = useState(false)
-  const [newService, setNewService] = useState({
-    service_template_id: 0,
-    name: '',
-    duration: 30, // Duration in minutes as number
-    price: 0,
-    description: '',
-    is_active: true,
-  })
-  const [editingServiceId, setEditingServiceId] = useState<number | null>(null)
-  const [editService, setEditService] = useState({
-    name: '',
-    duration: 30, // Duration in minutes as number
-    price: 0,
-    description: '',
-    is_active: true,
-  })
   // Client names mapping
   const [clientNames, setClientNames] = useState<{[key: string]: string}>({})
   
   // Document management
-  const [bookingDocuments, setBookingDocuments] = useState<{[key: number]: any[]}>({})
-  const [documentLoading, setDocumentLoading] = useState<{[key: number]: boolean}>({})
+  const [bookingDocuments] = useState<{[key: number]: any[]}>({})
   
   // Modal states
   const [showIntakeModal, setShowIntakeModal] = useState(false)
@@ -61,7 +111,6 @@ export function RCICDashboard() {
   const [selectedClient, setSelectedClient] = useState<any>(null)
   // Status update states
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null)
-  const [statusUpdateError, setStatusUpdateError] = useState<string | null>(null)
   // Session detail modal states
   const [showSessionDetailModal, setShowSessionDetailModal] = useState(false)
   const [selectedSession, setSelectedSession] = useState<any>(null)
@@ -81,14 +130,10 @@ export function RCICDashboard() {
       setProfileSaveMessage(null)
       // Prepare payload with arrays normalized
       const payload: any = { ...profileForm }
-      if (Array.isArray(payload.languages)) {
-        payload.languages = payload.languages
-      } else if (typeof payload.languages === 'string') {
+      if (typeof payload.languages === 'string') {
         payload.languages = payload.languages.split(',').map((s: string) => s.trim()).filter(Boolean)
       }
-      if (Array.isArray(payload.specialties)) {
-        payload.specialties = payload.specialties
-      } else if (typeof payload.specialties === 'string') {
+      if (typeof payload.specialties === 'string') {
         payload.specialties = payload.specialties.split(',').map((s: string) => s.trim()).filter(Boolean)
       }
       // Remove auth-only and unrelated fields
@@ -237,55 +282,37 @@ export function RCICDashboard() {
     fetchConsultantDetails();
   }, [user]);
 
-  // Add this function to fetch documents for each booking
-  const fetchBookingDocuments = async (bookingId: number) => {
-    try {
-      setDocumentLoading(prev => ({...prev, [bookingId]: true}))
-      console.log(`🔥 Fetching documents for booking ${bookingId}...`)
-      const response = await bookingService.getBookingDocuments(bookingId)
-      console.log(`📄 Documents for booking ${bookingId}:`, response)
-      
-      setBookingDocuments(prev => ({
-        ...prev, 
-        [bookingId]: response.documents || []
-      }))
-    } catch (error) {
-      console.error(`❌ Failed to fetch documents for booking ${bookingId}:`, error)
-      setBookingDocuments(prev => ({...prev, [bookingId]: []}))
-    } finally {
-      setDocumentLoading(prev => ({...prev, [bookingId]: false}))
-    }
-  }
 
-  // Centralized bookings fetcher with optional spinner
+  // Centralized bookings fetcher with loading state management
   const didFetchRef = useRef(false)
-  const fetchBookings = async (showSpinner: boolean) => {
+  const [loading, setLoading] = useState(true)
+  
+  const fetchBookings = async (showSpinner: boolean = true) => {
+    if (!consultant) return
+    
     try {
-      if (showSpinner && !initialBookingsLoaded) setLoading(true); else setRefreshingBookings(true)
-      const data = await bookingService.getBookings()
-      const filteredBookings = consultant ? data.filter(b => b.consultant_id === consultant.id) : []
-      setBookings(filteredBookings)
-      const clientIds = filteredBookings.map(b => b.client_id).filter((id, i, arr) => arr.indexOf(id) === i)
-      await fetchClientNames(clientIds)
-      
-      // 🔥 FETCH DOCUMENTS FOR EACH BOOKING
-      console.log('📄 Fetching documents for all bookings...')
-      for (const booking of filteredBookings) {
-        // Don't await - fetch in parallel to not slow down the UI
-        fetchBookingDocuments(booking.id).catch(err => {
-          console.warn(`Failed to fetch documents for booking ${booking.id}:`, err)
-        })
+      if (showSpinner && !initialBookingsLoaded) {
+        setLoading(true)
       }
       
-      } catch (error) {
+      const data = await bookingService.getBookings()
+      const filteredBookings = data.filter(b => b.consultant_id === consultant.id)
+      
+      // Enhance bookings with service details using the same concise logic as ClientDashboard
+      const enhancedBookings = await enhanceRCICBookingsWithDetails(filteredBookings, consultant.id)
+      
+      setBookings(enhancedBookings)
+      
+      // Extract client names from bookings data
+      extractClientNamesFromBookings(enhancedBookings)
+      
+    } catch (error) {
       console.error('Failed to fetch bookings:', error)
       setBookings([])
-      } finally {
+    } finally {
       if (showSpinner && !initialBookingsLoaded) {
         setLoading(false)
         setInitialBookingsLoaded(true)
-      } else {
-        setRefreshingBookings(false)
       }
     }
   }
@@ -340,18 +367,18 @@ export function RCICDashboard() {
         minute: '2-digit', 
         hour12: true 
       }),
-      service: booking.service_type || `Service #${booking.service_id}`,
+      service: booking.service_name || booking.service_type || `Service #${booking.service_id}`,
       status: booking.status === 'confirmed' ? 'upcoming' : booking.status
     }))
 
   // Time-based session categorization logic
-  const categorizeBookingsByTime = (bookings: Booking[]) => {
+  const categorizeBookingsByTime = (bookings: EnhancedBooking[]) => {
     const now = new Date()
     const categories = {
-      upcoming: [] as Booking[],
-      ongoing: [] as Booking[],
-      completed: [] as Booking[],
-      past: [] as Booking[]
+      upcoming: [] as EnhancedBooking[],
+      ongoing: [] as EnhancedBooking[],
+      completed: [] as EnhancedBooking[],
+      past: [] as EnhancedBooking[]
     }
 
     bookings.forEach(booking => {
@@ -390,189 +417,27 @@ export function RCICDashboard() {
   // Categorized sessions
   const categorizedSessions = categorizeBookingsByTime(bookings)
 
-  useEffect(() => {
-    if (!consultant) return;
-    const fetchServices = async () => {
-      try {
-        setServicesLoading(true)
-        setServicesError(null)
-        const list = await consultantService.getConsultantServices(consultant.id)
-        setServices(list)
-      } catch (error: any) {
-        setServicesError(error?.message || 'Failed to load services')
-        setServices([])
-      } finally {
-        setServicesLoading(false)
-      }
-    }
-    fetchServices()
-  }, [consultant])
 
-  // Fetch service templates on component mount
-  useEffect(() => {
-    const fetchServiceTemplates = async () => {
-      try {
-        setTemplatesLoading(true)
-        setTemplatesError(null)
-        const templates = await serviceTemplateService.getServiceTemplates()
-        setServiceTemplates(templates)
-      } catch (error: any) {
-        setTemplatesError(error?.message || 'Failed to load service templates')
-        setServiceTemplates([])
-      } finally {
-        setTemplatesLoading(false)
-      }
-    }
-    fetchServiceTemplates()
-  }, [])
 
-  const resetNewService = () => {
-    setNewService({ service_template_id: 0, name: '', duration: 30, price: 0, description: '', is_active: true })
-  }
 
-  const handleAddService = async () => {
-    if (!consultant) return
-    try {
-      setServicesLoading(true)
-      const created = await consultantService.createConsultantService(consultant.id, newService)
-      setServices(prev => [created, ...prev])
-      resetNewService()
-      setIsAdding(false)
-    } catch (error: any) {
-      setServicesError(error?.message || 'Failed to create service')
-    } finally {
-      setServicesLoading(false)
-    }
-  }
-
-  const startEditService = (svc: ConsultantServiceInDB) => {
-    setEditingServiceId(svc.id)
-    setEditService({
-      name: svc.name,
-      duration: svc.duration,
-      price: svc.price,
-      description: svc.description || '',
-      is_active: svc.is_active,
-    })
-  }
-
-  const cancelEditService = () => {
-    setEditingServiceId(null)
-  }
-
-  const handleUpdateService = async (serviceId: number) => {
-    if (!consultant) return
-    try {
-      setServicesLoading(true)
-      const updated = await consultantService.updateConsultantService(consultant.id, serviceId, editService)
-      setServices(prev => prev.map(s => (s.id === serviceId ? updated : s)))
-      setEditingServiceId(null)
-    } catch (error: any) {
-      setServicesError(error?.message || 'Failed to update service')
-    } finally {
-      setServicesLoading(false)
-    }
-  }
-
-  const handleToggleService = async (serviceId: number) => {
-    if (!consultant) return
-    try {
-      setServicesLoading(true)
-      const result = await consultantService.toggleConsultantService(consultant.id, serviceId)
-      // Update the service in the list with new status
-      setServices(prev => prev.map(s => 
-        s.id === serviceId ? { ...s, is_active: result.is_active } : s
-      ))
-      // Show success message
-      alert(result.message)
-    } catch (error: any) {
-      setServicesError(error?.message || 'Failed to toggle service status')
-    } finally {
-      setServicesLoading(false)
-    }
-  }
-
-  // Fetch client names for display
-  const fetchClientNames = async (clientIds: string[]) => {
-    if (clientIds.length === 0) return
+  // Extract client names from bookings data - no additional API calls needed
+  const extractClientNamesFromBookings = (bookings: EnhancedBooking[]) => {
+    const names: {[key: string]: string} = {}
     
-    try {
-      // Create a mapping with more readable client names
-      const namesMap: {[key: string]: string} = {}
-      
-      clientIds.forEach(id => {
-        // Create a more readable client identifier
-        const shortId = id.slice(0, 8)
-        const lastFour = id.slice(-4)
-        namesMap[id] = `Client ${shortId}...${lastFour}`
-      })
-      
-      setClientNames(namesMap)
-    } catch (error) {
-      console.error('Failed to fetch client names:', error)
-      // Fallback to client IDs
-      const namesMap: {[key: string]: string} = {}
-      clientIds.forEach(id => {
-        const shortId = id.slice(0, 8)
-        const lastFour = id.slice(-4)
-        namesMap[id] = `Client ${shortId}...${lastFour}`
-      })
-      setClientNames(namesMap)
-    } finally {
-      // setClientNamesLoading(false) // This line was removed as per the edit hint
-    }
+    bookings.forEach(booking => {
+      if (booking.client_id) {
+        // For now, use fallback names until we get proper client data
+        const clientId = booking.client_id
+        const shortId = clientId.slice(0, 8)
+        const lastFour = clientId.slice(-4)
+        names[clientId] = `Client ${shortId}...${lastFour}`
+      }
+    })
+    
+    setClientNames(names)
   }
 
   // Handle viewing intake form
-  const handleViewIntakeForm = (intakeData: any, clientInfo: any) => {
-    if (!intakeData) {
-      alert('No intake form data available')
-      return
-    }
-    
-    // Debug logging to understand the data structure
-    console.log('🔍 Raw intake data:', intakeData)
-    console.log('🔍 Intake data type:', typeof intakeData)
-    console.log('🔍 Intake data keys:', Object.keys(intakeData))
-    console.log('🔍 Intake data JSON string:', JSON.stringify(intakeData, null, 2))
-    
-    // Check if data is already parsed object or needs parsing
-    let parsedIntakeData = intakeData
-    
-    if (typeof intakeData === 'string') {
-      try {
-        parsedIntakeData = JSON.parse(intakeData)
-        console.log('✅ Parsed intake data from string:', parsedIntakeData)
-      } catch (error) {
-        console.error('❌ Failed to parse intake form JSON:', error)
-        console.log('Raw string data:', intakeData)
-      }
-    } else if (typeof intakeData === 'object' && intakeData !== null) {
-      // Check if this object has nested JSON strings that need parsing
-      console.log('🔍 Processing object intake data...')
-      Object.keys(intakeData).forEach(key => {
-        const value = intakeData[key]
-        console.log(`🔍 Field '${key}':`, typeof value, value)
-        
-        // If value is a string that looks like JSON, try to parse it
-        if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))  ) {
-          try {
-            const parsed = JSON.parse(value)
-            console.log(`🔧 Parsed nested JSON for '${key}':`, parsed)
-            parsedIntakeData[key] = parsed
-          } catch (e) {
-            console.log(`⚠️ Could not parse '${key}' as JSON:`, e)
-          }
-        }
-      })
-      
-      console.log('✅ Final processed intake data:', parsedIntakeData)
-    }
-    
-    setSelectedIntakeData(parsedIntakeData)
-    setSelectedClient(clientInfo)
-    setShowIntakeModal(true)
-  }
 
   // Handle viewing document
   const handleViewDocument = (file: any, clientInfo: any) => {
@@ -705,6 +570,11 @@ export function RCICDashboard() {
     }
   }
 
+  // Handle joining video meeting
+  const handleJoinSession = (bookingId: number) => {
+    navigate(`/meeting/${bookingId}`)
+  }
+
   // Close modals
   const closeIntakeModal = () => {
     setShowIntakeModal(false)
@@ -758,13 +628,12 @@ export function RCICDashboard() {
     
     try {
       setUpdatingStatus(bookingId)
-      setStatusUpdateError(null)
       const updated = await bookingService.updateBooking(bookingId, { status: newStatus } as any)
       setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: updated.status } : b)))
       // Silent background refresh to sync any other fields without UI loader
       fetchBookings(false)
     } catch (err: any) {
-      setStatusUpdateError(err?.message || 'Failed to update status')
+      console.error('Failed to update status:', err)
     } finally {
       setUpdatingStatus(null)
     }
@@ -850,7 +719,7 @@ export function RCICDashboard() {
   }, [toasts])
 
   // Set up real-time updates for booking status changes
-  const { isConnected, connectionType, reconnect } = useRealtimeBookingUpdates(bookings, {
+  const { isConnected, connectionType } = useRealtimeBookingUpdates(bookings, {
     onBookingUpdate: handleBookingUpdate,
     onError: handleRealtimeError,
     enabled: true, // ✅ ENABLED: Real-time booking status updates for RCICs
@@ -860,11 +729,7 @@ export function RCICDashboard() {
 
   // Debug connection status changes
   useEffect(() => {
-    console.log('🔌 Connection status changed:', {
-      isConnected,
-      connectionType,
-      bookingsCount: bookings.length
-    })
+    // Connection status changed
   }, [isConnected, connectionType, bookings.length])
 
   return (
@@ -1053,7 +918,7 @@ export function RCICDashboard() {
                                 <div className="h-3 w-3 bg-orange-500 rounded-full animate-pulse" />
                                 <div>
                                   <p className="font-medium text-gray-900">Live: {clientName}</p>
-                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-600">{booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
                                 </div>
                               </div>
                               <Badge className="bg-orange-100 text-orange-800 animate-pulse">ONGOING</Badge>
@@ -1282,7 +1147,7 @@ export function RCICDashboard() {
                                     </div>
                                     <div>
                                       <h4 className="font-semibold text-gray-900 text-lg">{clientName}</h4>
-                                      <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                      <p className="text-sm text-gray-600">{booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
                                     </div>
                                   </div>
                                   
@@ -1383,6 +1248,13 @@ export function RCICDashboard() {
                                   <>
                                     <Button 
                                       size="sm" 
+                                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1" 
+                                      onClick={() => handleJoinSession(booking.id)}
+                                    >
+                                      📹 Start Meeting
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
                                       className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1" 
                                       onClick={() => handleStatusChange(booking.id, 'completed')} 
                                       disabled={updatingStatus === booking.id}
@@ -1450,7 +1322,7 @@ export function RCICDashboard() {
                                     <h4 className="font-medium text-gray-900">{clientName}</h4>
                                     <Badge className="bg-orange-100 text-orange-800 text-xs animate-pulse">LIVE</Badge>
                                   </div>
-                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-600">{booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
                                   <p className="text-sm text-gray-500">
                                     Started at {bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                   </p>
@@ -1469,6 +1341,11 @@ export function RCICDashboard() {
                                 </Badge>
                               </div>
                               <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleJoinSession(booking.id)}>
+                                  <span className="flex items-center gap-1">
+                                    📹 Join Video
+                                  </span>
+                                </Button>
                                 <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange(booking.id, 'completed')} disabled={updatingStatus === booking.id}>
                                   {updatingStatus === booking.id ? 'Updating...' : 'Complete'}
                                 </Button>
@@ -1508,7 +1385,7 @@ export function RCICDashboard() {
                                     <h4 className="font-medium text-gray-900">{clientName}</h4>
                                     {isRecent && <Badge className="bg-green-100 text-green-800 text-xs">Recent</Badge>}
                                   </div>
-                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-600">{booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
                                   <p className="text-sm text-gray-500">
                                     {bookingDate.toLocaleDateString()} at {bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                   </p>
@@ -1560,7 +1437,7 @@ export function RCICDashboard() {
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                   <h4 className="font-medium text-gray-900">{clientName}</h4>
-                                  <p className="text-sm text-gray-600">{booking.service_type || `Service #${booking.service_id}`}</p>
+                                  <p className="text-sm text-gray-600">{booking.service_name || booking.service_type || `Service #${booking.service_id}`}</p>
                                   <p className="text-sm text-gray-500">
                                     {bookingDate.toLocaleDateString()} at {bookingDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                                   </p>
@@ -2137,12 +2014,8 @@ export function RCICDashboard() {
           <ServicesTableView 
             consultantId={consultant.id}
             onServicesChange={() => {
-              // Refresh services list if needed
-              if (consultant) {
-                consultantService.getConsultantServices(consultant.id)
-                  .then(setServices)
-                  .catch(console.error)
-              }
+              // Services are managed by ServicesTableView component
+              console.log('Services updated')
             }}
           />
         )}
@@ -2282,7 +2155,7 @@ export function RCICDashboard() {
                     <span className="font-medium">Client ID:</span> {selectedClient.client_id}
                   </div>
                   <div>
-                    <span className="font-medium">Service:</span> {selectedClient.service_type || `Service #${selectedClient.service_id}`}
+                    <span className="font-medium">Service:</span> {selectedClient.service_name || selectedClient.service_type || `Service #${selectedClient.service_id}`}
                   </div>
                 </div>
               </div>
@@ -2446,7 +2319,7 @@ export function RCICDashboard() {
                 <h4 className="font-medium text-gray-900 mb-2">Client Information</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div><span className="font-medium">Client ID:</span> {selectedClient.client_id}</div>
-                  <div><span className="font-medium">Service:</span> {selectedClient.service_type || `Service #${selectedClient.service_id}`}</div>
+                  <div><span className="font-medium">Service:</span> {selectedClient.service_name || selectedClient.service_type || `Service #${selectedClient.service_id}`}</div>
                 </div>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg">

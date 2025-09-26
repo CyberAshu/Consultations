@@ -11,8 +11,6 @@ import {
   Settings, 
   Clock,
   Video,
-  Upload,
-  Download,
   LogOut,
   ArrowLeft,
   Bell,
@@ -20,15 +18,12 @@ import {
   AlertCircle,
   Plus,
   Loader,
-  Trash2,
-  Eye,
   Wifi,
   WifiOff,
   User as UserIcon
 } from 'lucide-react'
 import { bookingService } from '../../services/bookingService'
 import { authService } from '../../services/authService'
-import { intakeService } from '../../services/intakeService'
 import { consultantService } from '../../services/consultantService'
 import { serviceTemplateService } from '../../services/serviceTemplateService'
 import { Booking, User, Consultant, ServiceTemplate } from '../../services/types'
@@ -46,15 +41,8 @@ interface EnhancedBooking extends Booking {
 
 // Function to enhance bookings with consultant and service details
 const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<EnhancedBooking[]> => {
-  console.log('📊 Enhancing booking data with consultant and service details...')
-  
-  // Get unique consultant IDs and consultant service IDs (these are what booking.service_id refers to)
+  // Get unique consultant IDs and consultant service IDs
   const consultantIds = Array.from(new Set(bookings.map(b => b.consultant_id)))
-  const consultantServiceIds = Array.from(new Set(bookings.map(b => b.service_id).filter(Boolean)))
-  
-  console.log('🔍 Found consultant IDs:', consultantIds)
-  console.log('🔍 Found consultant service IDs:', consultantServiceIds)
-  console.log('🔍 Sample booking data:', bookings[0])
   
   // Create lookup maps for our enhanced data
   const consultantMap = new Map<number, Consultant>()
@@ -63,13 +51,11 @@ const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<Enhanced
   
   try {
     // 1. Fetch all consultants
-    console.log('📡 Step 1: Fetching consultants...')
     const consultantResults = await Promise.allSettled(
       consultantIds.map(async (id) => {
         try {
           return await consultantService.getConsultantById(id)
         } catch (error) {
-          console.warn(`Failed to fetch consultant ${id}:`, error)
           return null
         }
       })
@@ -82,26 +68,20 @@ const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<Enhanced
       }
     })
     
-    console.log(`✅ Loaded ${consultantMap.size} consultants`)
-    
     // 2. Fetch consultant services for each consultant to build service lookup
-    console.log('📡 Step 2: Fetching consultant services...')
     const allConsultantServices: any[] = []
     
     for (const consultantId of consultantIds) {
       try {
         const services = await consultantService.getActiveConsultantServices(consultantId)
-        console.log(`📋 Consultant ${consultantId} has ${services.length} services:`, services.map(s => ({ id: s.id, name: s.name, templateId: s.service_template_id })))
         services.forEach(service => {
           consultantServicesMap.set(service.id, service)
           allConsultantServices.push(service)
         })
       } catch (error) {
-        console.warn(`Failed to fetch services for consultant ${consultantId}:`, error)
+        // Silently handle service fetching errors
       }
     }
-    
-    console.log(`✅ Loaded ${consultantServicesMap.size} consultant services`)
     
     // 3. Get unique service template IDs from consultant services
     const serviceTemplateIds = Array.from(
@@ -112,20 +92,14 @@ const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<Enhanced
       )
     )
     
-    console.log('🔍 Found service template IDs to fetch:', serviceTemplateIds)
-    
     // 4. Fetch service templates
     if (serviceTemplateIds.length > 0) {
-      console.log('📡 Step 3: Fetching service templates...')
       const templateResults = await Promise.allSettled(
         serviceTemplateIds.map(async (id) => {
           try {
-            console.log(`🔄 Fetching service template ${id}...`)
             const template = await serviceTemplateService.getServiceTemplateById(id)
-            console.log(`✅ Service template ${id} loaded:`, template)
             return template
           } catch (error: any) {
-            console.error(`❌ Failed to fetch service template ${id}:`, error)
             return null
           }
         })
@@ -139,14 +113,8 @@ const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<Enhanced
       })
     }
     
-    console.log('✅ Enhanced data loaded:', {
-      consultants: consultantMap.size,
-      consultantServices: consultantServicesMap.size,
-      serviceTemplates: serviceTemplateMap.size
-    })
-    
   } catch (error) {
-    console.error('❌ Error during data enhancement:', error)
+    // Silently handle enhancement errors
   }
   
   // 5. Enhance each booking with the resolved data
@@ -161,14 +129,7 @@ const enhanceBookingsWithDetails = async (bookings: Booking[]): Promise<Enhanced
     const serviceName = serviceTemplate?.name || consultantService?.name || `Service #${booking.service_id}`
     const serviceDescription = serviceTemplate?.default_description || consultantService?.description
     
-    console.log(`🔍 Booking ${booking.id} enhancement:`, {
-      booking_service_id: booking.service_id,
-      consultant_service_found: !!consultantService,
-      consultant_service_name: consultantService?.name,
-      service_template_id: consultantService?.service_template_id,
-      service_template_found: !!serviceTemplate,
-      final_service_name: serviceName
-    })
+    // Enhancement data resolved
     
     return {
       ...booking,
@@ -187,14 +148,11 @@ export function ClientDashboard() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [selectedSession, setSelectedSession] = useState<EnhancedBooking | null>(null)
   
   // Load intake summary
-  const { summary: intakeSummary, loading: intakeLoading } = useIntakeSummary()
+  const { summary: intakeSummary } = useIntakeSummary()
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -206,7 +164,6 @@ export function ClientDashboard() {
     timezone: 'America/Toronto',
     immigration_notes: ''
   })
-  const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null)
 
   const tabs = [
@@ -239,18 +196,6 @@ export function ClientDashboard() {
         
         // Fetch user's bookings
         const userBookings = await bookingService.getBookings()
-        console.log('🚀 Raw booking data from API:', userBookings)
-        
-        // Log each booking's service information
-        userBookings.forEach((booking, index) => {
-          console.log(`📋 Booking ${index + 1}:`, {
-            id: booking.id,
-            service_id: booking.service_id,
-            service_type: booking.service_type,
-            consultant_id: booking.consultant_id,
-            all_fields: Object.keys(booking)
-          })
-        })
         
         // Enhance bookings with consultant and service details
         const enhancedBookings = await enhanceBookingsWithDetails(userBookings)
@@ -342,36 +287,7 @@ export function ClientDashboard() {
     }
   }
 
-  // Get all documents from all bookings
-  const allDocuments = bookings.flatMap(booking => 
-    (booking.documents || []).map(doc => ({
-      ...doc,
-      booking_id: booking.id,
-      booking_service: booking.service_name || booking.service_type || `Service #${booking.service_id}`,
-      booking_date: booking.booking_date || booking.scheduled_date
-    }))
-  )
 
-  // Get intake forms from bookings
-  const intakeForms = bookings.filter(booking => booking.intake_form_data).map(booking => ({
-    id: booking.id,
-    service: booking.service_name || booking.service_type || `Service #${booking.service_id}`,
-    date: booking.booking_date || booking.scheduled_date || new Date().toISOString(),
-    data: booking.intake_form_data
-  }))
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setSelectedFile(file)
-      setUploadError(null)
-    }
-  }
-
-  const handleFileUpload = async () => {
-    // Document upload functionality will be implemented later
-    setUploadError('Document upload feature coming soon')
-  }
 
   const handleProfileInputChange = (field: string, value: string) => {
     setProfileForm(prev => ({
@@ -384,7 +300,6 @@ export function ClientDashboard() {
     if (!currentUser) return
 
     try {
-      setSavingProfile(true)
       setProfileSaveMessage(null)
 
       // Call API to update user profile
@@ -419,17 +334,9 @@ export function ClientDashboard() {
       console.error('Profile update error:', error)
       setProfileSaveMessage('Failed to update profile. Please try again.')
     } finally {
-      setSavingProfile(false)
     }
   }
 
-  const formatDocumentDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   const handleViewSummary = (session: Booking) => {
     // Find the enhanced booking from our state using the booking ID
@@ -462,11 +369,99 @@ export function ClientDashboard() {
   }
 
   // Handle booking actions
+  // Meeting status state with throttling
+  const [meetingStatuses, setMeetingStatuses] = useState<{[key: number]: {isActive: boolean, consultantJoined: boolean}}>({});
+  const [checkingMeetingStatus, setCheckingMeetingStatus] = useState<{[key: number]: boolean}>({});
+  const [lastStatusCheck, setLastStatusCheck] = useState<{[key: number]: number}>({});
+
   const handleJoinSession = (bookingId: number) => {
-    // TODO: Implement actual video call integration
-    alert(`Joining session for booking #${bookingId}`)
-    console.log('Join session clicked for booking:', bookingId)
+    // Navigate to video meeting page
+    navigate(`/meeting/${bookingId}`)
   }
+
+  // Check meeting status for a specific booking
+  const checkMeetingStatus = useCallback(async (bookingId: number) => {
+    const now = Date.now();
+    const lastCheck = lastStatusCheck[bookingId] || 0;
+    
+    // Throttle: Don't check more than once every 30 seconds for same booking
+    if (now - lastCheck < 30000) return;
+    
+    if (checkingMeetingStatus[bookingId]) return; // Already checking
+    
+    try {
+      setLastStatusCheck(prev => ({ ...prev, [bookingId]: now }));
+      setCheckingMeetingStatus(prev => ({ ...prev, [bookingId]: true }));
+      
+      const token = authService.getAccessToken();
+      if (!token) return;
+
+      const base = process.env.REACT_APP_API_URL || ''
+      const response = await fetch(
+        `${base}/api/v1/video/booking/${bookingId}/status`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const statusData = await response.json();
+        setMeetingStatuses(prev => ({
+          ...prev,
+          [bookingId]: {
+            isActive: statusData.is_active || false,
+            consultantJoined: !!statusData.started_by
+          }
+        }));
+      }
+    } catch (err) {
+      // Silently handle errors to avoid console spam
+    } finally {
+      setCheckingMeetingStatus(prev => ({ ...prev, [bookingId]: false }));
+    }
+  }, [checkingMeetingStatus, lastStatusCheck]);
+
+  // Check if client can join meeting (only after consultant has started)
+  const canJoinMeeting = (bookingId: number) => {
+    const status = meetingStatuses[bookingId];
+    return status && status.isActive && status.consultantJoined;
+  };
+
+  // Effect to check meeting status for upcoming sessions with proper dependency management
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (upcomingSessions.length === 0) return;
+    
+    // Only check status for sessions happening within next 24 hours
+    const now = new Date();
+    const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    const todaysSessions = upcomingSessions.filter(session => {
+      const sessionDate = new Date(session.booking_date || session.scheduled_date || '');
+      return sessionDate >= now && sessionDate <= next24Hours;
+    });
+    
+    if (todaysSessions.length === 0) return;
+    
+    const bookingIds = todaysSessions.map(session => session.id);
+    
+    // Initial check for each booking
+    bookingIds.forEach(bookingId => {
+      checkMeetingStatus(bookingId);
+    });
+    
+    // Set up polling for status updates every 60 seconds
+    const interval = setInterval(() => {
+      bookingIds.forEach(bookingId => {
+        checkMeetingStatus(bookingId);
+      });
+    }, 60000); // Reduced API polling to once per minute
+    
+    return () => clearInterval(interval);
+  }, [upcomingSessions.length, checkMeetingStatus]); // Only depend on length, not entire array
 
   const handleRescheduleBooking = async (bookingId: number) => {
     const confirmed = window.confirm('Are you sure you want to reschedule this booking?')
@@ -506,71 +501,6 @@ export function ClientDashboard() {
     navigate('/consultants')
   }
 
-  const handleViewDocument = async (doc: any) => {
-    try {
-      // Get document with download URL from the API
-      const response = await fetch(`/api/v1/bookings/${doc.booking_id}/documents/${doc.id}/download`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.download_url) {
-          window.open(data.download_url, '_blank')
-        } else {
-          toasts.error('View Failed', 'Document URL not available')
-        }
-      } else {
-        toasts.error('View Failed', 'Could not retrieve document URL')
-      }
-    } catch (error: any) {
-      toasts.error('View Failed', error.message || 'Failed to view document')
-    }
-  }
-
-  const handleDownloadDocument = async (doc: any) => {
-    try {
-      const response = await fetch(`/api/v1/bookings/${doc.booking_id}/documents/${doc.id}/download`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.download_url) {
-          const link = document.createElement('a')
-          link.href = data.download_url
-          link.download = data.file_name || doc.file_name || 'document'
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          toasts.success('Download Started', 'Your document download has started.')
-        } else {
-          toasts.error('Download Failed', 'Document URL not available')
-        }
-      } else {
-        toasts.error('Download Failed', 'Could not retrieve document URL')
-      }
-    } catch (error: any) {
-      toasts.error('Download Failed', error.message || 'Failed to download document')
-    }
-  }
-
-  const handleDeleteDocument = async (doc: any) => {
-    const confirmed = window.confirm(`Are you sure you want to delete "${doc.file_name}"? This action cannot be undone.`)
-    if (confirmed) {
-      try {
-        // TODO: Implement document deletion API call
-        alert('Document deletion functionality will be implemented soon.')
-        console.log('Delete document:', doc)
-      } catch (error: any) {
-        toasts.error('Delete Failed', error.message || 'Failed to delete document')
-      }
-    }
-  }
 
   // Initialize toast notifications
   const toasts = useToasts()
@@ -614,12 +544,12 @@ export function ClientDashboard() {
   }, [toasts])
 
   // Set up real-time updates for booking status changes
-  const { isConnected, connectionType, reconnect } = useRealtimeBookingUpdates(bookings, {
+  const { isConnected, connectionType } = useRealtimeBookingUpdates(bookings, {
     onBookingUpdate: handleBookingUpdate,
     onError: handleRealtimeError,
-    enabled: true, // ✅ ENABLED: Real-time booking status updates are now active
+    enabled: true,
     fallbackToPolling: true,
-    pollingInterval: 30000 // Poll every 30 seconds as fallback
+    pollingInterval: 30000
   })
 
   if (loading) {
@@ -837,15 +767,32 @@ export function ClientDashboard() {
                           </Badge>
                         </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button 
-                      size="sm" 
-                      className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
-                      onClick={() => handleJoinSession(session.id)}
-                    >
-                      <Video className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Join Session</span>
-                      <span className="sm:hidden">Join</span>
-                    </Button>
+                    {canJoinMeeting(session.id) ? (
+                      <Button 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700 flex-shrink-0"
+                        onClick={() => handleJoinSession(session.id)}
+                      >
+                        <Video className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Join Session</span>
+                        <span className="sm:hidden">Join</span>
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="sm" 
+                          disabled
+                          className="bg-gray-400 flex-shrink-0 cursor-not-allowed"
+                        >
+                          <Video className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Waiting for Consultant</span>
+                          <span className="sm:hidden">Waiting</span>
+                        </Button>
+                        {checkingMeetingStatus[session.id] && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        )}
+                      </div>
+                    )}
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -948,13 +895,23 @@ export function ClientDashboard() {
                           </Badge>
                         </div>
                       <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button 
-                          size="sm" 
-                          className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0"
-                          onClick={() => handleJoinSession(session.id)}
-                        >
-                          Join
-                        </Button>
+                        {canJoinMeeting(session.id) ? (
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700 flex-1 min-w-0"
+                            onClick={() => handleJoinSession(session.id)}
+                          >
+                            Join
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            disabled
+                            className="bg-gray-400 flex-1 min-w-0 cursor-not-allowed"
+                          >
+                            Waiting...
+                          </Button>
+                        )}
                         <Button 
                           size="sm" 
                           variant="outline" 
@@ -1004,13 +961,23 @@ export function ClientDashboard() {
                             </td>
                           <td className="p-3" onClick={(e) => e.stopPropagation()}>
                             <div className="flex flex-wrap gap-1">
-                              <Button 
-                                size="sm" 
-                                className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => handleJoinSession(session.id)}
-                              >
-                                Join
-                              </Button>
+                              {canJoinMeeting(session.id) ? (
+                                <Button 
+                                  size="sm" 
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleJoinSession(session.id)}
+                                >
+                                  Join
+                                </Button>
+                              ) : (
+                                <Button 
+                                  size="sm" 
+                                  disabled
+                                  className="bg-gray-400 cursor-not-allowed"
+                                >
+                                  Waiting
+                                </Button>
+                              )}
                               <Button 
                                 size="sm" 
                                 variant="outline"

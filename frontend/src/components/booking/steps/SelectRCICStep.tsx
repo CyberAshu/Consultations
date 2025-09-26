@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
 import { Badge } from '../../ui/Badge'
 import { DurationBasedServiceSelection } from './DurationBasedServiceSelection'
-import { consultantService, bookingService } from '../../../services'
+import { consultantService } from '../../../services'
 import { 
   Star, 
   CheckCircle, 
   Award,
-  MessageSquare,
   Globe,
   Plus,
   Minus
@@ -112,7 +111,7 @@ export function SelectRCICStep({
         // DON'T set prefilled service here - let DurationBasedServiceSelection handle it properly
         // This ensures proper duration-based flow is followed
         if (prefilledService) {
-          console.log('🔍 Prefilled service detected:', prefilledService, 'but letting DurationBasedServiceSelection handle it');
+          // Prefilled service will be handled by DurationBasedServiceSelection
         }
       }
     }
@@ -171,13 +170,15 @@ export function SelectRCICStep({
   }
 
   useEffect(() => {
+    const base = (calculatedPrice || (selectedService ? selectedService.price : 0) || 0);
+    const addons = selectedAddons.reduce((sum, a) => sum + a.price, 0);
     onDataChange({
       rcic: selectedRCIC,
       service: selectedService, // This already has the correct structure from DurationBasedServiceSelection
       duration: selectedDuration,
       calculatedPrice: calculatedPrice,
       selectedAddons: selectedAddons,
-      totalAmount: calculateTotal()
+      totalAmount: base + addons
     })
   }, [selectedRCIC, selectedService, selectedDuration, calculatedPrice, selectedAddons, onDataChange])
 
@@ -193,30 +194,6 @@ export function SelectRCICStep({
     console.log('🔍 RCIC selection complete, service state reset');
   }
 
-  const handleServiceSelect = (service: any) => {
-    setSelectedService(service);
-    setSelectedDuration(service.duration); // Set default duration
-    setCalculatedPrice(service.price); // Set default price
-  }
-
-  const handleDurationChange = async (duration: number) => {
-    if (!selectedService) return;
-    
-    setSelectedDuration(duration);
-    if (duration >= 15 && selectedService.duration_option_id) {
-      try {
-        const response = await bookingService.calculateDurationPrice({
-          service_id: selectedService.id,
-          duration_option_id: selectedService.duration_option_id
-        });
-        setCalculatedPrice(response.price);
-      } catch (error) {
-        console.error('Failed to calculate duration price:', error);
-        // Fallback to the service's default price
-        setCalculatedPrice(selectedService.price);
-      }
-    }
-  };
 
   return (
     <div className="space-y-6">

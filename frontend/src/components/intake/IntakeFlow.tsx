@@ -197,6 +197,7 @@ export function IntakeFlow() {
   }
 
   // Debounced auto-save
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSave = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { CheckCircle, AlertCircle, X, Clock, Calendar } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { CheckCircle, AlertCircle, X, Clock } from 'lucide-react'
 
 export interface ToastMessage {
   id: string
@@ -20,6 +20,11 @@ interface ToastProps extends ToastMessage {
 function Toast({ id, type, title, message, duration = 5000, action, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false)
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false)
+    setTimeout(() => onClose(id), 300) // Wait for slide-out animation
+  }, [id, onClose])
+
   useEffect(() => {
     // Slide in animation
     setIsVisible(true)
@@ -32,12 +37,7 @@ function Toast({ id, type, title, message, duration = 5000, action, onClose }: T
 
       return () => clearTimeout(timer)
     }
-  }, [duration])
-
-  const handleClose = () => {
-    setIsVisible(false)
-    setTimeout(() => onClose(id), 300) // Wait for slide-out animation
-  }
+  }, [duration, handleClose])
 
   const getTypeStyles = () => {
     switch (type) {

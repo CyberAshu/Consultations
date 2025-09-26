@@ -32,7 +32,7 @@ export function CardHeader({ className, ...props }: CardHeaderProps) {
 
 export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
 
-export function CardTitle({ className, ...props }: CardTitleProps) {
+export function CardTitle({ className, children, ...props }: CardTitleProps) {
   return (
     <h3
       className={cn(
@@ -40,7 +40,9 @@ export function CardTitle({ className, ...props }: CardTitleProps) {
         className
       )}
       {...props}
-    />
+    >
+      {children || ' '}
+    </h3>
   )
 }
 

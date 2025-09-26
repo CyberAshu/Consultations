@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '../shared/Button'
 import { consultantService } from '../../services/consultantService'
-import { serviceTemplateService } from '../../services/serviceTemplateService'
 import { 
   ConsultantServiceWithPricing, 
   ServiceTemplate,
   ServiceDurationOption,
-  ConsultantServicePricing,
   BulkPricingUpdate
 } from '../../services/types'
 import { 

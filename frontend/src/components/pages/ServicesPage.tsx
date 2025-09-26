@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../shared/Button';
-import { Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Globe, UserCheck, MapPin, HelpCircle, CheckCircle, Star } from 'lucide-react';
+import { Clock, FileText, Shield, Users, Zap, Target, FileEdit, RefreshCw, ArrowRight, Globe, UserCheck, MapPin, HelpCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export function ServicesPage() {
@@ -289,7 +289,6 @@ export function ServicesPage() {
                 image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&h=400&fit=crop&crop=center"
               }
             ].map((service, index) => {
-              const isEven = index % 2 === 0;
               return (
                 <div 
                   key={index} 

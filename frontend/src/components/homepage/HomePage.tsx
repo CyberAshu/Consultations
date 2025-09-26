@@ -87,7 +87,7 @@ useEffect(() => {
     }, 3000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [navigate])
 
 
   // const testimonials = [

@@ -11,7 +11,6 @@ import {
 } from '../../services/types'
 import { 
   Wrench, 
-  Settings,
   Plus,
   Eye,
   AlertTriangle,
@@ -27,7 +26,6 @@ interface ServicesTableViewProps {
 
 export function ServicesTableView({ consultantId, onServicesChange }: ServicesTableViewProps) {
   const [services, setServices] = useState<ConsultantServiceWithPricing[]>([])
-  const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([])
   const [allServiceTemplates, setAllServiceTemplates] = useState<ServiceTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,10 +55,7 @@ export function ServicesTableView({ consultantId, onServicesChange }: ServicesTa
       setAllServiceTemplates(templates)
       
       // Get templates that don't have corresponding services yet
-      const existingTemplateIds = servicesWithPricing.map(s => s.service_template_id)
-      const availableTemplates = templates.filter(t => !existingTemplateIds.includes(t.id))
-      setServiceTemplates(availableTemplates)
-      
+      // (We compute directly when rendering)
     } catch (err: any) {
       setError(err?.message || 'Failed to load services and templates')
     } finally {

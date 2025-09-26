@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ConsultantServiceWithPricing,
-  ServiceDurationOption,
-  ConsultantServicePricing,
   PriceCalculationResponse 
 } from '../../../services/types';
 import { consultantService } from '../../../services/consultantService';
@@ -40,112 +38,49 @@ export function DurationBasedServiceSelection({
   );
   const [pricingInfo, setPricingInfo] = useState<PriceCalculationResponse | null>(null);
 
-  useEffect(() => {
-    if (consultantId) {
-      loadServices();
-    }
-  }, [consultantId]);
-
-  useEffect(() => {
-    if (selectedServiceId && selectedDurationId) {
-      calculatePrice();
-    }
-  }, [selectedServiceId, selectedDurationId]);
-  
-  // Handle prefilled service selection
-  useEffect(() => {
-    // Check if we have prefilled service from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const prefilledServiceId = urlParams.get('service');
-    
-    if (prefilledServiceId && services.length > 0 && !selectedServiceId) {
-      console.log('🔍 Handling prefilled service:', prefilledServiceId);
-      
-      // Find the service with matching ID
-      const matchingService = services.find(s => s.id === parseInt(prefilledServiceId));
-      if (matchingService && matchingService.pricing_options.length > 0) {
-        console.log('🔍 Found matching service for prefill:', matchingService);
-        
-        // Auto-select the service
-        setSelectedServiceId(matchingService.id);
-        
-        // Auto-select the first available duration option
-        const firstActiveDuration = matchingService.pricing_options.find(p => p.is_active);
-        if (firstActiveDuration && firstActiveDuration.duration_option) {
-          console.log('🔍 Auto-selecting duration:', firstActiveDuration);
-          setSelectedDurationId(firstActiveDuration.duration_option.id);
-        }
-      } else {
-        console.warn('⚠️ Prefilled service not found or no pricing options:', prefilledServiceId);
-      }
-    }
-  }, [services, selectedServiceId]);
-
-  const loadServices = async () => {
-    console.log('🔍 Loading services for consultant:', consultantId);
-    console.log('🔍 consultantService object:', consultantService);
-    console.log('🔍 consultantService.getConsultantServicesWithPricing:', typeof consultantService.getConsultantServicesWithPricing);
-    
+  const loadServices = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 About to call API...');
       // Get only active services with pricing for public booking
       const servicesData = await consultantService.getConsultantServicesWithPricing(consultantId, true);
-      console.log('🔍 API call successful! Raw services data:', servicesData);
-      
       // Filter to only show services that have at least one active pricing option
       const servicesWithActivePricing = servicesData.filter(service => 
         service.is_active && service.pricing_options.some(p => p.is_active)
       );
-      
-      console.log('🔍 Filtered services with pricing:', servicesWithActivePricing);
       setServices(servicesWithActivePricing);
-      
       if (servicesWithActivePricing.length === 0) {
-        console.warn('⚠️ No services with active pricing found for consultant', consultantId);
+        // no services
       }
     } catch (err) {
-      console.error('❌ Error loading services for consultant', consultantId, ':', err);
+      console.error('Error loading services for consultant', consultantId, err);
       setError('Failed to load services');
     } finally {
       setLoading(false);
     }
-  };
+  }, [consultantId]);
 
-  const calculatePrice = async () => {
-    console.log('🔍 calculatePrice called with:', { selectedServiceId, selectedDurationId });
-    
+  useEffect(() => {
+    if (consultantId) {
+      loadServices();
+    }
+  }, [consultantId, loadServices]);
+
+  const calculatePrice = useCallback(async () => {
     if (!selectedServiceId || !selectedDurationId) {
-      console.log('⚠️ calculatePrice: missing serviceId or durationId');
       return;
     }
 
     try {
-      console.log('🔍 About to call calculateDurationPrice API...');
       const priceData = await bookingService.calculateDurationPrice({
         service_id: selectedServiceId,
         duration_option_id: selectedDurationId
       });
-      console.log('🔍 calculateDurationPrice API successful:', priceData);
       setPricingInfo(priceData);
       
       // Find the service and duration details
       const service = services.find(s => s.id === selectedServiceId);
       
-      console.log('🔍 Service found:', service);
-      console.log('🔍 Service pricing_options:', service?.pricing_options);
-      console.log('🔍 Looking for selectedDurationId:', selectedDurationId);
-      
-      const pricing = service?.pricing_options.find(p => {
-        console.log('🔍 Pricing option keys:', Object.keys(p));
-        console.log('🔍 Pricing option:', p);
-        console.log('🔍 Duration option:', p.duration_option);
-        console.log('🔍 Comparing:', p.duration_option?.id, '===', selectedDurationId);
-        return p.duration_option?.id === selectedDurationId;
-      });
-      
-      console.log('🔍 Pricing found:', pricing);
-      console.log('🔍 Duration option:', pricing?.duration_option);
+      const pricing = service?.pricing_options.find(p => p.duration_option?.id === selectedDurationId);
       
       if (service && pricing?.duration_option) {
         const serviceData = {
@@ -157,24 +92,55 @@ export function DurationBasedServiceSelection({
           durationMinutes: priceData.duration_minutes
         };
         
-        console.log('🔍 DurationBasedServiceSelection sending data:', serviceData);
         onServiceSelect(serviceData);
       }
     } catch (err) {
       setError('Failed to calculate price');
       console.error(err);
     }
-  };
+  }, [selectedServiceId, selectedDurationId, services, onServiceSelect]);
+
+  useEffect(() => {
+    if (selectedServiceId && selectedDurationId) {
+      calculatePrice();
+    }
+  }, [selectedServiceId, selectedDurationId, calculatePrice]);
+  
+  // Handle prefilled service selection
+  useEffect(() => {
+    // Check if we have prefilled service from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefilledServiceId = urlParams.get('service');
+    
+    if (prefilledServiceId && services.length > 0 && !selectedServiceId) {
+      
+      // Find the service with matching ID
+      const matchingService = services.find(s => s.id === parseInt(prefilledServiceId));
+      if (matchingService && matchingService.pricing_options.length > 0) {
+        
+        // Auto-select the service
+        setSelectedServiceId(matchingService.id);
+        
+        // Auto-select the first available duration option
+        const firstActiveDuration = matchingService.pricing_options.find(p => p.is_active);
+        if (firstActiveDuration && firstActiveDuration.duration_option) {
+          setSelectedDurationId(firstActiveDuration.duration_option.id);
+        }
+      } else {
+        console.warn('⚠️ Prefilled service not found or no pricing options:', prefilledServiceId);
+      }
+    }
+  }, [services, selectedServiceId]);
+
+
 
   const handleServiceChange = (serviceId: number) => {
-    console.log('🔍 Service changed to:', serviceId);
     setSelectedServiceId(serviceId);
     setSelectedDurationId(null);
     setPricingInfo(null);
   };
 
   const handleDurationChange = (durationId: number) => {
-    console.log('🔍 Duration changed to:', durationId);
     setSelectedDurationId(durationId);
   };
 

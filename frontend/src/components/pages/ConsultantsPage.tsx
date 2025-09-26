@@ -29,7 +29,7 @@ const getDisplayName = (fullName: string) => {
 
 export function ConsultantsPage() {
   const navigate = useNavigate()
-  const { isAuthenticated, loading: authLoading } = useAuthState()
+const { isAuthenticated } = useAuthState()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLanguage, setSelectedLanguage] = useState("")
   const [selectedProvince, setSelectedProvince] = useState("")
@@ -42,7 +42,6 @@ export function ConsultantsPage() {
   const [consultants, setConsultants] = useState<Consultant[]>([])
   const [loading, setLoading] = useState(true)
   const [initialLoaded, setInitialLoaded] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Load all consultants once to populate filter options
@@ -53,7 +52,7 @@ export function ConsultantsPage() {
   const didFetchRef = useRef(false)
   const fetchConsultants = async (showSpinner: boolean) => {
     try {
-      if (showSpinner && !initialLoaded) setLoading(true); else setRefreshing(true)
+      if (showSpinner && !initialLoaded) setLoading(true)
       if (isInitialLoad) {
         const allLoaded = await consultantService.getConsultants({})
         setAllConsultants(allLoaded)
@@ -77,8 +76,6 @@ export function ConsultantsPage() {
       if (showSpinner && !initialLoaded) {
         setLoading(false)
         setInitialLoaded(true)
-      } else {
-        setRefreshing(false)
       }
     }
   }

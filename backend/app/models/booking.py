@@ -46,6 +46,8 @@ class Booking(Base):
     # Meeting details
     meeting_url = Column(String)
     meeting_notes = Column(Text)
+    meeting_status = Column(String, default="not_started")  # not_started, active, ended
+    consultant_joined_at = Column(DateTime(timezone=True))
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

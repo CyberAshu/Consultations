@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
-import { Input } from '../../ui/Input'
 import { History, Info, AlertCircle, FileX, Shield, Clock } from 'lucide-react'
 import { IntakeStageProps } from './IntakeStage'
 import { intakeService } from '../../../services/intakeService'

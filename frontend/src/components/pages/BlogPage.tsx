@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../shared/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent } from '../ui/Card';
-import { Heart, MessageCircle, User, Calendar, Tag, Search } from 'lucide-react';
+import { Heart, MessageCircle, User, Calendar, Search } from 'lucide-react';
 
 interface Comment {
   id: number;
@@ -115,6 +115,7 @@ const Sidebar = () => {
           <ul className="space-y-2">
             {categories.map((category, index) => (
               <li key={index} className="flex justify-between items-center">
+                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
                 <a href="#" className="text-blue-600 hover:text-blue-800 transition-colors">
                   {category.name}
                 </a>
@@ -132,6 +133,7 @@ const Sidebar = () => {
           <ul className="space-y-3">
             {recentPosts.map((post, index) => (
               <li key={index}>
+                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
                 <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors text-sm line-clamp-2">
                   {post}
                 </a>

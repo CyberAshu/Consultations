@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
 import { Input } from '../../ui/Input'
-import { Button } from '../../shared/Button'
 import { User, Mail, Phone, Globe, Shield, Info, Check } from 'lucide-react'
 import { IntakeStageProps } from './IntakeStage'
 import { intakeService } from '../../../services/intakeService'

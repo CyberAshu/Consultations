@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '../../ui/Card'
-import { Badge } from '../../ui/Badge'
 import { Button } from '../../shared/Button'
 import { 
   Calendar,
@@ -99,14 +98,6 @@ export function ChooseTimeSlotStep({
     setSelectedTimeSlot(timeSlotData)
   }
 
-  const handleDateChange = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate)
-    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1))
-    setCurrentDate(newDate)
-    setSelectedTimeSlot(null) // Reset selection when date changes
-    // fetchAvailableSlots will be called automatically by useEffect
-  }
-
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -119,12 +110,6 @@ export function ChooseTimeSlotStep({
   const isToday = (date: Date) => {
     const today = new Date()
     return date.toDateString() === today.toDateString()
-  }
-
-  const isPastDate = (date: Date) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return date < today
   }
 
   return (
@@ -308,7 +293,6 @@ export function ChooseTimeSlotStep({
                     const year = currentDate.getFullYear()
                     const month = currentDate.getMonth()
                     const firstDay = new Date(year, month, 1)
-                    const lastDay = new Date(year, month + 1, 0)
                     const startDate = new Date(firstDay)
                     startDate.setDate(startDate.getDate() - firstDay.getDay())
                     
