@@ -3,12 +3,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from app.core.config import settings
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 class EmailService:
     @staticmethod
-    def send_email(subject: str, recipient: str, body: str) -> bool:
+    def send_email(subject: str, recipient: str, body: str, reply_to: Optional[str] = None) -> bool:
         # Check if we're in development and SMTP is not properly configured
         if (settings.ENVIRONMENT == "development" and 
             (settings.SMTP_USER.startswith("your_") or 
@@ -21,6 +22,8 @@ class EmailService:
             print(f"To: {recipient}")
             print(f"Subject: {subject}")
             print(f"From: {settings.FROM_NAME} <{settings.SMTP_USER}>")
+            if reply_to:
+                print(f"Reply-To: {reply_to}")
             print("-"*80)
             print(body)
             print("="*80)
@@ -35,6 +38,8 @@ class EmailService:
         msg['From'] = f"{settings.FROM_NAME} <{from_email}>"
         msg['To'] = recipient
         msg['Subject'] = subject
+        if reply_to:
+            msg['Reply-To'] = reply_to
 
         msg.attach(MIMEText(body, 'html'))
 

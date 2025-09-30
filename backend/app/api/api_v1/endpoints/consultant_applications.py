@@ -83,6 +83,53 @@ async def create_initial_application(
     
     # Create the application
     result = consultant_application.create(db, obj_in=application_data)
+
+    # Send EMAIL 1: Thank You for initial interest (after Section 1)
+    try:
+        first_name = full_legal_name.split()[0] if full_legal_name else "there"
+        EmailService.send_email(
+            subject="Thank You for Your Interest in Joining ImmigWise",
+            recipient=email,
+            body=f"""
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
+        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Thank You for Your Interest</p>
+    </div>
+
+    <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #2d3748; margin-top: 0;">Hi {first_name},</h2>
+
+Thank you for submitting your interest in becoming a Registered Consultant with ImmigWise. We're excited to learn more about you.
+
+        <p>Our team is currently reviewing your information to confirm your RCIC status. Once verified, you will receive another email requesting the remaining details to proceed with your onboarding.</p>
+
+        <p>We’re committed to building a high-trust platform where consultants like you are respected, compensated fairly, and supported through technology.</p>
+
+<p>If you have any questions in the meantime, feel free to contact us at <a href="mailto:info@immigwise.com">info@immigwise.com</a> or visit our Help Center.</p>
+
+<p style="margin-top: 30px;">Warm regards,<br/>ImmigWise Team</p>
+
+        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
+
+        <p style="color: #718096; font-size: 14px; text-align: center;">
+            <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #3b82f6; text-decoration: none;">Website</a> |
+            <a href="#" style="color: #3b82f6; text-decoration: none;">Help Center</a> |
+            <a href="#" style="color: #3b82f6; text-decoration: none;">LinkedIn</a> |
+            <a href="#" style="color: #3b82f6; text-decoration: none;">Instagram</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
+            """,
+            reply_to="info@immigwise.com"
+        )
+    except Exception as e:
+        print(f"Error sending initial thank-you email: {str(e)}")
+
     return result
 
 @router.post("/", response_model=ConsultantApplicationResponse)
@@ -285,51 +332,7 @@ async def create_consultant_application(
     # Create application
     new_application = consultant_application.create(db=db, obj_in=application_data)
 
-    # Send auto-response email
-    EmailService.send_email(
-subject="Thank You for Your Interest in Joining Immig Wise",
-        recipient=email,
-        body=f"""
-<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-<h1 style="color: white; margin: 0; font-size: 24px;">Immig Wise</h1>
-        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Thank You for Your Interest</p>
-    </div>
-    
-    <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2d3748; margin-top: 0;">Hi {full_legal_name.split()[0] if full_legal_name else 'there'},</h2>
-        
-Thank you for submitting your interest in becoming a Registered Consultant with Immig Wise. We're excited to learn more about you.
-        
-        <p>Our team is currently reviewing your information to confirm your RCIC status. Once verified, you will receive another email requesting the remaining details to proceed with your onboarding.</p>
-        
-        <p>We're committed to building a high-trust platform where consultants like you are respected, compensated fairly, and supported through technology.</p>
-        
-        <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
-            <p style="margin: 0; font-weight: bold;">Application ID:</p>
-            <p style="margin: 5px 0 0 0; color: #4299e1;">#{new_application.get('id', 'N/A')}</p>
-        </div>
-        
-        <p>If you have any questions in the meantime, feel free to contact us at support@immigrationconnect.com or visit our Help Center.</p>
-        
-<p style="margin-top: 30px;">Warm regards,<br/>Immig Wise Team</p>
-        
-        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
-        
-        <p style="color: #718096; font-size: 14px; text-align: center;">
-            <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #4299e1; text-decoration: none;">Website</a> | 
-            <a href="#" style="color: #4299e1; text-decoration: none;">Help Center</a> | 
-            <a href="#" style="color: #4299e1; text-decoration: none;">LinkedIn</a> | 
-            <a href="#" style="color: #4299e1; text-decoration: none;">Instagram</a>
-        </p>
-    </div>
-</div>
-</body>
-</html>
-        """
-    )
+    # Note: Initial thank-you email is sent by the Section 1 endpoint.
 
     return new_application
 
@@ -646,7 +649,7 @@ The Platform Team</p>
             
             # Send credentials email
             email_sent = EmailService.send_email(
-subject="Welcome to Immig Wise – Your Consultant Account is Ready",
+subject="Welcome to ImmigWise – Your Consultant Account is Ready",
                 recipient=db_application.get('email'),
                 body=f"""
 <html>
@@ -694,7 +697,7 @@ subject="Welcome to Immig Wise – Your Consultant Account is Ready",
             <p style="margin: 10px 0;">We're here to support you every step of the way.</p>
             <ul style="margin: 10px 0; padding-left: 20px;">
                 <li>Visit our Help Center for tutorials and FAQs</li>
-                <li>Contact our support team anytime at support@immigrationconnect.com</li>
+<li>Contact our support team anytime at info@immigwise.com</li>
                 <li>Follow us on LinkedIn and Instagram for platform updates and community highlights</li>
             </ul>
         </div>
@@ -1082,7 +1085,7 @@ def request_additional_sections(
                     
                     <p>This form includes multiple sections and should take approximately 10–15 minutes to complete. Once submitted, our compliance team will review the details within 24 to 48 business hours.</p>
                     
-                    <p>Should you have any questions, feel free to contact us at support@immigrationconnect.com.</p>
+<p>Should you have any questions, feel free to contact us at info@immigwise.com.</p>
                     
                     <p style="margin-top: 30px;">Sincerely,<br/>ImmigWise Team</p>
                     
@@ -1328,7 +1331,7 @@ async def complete_additional_sections(
             <p style="margin: 5px 0 0 0; color: #4299e1;">#{application_id}</p>
         </div>
         
-        <p>In the meantime, if you have any questions, please don't hesitate to contact us at support@immigrationconnect.com.</p>
+<p>In the meantime, if you have any questions, please don't hesitate to contact us at info@immigwise.com.</p>
         
         <p style="margin-top: 30px;">Warm regards,<br/>ImmigWise Team</p>
         
