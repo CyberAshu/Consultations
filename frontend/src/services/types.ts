@@ -90,6 +90,7 @@ export interface Booking {
   duration_minutes: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'delayed' | 'rescheduled';
   total_amount: number;
+  timezone?: string; // booking timezone
   notes?: string; // legacy
   meeting_link?: string; // legacy
   meeting_url?: string;

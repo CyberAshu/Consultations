@@ -41,6 +41,7 @@ export function RCICBookingsCalendar({ consultantId, onBookingClick, clientNames
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [selectedDayBookings, setSelectedDayBookings] = useState<CalendarBooking[]>([]);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [consultantTimezone, setConsultantTimezone] = useState<string>('America/Toronto');
 
   useEffect(() => {
     fetchBookings();
@@ -61,6 +62,11 @@ export function RCICBookingsCalendar({ consultantId, onBookingClick, clientNames
         return bookingDate >= startOfMonth && bookingDate <= endOfMonth;
       });
 
+      // Set consultant timezone from bookings
+      if (monthBookings.length > 0 && monthBookings[0].timezone) {
+        setConsultantTimezone(monthBookings[0].timezone || 'America/Toronto');
+      }
+
       // Map bookings to calendar interface with additional display fields
       const mappedBookings: CalendarBooking[] = monthBookings.map((booking: Booking) => {
         // Get client name from prop or fallback to formatted ID
@@ -77,7 +83,7 @@ export function RCICBookingsCalendar({ consultantId, onBookingClick, clientNames
           client_name: clientName,
           service_name: booking.service_type || 'Consultation',
           duration: booking.duration_minutes || 45,
-          timezone: 'America/Toronto', // Default timezone
+          timezone: booking.timezone || consultantTimezone,
         };
       });
 
@@ -117,17 +123,25 @@ export function RCICBookingsCalendar({ consultantId, onBookingClick, clientNames
       const dateStr = booking.booking_date || booking.scheduled_date;
       if (!dateStr) return false;
       
-      // Parse booking date - it's stored in UTC ISO format
+      // Parse booking date - stored in UTC
       const bookingDate = new Date(dateStr);
       
-      // Compare dates using local date components to handle calendar display properly
-      // This ensures the booking appears on the correct calendar day
-      const bookingLocalDate = new Date(bookingDate.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
+      // Use the booking's timezone to convert for proper calendar display
+      const bookingTimezone = booking.timezone || consultantTimezone;
+      const consultantDateStr = bookingDate.toLocaleString('en-US', { 
+        timeZone: bookingTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      
+      // Parse date components (format: MM/DD/YYYY)
+      const [month, day, year] = consultantDateStr.split('/').map(Number);
       
       return (
-        bookingLocalDate.getDate() === date.getDate() &&
-        bookingLocalDate.getMonth() === date.getMonth() &&
-        bookingLocalDate.getFullYear() === date.getFullYear()
+        day === date.getDate() &&
+        month === (date.getMonth() + 1) &&
+        year === date.getFullYear()
       );
     });
   };
