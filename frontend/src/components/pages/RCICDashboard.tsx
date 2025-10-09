@@ -14,6 +14,7 @@ import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 import { ServicesTableView } from '../rcic/ServicesTableView'
 import { RCICAvailabilityManager } from '../rcic/RCICAvailabilityManager'
+import { RCICBookingsCalendar } from '../rcic/RCICBookingsCalendar'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
@@ -1624,6 +1625,20 @@ export function RCICDashboard() {
         {/* Availability Tab */}
         {activeTab === 'availability' && (
           <div className="space-y-6">
+            {/* Bookings Calendar */}
+            <RCICBookingsCalendar 
+              consultantId={consultant?.id}
+              clientNames={clientNames}
+              onBookingClick={(booking) => {
+                // Handle booking click - could open detail modal
+                const fullBooking = bookings.find(b => b.id === booking.id);
+                if (fullBooking) {
+                  handleViewSessionDetail(fullBooking);
+                }
+              }}
+            />
+            
+            {/* Availability Manager */}
             <RCICAvailabilityManager 
               consultantId={consultant?.id}
               onScheduleUpdated={() => {

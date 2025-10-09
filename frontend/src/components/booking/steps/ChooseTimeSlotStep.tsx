@@ -51,20 +51,33 @@ export function ChooseTimeSlotStep({
       )
       
       // Map response slots to UI format
+      // API returns times already converted to client timezone
       const slots = response.slots
         .filter((slot) => slot.available)
-        .map((slot, index) => ({
-          id: index,
-          time: new Date(slot.start).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-          }),
-          datetime: new Date(slot.start),
-          available: true,
-          consultantTime: slot.start_consultant_tz // Store for display
-        }))
+        .map((slot, index) => {
+          // Parse the ISO string which is already in client's selected timezone
+          const slotDate = new Date(slot.start)
+          
+          // Extract just the time portion for display
+          const hours = slotDate.getHours().toString().padStart(2, '0')
+          const minutes = slotDate.getMinutes().toString().padStart(2, '0')
+          const timeString = `${hours}:${minutes}`
+          
+          return {
+            id: index,
+            time: timeString,
+            datetime: slotDate,
+            available: true,
+            consultantTime: slot.start_consultant_tz // Store for display
+          }
+        })
       
+      console.log('📅 Available slots loaded:', slots.length)
+      console.log('Selected timezone:', selectedTimezone)
+      if (slots.length > 0) {
+        console.log('First slot:', slots[0])
+        console.log('Browser timezone offset (hours):', new Date().getTimezoneOffset() / -60)
+      }
       setAvailableSlots(slots)
     } catch (error) {
       console.error('Failed to fetch availability:', error)
@@ -438,7 +451,23 @@ export function ChooseTimeSlotStep({
           {/* Time Slots */}
           <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
             <CardContent className="p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Time Slots</h3>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Available Time Slots</h3>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="text-xs text-blue-800">
+                    <p className="font-medium">Flexible Booking Times</p>
+                    <p className="text-blue-700 mt-1">
+                      Your {service?.duration || '45-minute'} consultation can start at any available time slot. 
+                      Multiple start times are offered to give you maximum flexibility in scheduling.
+                    </p>
+                  </div>
+                </div>
+              </div>
               
               {loadingSlots ? (
                 <div className="text-center py-12">
@@ -450,17 +479,31 @@ export function ChooseTimeSlotStep({
                 <div className="space-y-6">
                   {/* Time Period Headers */}
                   {(() => {
+                    // Group slots by time of day (using 24-hour ranges to cover all timezones)
                     const morningSlots = availableSlots.filter(slot => {
-                      const hour = parseInt(slot.time.split(':')[0])
-                      return hour >= 6 && hour < 12
+                      const hour = slot.datetime.getHours()
+                      return hour >= 5 && hour < 12
                     })
                     const afternoonSlots = availableSlots.filter(slot => {
-                      const hour = parseInt(slot.time.split(':')[0])
+                      const hour = slot.datetime.getHours()
                       return hour >= 12 && hour < 17
                     })
                     const eveningSlots = availableSlots.filter(slot => {
-                      const hour = parseInt(slot.time.split(':')[0])
-                      return hour >= 17 && hour < 21
+                      const hour = slot.datetime.getHours()
+                      return hour >= 17 && hour < 24
+                    })
+                    const nightSlots = availableSlots.filter(slot => {
+                      const hour = slot.datetime.getHours()
+                      return hour >= 0 && hour < 5
+                    })
+                    
+                    console.log('🔍 Slot distribution:', {
+                      total: availableSlots.length,
+                      morning: morningSlots.length,
+                      afternoon: afternoonSlots.length,
+                      evening: eveningSlots.length,
+                      night: nightSlots.length,
+                      firstSlotHour: availableSlots[0]?.datetime.getHours()
                     })
 
                     return (
@@ -471,7 +514,7 @@ export function ChooseTimeSlotStep({
                               <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                                 <span className="text-yellow-600 text-sm">🌅</span>
                               </div>
-                              <h4 className="font-semibold text-gray-900">Morning (6:00 AM - 12:00 PM)</h4>
+                              <h4 className="font-semibold text-gray-900">Morning (5:00 AM - 12:00 PM)</h4>
                               <div className="flex-1 h-px bg-gray-200"></div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -549,11 +592,50 @@ export function ChooseTimeSlotStep({
                               <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                                 <span className="text-purple-600 text-sm">🌙</span>
                               </div>
-                              <h4 className="font-semibold text-gray-900">Evening (5:00 PM - 9:00 PM)</h4>
+                              <h4 className="font-semibold text-gray-900">Evening (5:00 PM - 12:00 AM)</h4>
                               <div className="flex-1 h-px bg-gray-200"></div>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                               {eveningSlots.map((slot) => (
+                                <button
+                                  key={slot.id}
+                                  onClick={() => handleTimeSlotSelect(slot)}
+                                  className={`
+                                    p-4 rounded-xl border-2 transition-all duration-200 text-center hover:scale-105
+                                    ${selectedTimeSlot?.id === slot.id
+                                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg ring-2 ring-blue-500 ring-offset-2'
+                                      : 'bg-white border-gray-200 text-gray-900 hover:bg-blue-50 hover:border-blue-300 shadow-sm hover:shadow-md'
+                                    }
+                                  `}
+                                >
+                                  <Clock className={`h-4 w-4 mx-auto mb-2 ${selectedTimeSlot?.id === slot.id ? 'text-white' : 'text-blue-600'}`} />
+                                  <div className="font-semibold text-sm">{slot.time}</div>
+                                  <div className={`text-xs mt-1 ${selectedTimeSlot?.id === slot.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                                    {(() => {
+                                      const [hours, minutes] = slot.time.split(':')
+                                      const hour = parseInt(hours)
+                                      const ampm = hour >= 12 ? 'PM' : 'AM'
+                                      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+                                      return `${displayHour}:${minutes} ${ampm}`
+                                    })()}
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {nightSlots.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <span className="text-indigo-600 text-sm">🌃</span>
+                              </div>
+                              <h4 className="font-semibold text-gray-900">Night (12:00 AM - 5:00 AM)</h4>
+                              <div className="flex-1 h-px bg-gray-200"></div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {nightSlots.map((slot) => (
                                 <button
                                   key={slot.id}
                                   onClick={() => handleTimeSlotSelect(slot)}
