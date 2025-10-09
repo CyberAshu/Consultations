@@ -119,8 +119,12 @@ class AvailabilityService:
             end_date=end_of_day
         )
         
-        # Get existing bookings for this date
-        bookings = sql_db.query(Booking).filter(
+        # Get existing bookings for this date with their duration info
+        from app.models.service_template import ServiceDurationOption
+        bookings_with_duration = sql_db.query(Booking, ServiceDurationOption.duration_minutes).outerjoin(
+            ServiceDurationOption,
+            Booking.duration_option_id == ServiceDurationOption.id
+        ).filter(
             Booking.consultant_id == consultant_id,
             Booking.booking_date >= start_of_day,
             Booking.booking_date <= end_of_day,
@@ -131,6 +135,21 @@ class AvailabilityService:
             ])
         ).all()
         
+        # Build list of (booking, duration) tuples
+        bookings_info = []
+        for booking, duration_minutes in bookings_with_duration:
+            if duration_minutes is None:
+                # If no duration_option, get from service default duration
+                service_response = supabase_db.table("consultant_services").select("duration").eq("id", booking.service_id).execute()
+                if not service_response.data or len(service_response.data) == 0:
+                    raise ValueError(f"Service {booking.service_id} not found for booking {booking.id}")
+                
+                duration_minutes = service_response.data[0].get("duration")
+                if duration_minutes is None:
+                    raise ValueError(f"Service {booking.service_id} has no duration set")
+            
+            bookings_info.append((booking, duration_minutes))
+        
         # Generate available slots
         available_slots = []
         
@@ -138,6 +157,10 @@ class AvailabilityService:
             # Create datetime objects in consultant's timezone
             slot_start = datetime.combine(target_date, avail_slot.start_time).replace(tzinfo=ZoneInfo(consultant_tz))
             slot_end = datetime.combine(target_date, avail_slot.end_time).replace(tzinfo=ZoneInfo(consultant_tz))
+            
+            # Use the slot_interval_minutes from the availability slot (e.g., 15 min)
+            # This controls how often we generate potential booking start times
+            slot_interval = avail_slot.slot_interval_minutes
             
             # Generate time slots within this availability window
             current_time = slot_start
@@ -149,8 +172,7 @@ class AvailabilityService:
                     current_time,
                     slot_end_time,
                     blocked_times,
-                    bookings,
-                    slot_duration_minutes
+                    bookings_info
                 )
                 
                 if is_available:
@@ -167,8 +189,9 @@ class AvailabilityService:
                         available=True
                     ))
                 
-                # Move to next slot
-                current_time += timedelta(minutes=slot_duration_minutes)
+                # Move to next slot based on slot_interval (not slot_duration)
+                # This allows for overlapping booking opportunities
+                current_time += timedelta(minutes=slot_interval)
         
         return AvailableTimeSlots(
             date=target_date.isoformat(),
@@ -184,8 +207,7 @@ class AvailabilityService:
         slot_start: datetime,
         slot_end: datetime,
         blocked_times: List[ConsultantBlockedTime],
-        bookings: List[Booking],
-        slot_duration_minutes: int
+        bookings_info: List[Tuple[Booking, int]]
     ) -> bool:
         """
         Check if a time slot is available (not blocked and not booked).
@@ -194,8 +216,7 @@ class AvailabilityService:
             slot_start: Start of the slot to check
             slot_end: End of the slot to check
             blocked_times: List of blocked time periods
-            bookings: List of existing bookings
-            slot_duration_minutes: Duration of booking slot in minutes
+            bookings_info: List of (booking, duration_minutes) tuples
         
         Returns:
             True if slot is available, False otherwise
@@ -209,8 +230,8 @@ class AvailabilityService:
                 return False
         
         # Check against existing bookings
-        for booking in bookings:
-            booking_end = booking.booking_date + timedelta(minutes=slot_duration_minutes)
+        for booking, booking_duration in bookings_info:
+            booking_end = booking.booking_date + timedelta(minutes=booking_duration)
             if self._time_ranges_overlap(
                 slot_start, slot_end,
                 booking.booking_date, booking_end
