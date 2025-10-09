@@ -116,11 +116,18 @@ export function RCICBookingsCalendar({ consultantId, onBookingClick, clientNames
     return bookings.filter((booking) => {
       const dateStr = booking.booking_date || booking.scheduled_date;
       if (!dateStr) return false;
+      
+      // Parse booking date - it's stored in UTC ISO format
       const bookingDate = new Date(dateStr);
+      
+      // Compare dates using local date components to handle calendar display properly
+      // This ensures the booking appears on the correct calendar day
+      const bookingLocalDate = new Date(bookingDate.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
+      
       return (
-        bookingDate.getDate() === date.getDate() &&
-        bookingDate.getMonth() === date.getMonth() &&
-        bookingDate.getFullYear() === date.getFullYear()
+        bookingLocalDate.getDate() === date.getDate() &&
+        bookingLocalDate.getMonth() === date.getMonth() &&
+        bookingLocalDate.getFullYear() === date.getFullYear()
       );
     });
   };
