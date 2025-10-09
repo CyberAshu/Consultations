@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .endpoints import auth, consultants, bookings, blogs, features, newsletter, consultant_applications, consultant_onboarding, users, uploads, password_reset, session_notes, events, service_templates, service_duration_options, intake, health
+from .endpoints import auth, consultants, bookings, blogs, features, newsletter, consultant_applications, consultant_onboarding, users, uploads, password_reset, session_notes, events, service_templates, service_duration_options, intake, health, availability
 
 api_router = APIRouter()
 
@@ -20,4 +20,5 @@ api_router.include_router(uploads.router, prefix="/uploads", tags=["uploads"])
 api_router.include_router(password_reset.router, prefix="/password-reset", tags=["password-reset"])
 api_router.include_router(events.router, prefix="/events", tags=["events"])
 api_router.include_router(intake.router, prefix="/intake", tags=["intake"])
-api_router.include_router(health.router, prefix="/health", tags=["health"]) 
+api_router.include_router(health.router, prefix="/health", tags=["health"])
+api_router.include_router(availability.router, prefix="/availability", tags=["availability"])

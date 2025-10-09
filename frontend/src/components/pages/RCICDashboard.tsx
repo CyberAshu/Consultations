@@ -13,6 +13,7 @@ import { Booking, Consultant, ConsultantServiceInDB, ServiceTemplate } from '../
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 import { ServicesTableView } from '../rcic/ServicesTableView'
+import { RCICAvailabilityManager } from '../rcic/RCICAvailabilityManager'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
@@ -323,6 +324,7 @@ export function RCICDashboard() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <User className="h-4 w-4" /> },
     { id: 'sessions', label: 'My Sessions', icon: <Calendar className="h-4 w-4" /> },
+    { id: 'availability', label: 'Availability', icon: <Clock className="h-4 w-4" /> },
     { id: 'services', label: 'Services', icon: <Wrench className="h-4 w-4" /> },
     { id: 'profile', label: 'Profile', icon: <Settings className="h-4 w-4" /> },
     { id: 'payments', label: 'Payments', icon: <DollarSign className="h-4 w-4" /> }
@@ -1618,6 +1620,19 @@ export function RCICDashboard() {
           />
         )}
 
+
+        {/* Availability Tab */}
+        {activeTab === 'availability' && (
+          <div className="space-y-6">
+            <RCICAvailabilityManager 
+              consultantId={consultant?.id}
+              onScheduleUpdated={() => {
+                // Optionally refresh bookings or show success message
+                console.log('Availability schedule updated');
+              }}
+            />
+          </div>
+        )}
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '../../ui/Card'
-import { Badge } from '../../ui/Badge'
 import { Button } from '../../shared/Button'
 import { 
   Calendar,
@@ -11,7 +10,7 @@ import {
   ChevronRight,
   ExternalLink
 } from 'lucide-react'
-import { bookingService } from '../../../services/bookingService'
+import { availabilityService } from '../../../services/availabilityService'
 
 interface ChooseTimeSlotStepProps {
   onDataChange: (data: any) => void
@@ -34,22 +33,36 @@ export function ChooseTimeSlotStep({
   const [availableSlots, setAvailableSlots] = useState<any[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
 
-  // Fetch available time slots from RCIC availability API
-  const fetchAvailableSlots = async (date: Date, consultantId: number) => {
+  // Fetch available time slots from new availability API
+  const fetchAvailableSlots = useCallback(async (date: Date, consultantId: number) => {
     if (!consultantId) return
     
     setLoadingSlots(true)
     try {
       const dateString = date.toISOString().split('T')[0] // YYYY-MM-DD format
-      const availability = await bookingService.getConsultantAvailability(consultantId, dateString)
       
-      const slots = availability.slots
-        .filter((slot: any) => slot.available)
-        .map((slot: any, index: number) => ({
+      // Use new availability service API with timezone support
+      const response = await availabilityService.getAvailableSlots(
+        consultantId,
+        dateString,
+        selectedTimezone,
+        service?.id || service?.serviceId,
+        service?.duration || service?.duration_minutes
+      )
+      
+      // Map response slots to UI format
+      const slots = response.slots
+        .filter((slot) => slot.available)
+        .map((slot, index) => ({
           id: index,
-          time: slot.time,
-          datetime: new Date(`${dateString}T${slot.time}:00`),
-          available: true
+          time: new Date(slot.start).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          }),
+          datetime: new Date(slot.start),
+          available: true,
+          consultantTime: slot.start_consultant_tz // Store for display
         }))
       
       setAvailableSlots(slots)
@@ -59,7 +72,7 @@ export function ChooseTimeSlotStep({
     } finally {
       setLoadingSlots(false)
     }
-  }
+  }, [selectedTimezone, service])
 
   const timezones = [
     { value: 'America/Toronto', label: 'Eastern Time (ET)', offset: 'UTC-5' },
@@ -75,7 +88,7 @@ export function ChooseTimeSlotStep({
     if (rcic?.id) {
       fetchAvailableSlots(currentDate, rcic.id)
     }
-  }, [rcic?.id, currentDate])
+  }, [rcic?.id, currentDate, fetchAvailableSlots])
 
   useEffect(() => {
     onDataChange({

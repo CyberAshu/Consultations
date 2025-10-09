@@ -297,12 +297,49 @@ def get_consultant_availability(
     db: Client = Depends(deps.get_db),
     consultant_id: int,
     date: str,
+    client_timezone: str = "America/Toronto",
+    service_id: Optional[int] = None,
 ) -> Any:
     """
     Get available time slots for a consultant on a specific date.
+    Uses the new availability system with timezone conversion.
+    
+    DEPRECATED: Use /api/v1/availability/consultants/{consultant_id}/slots instead.
+    This endpoint is kept for backward compatibility.
     """
-    slots = crud_booking.get_available_time_slots(db, consultant_id=consultant_id, date=date)
-    return {"date": date, "slots": slots}
+    from app.services.availability_service import availability_service
+    from datetime import datetime
+    
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    try:
+        available_slots = availability_service.get_available_slots_for_date(
+            db=db,
+            consultant_id=consultant_id,
+            target_date=target_date,
+            client_timezone=client_timezone,
+            service_id=service_id
+        )
+        
+        # Format response to match old API format for backward compatibility
+        slots = [
+            {
+                "time": slot.start.strftime("%H:%M"),
+                "datetime": slot.start.isoformat(),
+                "available": slot.available
+            }
+            for slot in available_slots.slots
+        ]
+        
+        return {"date": date, "slots": slots}
+    
+    except Exception as e:
+        # Fallback to mock data if availability not set up yet
+        print(f"⚠️ Availability service failed: {e}. Returning empty slots.")
+        return {"date": date, "slots": []}
 
 @router.post("/{booking_id}/documents")
 async def upload_booking_document(

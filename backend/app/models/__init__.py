@@ -12,3 +12,5 @@ from .faq import FAQ
 from .payment import Payment, PaymentMethod, PaymentStatusExtended
 from .notification import Notification, NotificationType
 from .intake import ClientIntake, IntakeDocument, IntakeStatus
+from .availability import ConsultantAvailability, ConsultantBlockedTime, DayOfWeek
+from .session_note import SessionNote

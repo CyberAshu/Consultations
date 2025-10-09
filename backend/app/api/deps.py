@@ -4,8 +4,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from app.core.config import settings
-from app.db.supabase import get_supabase, get_supabase_admin
+from app.db.supabase import get_supabase, get_supabase_admin, SessionLocal
 from supabase import Client
+from sqlalchemy.orm import Session
 import requests
 
 security_bearer = HTTPBearer()
@@ -25,6 +26,14 @@ def get_admin_db() -> Generator:
         yield db
     finally:
         pass
+
+def get_sqlalchemy_db() -> Generator[Session, None, None]:
+    """Get SQLAlchemy database session for direct database operations"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_current_user(
     db: Client = Depends(get_db), 

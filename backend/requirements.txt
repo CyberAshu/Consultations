@@ -25,6 +25,7 @@ aiofiles==23.2.1
 
 # Date and time handling
 python-dateutil==2.8.2
+tzdata==2025.2
 
 # Email functionality
 emails==0.6
