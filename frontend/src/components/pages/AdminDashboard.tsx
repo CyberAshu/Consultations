@@ -283,11 +283,11 @@ export function AdminDashboard() {
     }
   }
 
-  // Handler for sending credentials manually
+  // Handler for sending password reset link manually
   const handleSendCredentials = async () => {
     if (!selectedApplication) return
     
-    if (!window.confirm(`Are you sure you want to send login credentials to ${selectedApplication.full_legal_name}?`)) {
+    if (!window.confirm(`Send password reset link to ${selectedApplication.full_legal_name}?\n\nThey will receive an email with a link to set their password.`)) {
       return
     }
     
@@ -296,14 +296,14 @@ export function AdminDashboard() {
       const result = await consultantApplicationService.sendCredentials(selectedApplication.id)
       
       if (result.success) {
-        alert(`✅ Success!\n\nCredentials have been sent to:\n${result.full_name} (${result.email})\n\nThe consultant will receive their login details via email.`)
+        alert(`✅ Success!\n\nPassword reset link sent to:\n${result.full_name} (${result.email})\n\nThe consultant will receive an email with instructions to set their password.`)
       } else {
-        alert(`❌ Failed to send credentials: ${result.message}`)
+        alert(`❌ Failed to send password reset link: ${result.message}`)
       }
     } catch (error: any) {
-      console.error('Error sending credentials:', error)
+      console.error('Error sending password reset link:', error)
       const errorMessage = error?.response?.data?.detail || error?.message || 'Unknown error occurred'
-      alert(`❌ Error sending credentials: ${errorMessage}`)
+      alert(`❌ Error: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
@@ -1068,6 +1068,53 @@ export function AdminDashboard() {
             </div>
             
             <div className="p-6">
+              {/* Info box for pending applications */}
+              {selectedApplication.status === 'pending' && selectedApplication.section_1_completed === true && 
+               selectedApplication.section_2_completed === true && selectedApplication.section_3_completed === true && 
+               selectedApplication.section_4_completed === true && selectedApplication.section_5_completed === true && 
+               selectedApplication.section_6_completed === true && selectedApplication.section_7_completed === true && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-blue-900 mb-1">Ready to Approve</h4>
+                      <p className="text-sm text-blue-800">
+                        🔑 When you approve this application, the system will:
+                      </p>
+                      <ul className="text-sm text-blue-800 mt-2 ml-4 list-disc space-y-1">
+                        <li>Create a user account for the consultant</li>
+                        <li>Send them a <strong>password reset link</strong> via email</li>
+                        <li>They will set their own secure password</li>
+                        <li>No temporary passwords needed!</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Info box for approved applications */}
+              {selectedApplication.status === 'approved' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-green-900 mb-1">✅ Application Approved</h4>
+                      <p className="text-sm text-green-800">
+                        User account has been created. If the consultant didn't receive the password reset email, you can resend it using the button below.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="space-y-6">
@@ -1545,16 +1592,21 @@ export function AdminDashboard() {
                     </>
                   )}
                   
-                  {/* Send Credentials Button - Available for approved applications */}
+                  {/* Send Password Reset Link Button - Available for approved applications */}
                   {selectedApplication.status === 'approved' && (
-                    <Button 
-                      className="bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2"
-                      onClick={handleSendCredentials}
-                      disabled={loading}
-                    >
-                      <Mail className="h-4 w-4" />
-                      {loading ? 'Sending...' : 'Send ID & Password'}
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2"
+                        onClick={handleSendCredentials}
+                        disabled={loading}
+                      >
+                        <Mail className="h-4 w-4" />
+                        {loading ? 'Sending...' : 'Send Password Reset Link'}
+                      </Button>
+                      <p className="text-xs text-gray-500 text-center">
+                        🔒 User will receive an email to set their password
+                      </p>
+                    </div>
                   )}
                 </div>
                 

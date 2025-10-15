@@ -396,235 +396,100 @@ def update_consultant_application(
 
 def _send_credentials_to_consultant(db: Client, db_application: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Helper function to create Supabase user and send credentials to consultant
-    Returns: {"success": bool, "message": str, "temp_password": str | None}
+    Create Supabase user and send password reset link instead of temp password.
+    This provides a more secure and user-friendly onboarding experience.
+    Returns: {"success": bool, "message": str}
     """
-    # Import settings at the function level to ensure availability
     from app.core.config import settings
+    from app.utils.email_service import EmailService
     
-    # Generate temporary password
-    temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+    user_email = db_application.get('email')
+    user_name = db_application.get('full_legal_name')
+    first_name = user_name.split()[0] if user_name else 'there'
     
     try:
-        # Try to create user first, handle "already exists" error gracefully
+        print(f"Creating user account for: {user_email}")
+        
+        # Create user with admin privileges - NO PASSWORD needed!
+        # User will set password via reset link
         user_response = None
-        user_email = db_application.get('email')
         
         try:
-            # Try to create new user
-            print(f"Attempting to create user for email: {user_email}")
             user_response = db.auth.admin.create_user({
                 "email": user_email,
-                "password": temp_password,
-                "email_confirm": True,
+                "email_confirm": True,  # Auto-confirm email
                 "user_metadata": {
-                    "name": db_application.get('full_legal_name'),
-                    "role": "rcic"
+                    "name": user_name,
+                    "role": "rcic",
+                    "rcic_number": db_application.get('rcic_license_number'),
+                    "created_by": "admin_approval",
+                    "application_id": db_application.get('id')
+                },
+                "app_metadata": {
+                    "role": "rcic",
+                    "permissions": ["consultant_access"],
+                    "created_method": "admin_approval"
                 }
             })
-            print(f"Successfully created new user: {user_response.user.id if user_response and user_response.user else 'Failed'}")
+            
+            if not user_response or not user_response.user:
+                raise Exception("User creation failed - no user returned")
+                
+            print(f"✅ User created successfully: {user_response.user.id}")
             
         except Exception as create_error:
-            create_error_str = str(create_error)
-            print(f"Error creating user: {create_error_str}")
-            # If signups are disabled or restricted, try different approaches
-            if "User not allowed" in create_error_str or "Signups not allowed" in create_error_str or "signup is disabled" in create_error_str.lower():
-                print(f"User creation blocked by auth policy, trying invite method...")
+            error_msg = str(create_error)
+            print(f"❌ User creation error: {error_msg}")
+            
+            # Handle "user already exists" error
+            if "already been registered" in error_msg.lower() or "user already registered" in error_msg.lower():
+                print(f"User already exists, sending password reset link...")
                 
-                # Try the invite method with correct API format
                 try:
-                    # Method 1: Try simple invite without metadata first
-                    invite_resp = db.auth.admin.invite_user_by_email(user_email)
-                    print(f"Successfully sent basic invite to {user_email}")
-                    
-                    # Send informational email since we can't include metadata in the invite
-                    EmailService.send_email(
-                        subject="You're invited to the RCIC Platform",
-                        recipient=user_email,
-                        body=f"""
-<html>
-<body>
-<p>Dear {db_application.get('full_legal_name')},</p>
-<p>Your application has been approved! We've sent you an invitation email to create your account and set your password.</p>
-<p><strong>Next steps:</strong></p>
-<ul>
-<li>Check your inbox (and spam folder) for an email from our platform</li>
-<li>Click the invitation link to set your password</li>
-<li>Complete your account setup</li>
-<li>Access your RCIC dashboard</li></ul>
-<p><strong>Important:</strong> Your account will be set up with RCIC permissions once you complete the invitation process.</p>
-<p>Best regards,<br/>
-The Platform Team</p>
-</body>
-</html>
-"""
+                    # Send password reset for existing user (Supabase will handle the email)
+                    db.auth.reset_password_email(
+                        user_email,
+                        {"redirect_to": f"{settings.FRONTEND_URL}/reset-password"}
                     )
+                    print(f"✅ Password reset email sent to existing user: {user_email}")
                     
                     return {
                         "success": True,
-                        "message": "Invitation email sent successfully. User will receive invite link to set password.",
-                        "temp_password": None
+                        "message": "Password reset link sent to existing user"
                     }
                     
-                except Exception as invite_error:
-                    invite_error_str = str(invite_error)
-                    print(f"Failed to send invite: {invite_error_str}")
-                    
-                    # Method 2: Try with redirect URL if simple invite fails
-                    try:
-                        redirect_url = f"{settings.FRONTEND_URL}/auth/callback" if settings.FRONTEND_URL else None
-                        
-                        if redirect_url:
-                            invite_resp = db.auth.admin.invite_user_by_email(
-                                user_email,
-                                {"redirect_to": redirect_url}
-                            )
-                            print(f"Successfully sent invite with redirect to {user_email}")
-                            
-                            EmailService.send_email(
-                                subject="RCIC Platform Invitation",
-                                recipient=user_email,
-                                body=f"""
-<html>
-<body>
-<p>Dear {db_application.get('full_legal_name')},</p>
-<p>Welcome to the RCIC Platform! Your application has been approved.</p>
-<p>Please check your email for an invitation link to complete your account setup.</p>
-<p>Best regards,<br/>The Platform Team</p>
-</body>
-</html>
-"""
-                            )
-                            
-                            return {
-                                "success": True,
-                                "message": "Invitation sent with redirect URL",
-                                "temp_password": None
-                            }
-                    except Exception as redirect_error:
-                        print(f"Redirect invite also failed: {str(redirect_error)}")
-                    
-                    # Method 3: Manual fallback - send email with instructions
-                    print("All invite methods failed, falling back to manual email notification")
-                    EmailService.send_email(
-                        subject="RCIC Platform - Manual Account Setup Required",
-                        recipient=user_email,
-                        body=f"""
-<html>
-<body>
-<p>Dear {db_application.get('full_legal_name')},</p>
-<p>Your RCIC application has been approved! However, we encountered a technical issue with the automatic account creation.</p>
-<p><strong>Next Steps:</strong></p>
-<ol>
-<li>Visit our platform at: {settings.FRONTEND_URL if settings.FRONTEND_URL else '[Platform URL]'}</li>
-<li>Click "Sign Up" and register with this email: {user_email}</li>
-<li>Once registered, contact our support team to activate your RCIC permissions</li>
-</ol>
-<p>We apologize for this inconvenience and will have your account set up shortly.</p>
-<p>Best regards,<br/>The Platform Team</p>
-</body>
-</html>
-"""
-                    )
-                    
+                except Exception as reset_error:
+                    print(f"⚠️ Failed to send reset link: {str(reset_error)}")
                     return {
-                        "success": True,
-                        "message": "Manual setup instructions sent. User needs to register manually and contact support for RCIC role assignment.",
-                        "temp_password": "[Manual setup required]"
+                        "success": False,
+                        "message": f"User exists but failed to send reset link: {str(reset_error)}"
                     }
             
-            if "already been registered" in create_error_str or "User already registered" in create_error_str:
-                print("User already exists, attempting to find and update existing user")
-                
-                # User exists, try to list users and find by email, then update
-                try:
-                    # List all users (we'll filter by email)
-                    users_response = db.auth.admin.list_users()
-                    existing_user = None
-                    
-                    if users_response and hasattr(users_response, 'users'):
-                        # Find user by email
-                        for user in users_response.users:
-                            if user.email == user_email:
-                                existing_user = user
-                                break
-                    
-                    if existing_user:
-                        print(f"Found existing user: {existing_user.id}")
-                        # Update existing user's password
-                        user_response = db.auth.admin.update_user_by_id(
-                            existing_user.id,
-                            {
-                                "password": temp_password,
-                                "user_metadata": {
-                                    "name": db_application.get('full_legal_name'),
-                                    "role": "rcic"
-                                }
-                            }
-                        )
-                        print(f"Successfully updated existing user password")
-                    else:
-                        print("Could not find existing user in user list")
-                        # For development: simulate successful operation
-                        # In production, this should be handled differently
-                        if db_application.get('email').endswith('@gmail.com'):  # Development check
-                            print("Development mode: simulating credential reset for existing user")
-                            # Don't create fake UUIDs that will cause database errors
-                            # Just send the email and return success
-                            email_sent = EmailService.send_email(
-                                subject="Your RCIC Platform Login Credentials",
-                                recipient=db_application.get('email'),
-                                body=f"""
-<html>
-<body>
-<p>Dear {db_application.get('full_legal_name')},</p>
-<p>We received a request to send your login credentials. Since your account already exists, please use the password reset feature on the login page if you've forgotten your password.</p>
-<p><strong>Your Email:</strong> {db_application.get('email')}</p>
-<p>If you need assistance, please contact our support team.</p>
-<p>Best regards,<br/>
-- Platform Team</p>
-</body>
-</html>
-                                """
-                            )
-                            
-                            if email_sent:
-                                return {
-                                    "success": True, 
-                                    "message": "Password reset instructions sent to existing user",
-                                    "temp_password": "[Use password reset link]"
-                                }
-                            else:
-                                return {
-                                    "success": False, 
-                                    "message": "Could not send password reset instructions",
-                                    "temp_password": None
-                                }
-                        else:
-                            raise Exception("User exists but cannot be found or updated")
-                            
-                except Exception as lookup_error:
-                    print(f"Failed to find existing user: {str(lookup_error)}")
-                    raise Exception(f"User exists but cannot be found or updated: {str(lookup_error)}")
-            else:
-                # Different error, re-raise
-                raise create_error
+            # Other errors - return failure
+            return {
+                "success": False,
+                "message": f"Failed to create user: {error_msg}"
+            }
         
-        if user_response.user:
+        # If user creation was successful, create consultant record
+        if user_response and user_response.user:
+            user_id = user_response.user.id
+            print(f"Creating consultant record for user: {user_id}")
+            
             # Check if consultant record already exists
-            existing_consultant_by_user = consultant.get_by_user_id(db, user_response.user.id)
-            existing_consultant_by_rcic = consultant.get_by_rcic_number(db, db_application.get('rcic_license_number'))
+            existing_consultant = consultant.get_by_user_id(db, user_id)
+            if not existing_consultant:
+                existing_consultant = consultant.get_by_rcic_number(db, db_application.get('rcic_license_number'))
             
             new_consultant = None
-            if existing_consultant_by_user or existing_consultant_by_rcic:
-                # Use existing consultant record
-                new_consultant = existing_consultant_by_user or existing_consultant_by_rcic
+            if existing_consultant:
+                new_consultant = existing_consultant
                 print(f"Using existing consultant record: {new_consultant.get('id')}")
             else:
                 # Create new consultant record
                 consultant_data = ConsultantCreate(
-                    user_id=user_response.user.id,
-                    name=db_application.get('full_legal_name'),
+                    user_id=user_id,
+                    name=user_name,
                     rcic_number=db_application.get('rcic_license_number'),
                     location=db_application.get('city_province'),
                     timezone=db_application.get('time_zone', 'America/Toronto'),
@@ -634,10 +499,10 @@ The Platform Team</p>
                     is_verified=True,
                     is_available=False  # Will be set to true after onboarding
                 )
-                
                 new_consultant = consultant.create(db=db, obj_in=consultant_data)
+                print(f"✅ Consultant record created: {new_consultant.get('id')}")
             
-            # Create or update onboarding record if it doesn't exist
+            # Create onboarding record if it doesn't exist
             existing_onboarding = consultant_onboarding.get_by_application_id(db, db_application.get('id'))
             if not existing_onboarding:
                 onboarding_data = ConsultantOnboardingCreate(
@@ -646,109 +511,39 @@ The Platform Team</p>
                     time_zone=db_application.get('time_zone', 'America/Toronto')
                 )
                 consultant_onboarding.create(db=db, obj_in=onboarding_data)
+                print("✅ Onboarding record created")
             
-            # Send credentials email
-            email_sent = EmailService.send_email(
-subject="Welcome to ImmigWise – Your Consultant Account is Ready",
-                recipient=db_application.get('email'),
-                body=f"""
-<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">ImmigWise</h1>
-        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Welcome to the Platform</p>
-    </div>
-    
-    <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
-        <h2 style="color: #2d3748; margin-top: 0;">Hi {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'},</h2>
-        
-        <p>Congratulations and welcome to ImmigWise, we're thrilled to have you onboard as a Verified RCIC Partner. Your application has been successfully reviewed and approved by our compliance team. You are now officially part of our growing network of trusted immigration professionals dedicated to helping clients navigate Canadian immigration with clarity and confidence.</p>
-        
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
-            <h3 style="color: #0c4a6e; margin-top: 0;">Your Account Details</h3>
-            <p style="margin: 10px 0;">You can now log in and begin setting up your profile. Please use the temporary credentials below to access your consultant dashboard:</p>
-            <p style="margin: 10px 0;">• <strong>Login Email:</strong> {db_application.get('email')}</p>
-            <p style="margin: 10px 0;">• <strong>Temporary Password:</strong> {temp_password}</p>
-            <div style="text-align: center; margin: 20px 0;">
-                <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}/login" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                    Login to Your Portal
-                </a>
-            </div>
-            <p style="margin: 10px 0; font-size: 14px; color: #6b7280;">Once logged in, you'll be prompted to create a secure password of your own. Please complete this step right away to ensure continued access.</p>
-        </div>
-        
-        <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4299e1;">
-            <h3 style="color: #2d3748; margin-top: 0;">Next Steps: Set Up for Success</h3>
-            <p style="margin: 10px 0;">To make the most of your experience and start receiving leads, follow these onboarding steps:</p>
-            <ol style="margin: 10px 0; padding-left: 20px;">
-                <li><strong>Update Your Profile</strong><br/>Add your professional photo, bio, and languages spoken. Clients value transparency and background, this helps build trust.</li>
-                <li><strong>Add Immigration Expertise</strong><br/>Select the Canadian immigration services you offer (e.g., PR, Work Permits, Study Permits, Appeals).</li>
-                <li><strong>Services & Set Your Pricing</strong><br/>You can mark services as Active or Inactive anytime. Define your consultation fees for sessions. You'll be paid directly for all consultations.</li>
-                <li><strong>Sync Your Calendar</strong><br/>Connect your calendar to show your availability in real-time for bookings.</li>
-                <li><strong>Enable Payout Settings</strong><br/>Add your preferred payment details securely to receive client payments without delays.</li>
-                <li><strong>Explore Your Consultant Portal</strong><br/>Your dashboard includes tools to manage:<br/>○ Dashboard<br/>○ Your Session details<br/>○ Services<br/>○ Calendar<br/>○ Profile Update<br/>○ Analytics</li>
-            </ol>
-            <p style="margin: 10px 0; font-size: 14px; color: #6b7280;">You can even use this platform to manage your own private clients.</p>
-        </div>
-        
-        <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-            <h3 style="color: #92400e; margin-top: 0;">Need Help?</h3>
-            <p style="margin: 10px 0;">We're here to support you every step of the way.</p>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Visit our Help Center for tutorials and FAQs</li>
-<li>Contact our support team anytime at info@immigwise.com</li>
-                <li>Follow us on LinkedIn and Instagram for platform updates and community highlights</li>
-            </ul>
-        </div>
-        
-        <p>We're proud to partner with professionals like you. Together, we're redefining how clients access trusted immigration advice and ensuring that consultants like you are paid fairly, supported technologically, and empowered to grow.</p>
-        
-        <p style="margin-top: 30px;"><strong>Welcome aboard, {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'}.</strong></p>
-        <p>We look forward to seeing your success on ImmigWise.</p>
-        
-        <p style="margin-top: 30px;">Warm regards,<br/>ImmigWise Team</p>
-        
-        <hr style="border: none; border-top: 1px solid #e1e5e9; margin: 30px 0;">
-        
-        <p style="color: #718096; font-size: 14px; text-align: center;">
-            <a href="{settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') and settings.FRONTEND_URL else '#'}" style="color: #4299e1; text-decoration: none;">Website</a> | 
-            <a href="#" style="color: #4299e1; text-decoration: none;">Help Center</a> | 
-            <a href="#" style="color: #4299e1; text-decoration: none;">LinkedIn</a> | 
-            <a href="#" style="color: #4299e1; text-decoration: none;">Instagram</a>
-        </p>
-    </div>
-</div>
-</body>
-</html>
-                """
-            )
-            
-            if email_sent:
+            # Send password reset link via Supabase (ONLY email needed)
+            try:
+                db.auth.reset_password_email(
+                    user_email,
+                    {"redirect_to": f"{settings.FRONTEND_URL}/reset-password"}
+                )
+                print(f"✅ Password reset email sent to {user_email} by Supabase")
+                
                 return {
-                    "success": True, 
-                    "message": "Credentials sent successfully",
-                    "temp_password": temp_password
+                    "success": True,
+                    "message": "User created and password reset email sent successfully"
                 }
-            else:
+            except Exception as reset_error:
+                print(f"⚠️ Supabase password reset email failed: {str(reset_error)}")
                 return {
-                    "success": False, 
-                    "message": "User created but email sending failed",
-                    "temp_password": temp_password
+                    "success": True,  # User still created
+                    "message": "User created but password reset email may have failed. User can request reset from login page."
                 }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to create user account",
-                "temp_password": None
-            }
         
-    except Exception as e:
-        print(f"Error in _send_credentials_to_consultant: {str(e)}")
+        # If we reach here without user_response, something went wrong
         return {
             "success": False,
-            "message": f"Error creating user or sending credentials: {str(e)}",
-            "temp_password": None
+            "message": "Failed to create user account"
+        }
+        
+    except Exception as e:
+        error_msg = str(e)
+        print(f"❌ Error in _send_credentials_to_consultant: {error_msg}")
+        return {
+            "success": False,
+            "message": f"Error creating user: {error_msg}"
         }
 
 @router.post("/{application_id}/approve", response_model=ConsultantApplicationResponse)
@@ -757,7 +552,7 @@ def approve_consultant_application(
     db: Client = Depends(deps.get_admin_db)
 ):
     """
-    Approve a consultant application
+    Approve a consultant application and send password reset link
     """
     db_application = consultant_application.get(db=db, id=application_id)
     if not db_application:
@@ -769,26 +564,32 @@ def approve_consultant_application(
     # Update application status to approved
     updated_application = consultant_application.approve(db=db, db_obj=db_application)
 
-    # Send credentials to consultant
+    # Create user and send password reset link
     credential_result = _send_credentials_to_consultant(db, db_application)
     
     if not credential_result["success"]:
-        print(f"Warning: Approval succeeded but credential sending failed: {credential_result['message']}")
-        # Send a basic approval email without credentials
+        print(f"⚠️ Warning: Approval succeeded but user creation failed: {credential_result['message']}")
+        # Send basic approval email as fallback
         EmailService.send_email(
             subject="Your Application has been Approved!",
             recipient=db_application.get('email'),
             body=f"""
 <html>
-<body>
-<p>Dear {db_application.get('full_legal_name')},</p>
-<p>Congratulations! Your application has been approved. We'll be in touch shortly with your login credentials.</p>
-<p>Welcome aboard!</p>
-<p>- Platform Team</p>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2>Hi {db_application.get('full_legal_name', '').split()[0] if db_application.get('full_legal_name') else 'there'},</h2>
+    <p>🎉 Congratulations! Your RCIC application has been <strong>approved</strong>.</p>
+    <p>We're currently setting up your account. You'll receive login instructions via email shortly.</p>
+    <p>If you don't receive the email within 24 hours, please contact us at 
+       <a href="mailto:info@immigwise.com" style="color: #4299e1;">info@immigwise.com</a></p>
+    <p>Welcome aboard!<br/><strong>The ImmigWise Team</strong></p>
+</div>
 </body>
 </html>
             """
         )
+    else:
+        print(f"✅ User creation successful: {credential_result['message']}")
 
     return updated_application
 
