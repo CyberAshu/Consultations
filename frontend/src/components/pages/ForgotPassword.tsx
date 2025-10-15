@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { passwordResetService } from '../../services/passwordResetService'
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle } from 'lucide-react'
 
 export function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -38,9 +38,9 @@ export function ForgotPassword() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -69,7 +69,7 @@ export function ForgotPassword() {
               <div className="space-y-3">
                 <Link
                   to="/login"
-                  className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg text-center"
                 >
                   Back to Login
                 </Link>
@@ -79,7 +79,7 @@ export function ForgotPassword() {
                     setSubmitted(false)
                     setEmail('')
                   }}
-                  className="block w-full text-purple-600 hover:text-purple-700 font-medium py-2 transition-colors"
+                  className="block w-full text-blue-600 hover:text-blue-700 font-semibold py-2 transition-colors"
                 >
                   Try Different Email
                 </button>
@@ -92,16 +92,12 @@ export function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Mail className="h-8 w-8 text-purple-600" />
-            </div>
-            
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Forgot Password?
             </h1>
             
@@ -137,7 +133,7 @@ export function ForgotPassword() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 font-semibold shadow-md hover:shadow-lg transition-all"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -154,7 +150,7 @@ export function ForgotPassword() {
           <div className="mt-6 text-center">
             <Link
               to="/login"
-              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Login

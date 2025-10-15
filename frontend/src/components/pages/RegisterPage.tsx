@@ -53,25 +53,15 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200" />
-        <div className="absolute inset-0 bg-white/40 z-10" />
-      </div>
-
-      <div className="max-w-md w-full space-y-8 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6">
         <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-black p-3 rounded-full shadow-lg">
-              <UserPlus className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Create your account</h2>
-          <p className="mt-2 text-sm text-gray-600">Join and book your first consultation in minutes</p>
+          <h2 className="text-4xl font-bold text-gray-900 mb-2">Create Your Account</h2>
+          <p className="mt-2 text-sm text-gray-600">Join thousands of clients who trust us with their immigration journey</p>
         </div>
 
         <CardContent>
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 p-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
             <form onSubmit={handleRegister} className="space-y-6">
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -107,7 +97,7 @@ export function RegisterPage() {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="pl-12 h-12 bg-white border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
+                      className="pl-12 h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
                       placeholder="Jane Doe"
                     />
                     <UserIcon className="h-5 w-5 text-gray-400 absolute left-4 top-3.5" />
@@ -127,7 +117,7 @@ export function RegisterPage() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-12 h-12 bg-white border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
+                      className="pl-12 h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
                       placeholder="you@example.com"
                     />
                     <Mail className="h-5 w-5 text-gray-400 absolute left-4 top-3.5" />
@@ -147,7 +137,7 @@ export function RegisterPage() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-12 h-12 bg-white border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
+                      className="pl-12 h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
                       placeholder="Create a strong password"
                     />
                     <Lock className="h-5 w-5 text-gray-400 absolute left-4 top-3.5" />
@@ -167,7 +157,7 @@ export function RegisterPage() {
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-12 h-12 bg-white border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
+                      className="pl-12 h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg transition-all duration-200 text-gray-900 placeholder-gray-500"
                       placeholder="Re-enter your password"
                     />
                     <Lock className="h-5 w-5 text-gray-400 absolute left-4 top-3.5" />
@@ -178,7 +168,7 @@ export function RegisterPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors duration-200"
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -209,16 +199,16 @@ export function RegisterPage() {
                         setLoading(false)
                       }
                     }}
-                    className="text-sm text-emerald-700 hover:text-emerald-800 font-medium"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
                   >
                     Resend verification email
                   </button>
                 </div>
               )}
 
-              <div className="text-center text-sm text-gray-600">
+              <div className="mt-6 text-center text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-medium">Sign in</Link>
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">Sign in</Link>
               </div>
             </form>
           </div>

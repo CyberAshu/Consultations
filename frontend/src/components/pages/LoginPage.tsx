@@ -4,7 +4,7 @@ import { Button } from '../shared/Button'
 import { CardContent } from '../ui/Card'
 import { Input } from '../ui/Input'
 import { authService } from '../../services/authService'
-import { Mail, Lock, AlertCircle, LogIn, Shield } from 'lucide-react'
+import { Mail, Lock, AlertCircle, LogIn } from 'lucide-react'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -64,40 +64,21 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      {/* Professional background */}
-      <div className="absolute inset-0 z-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="https://player.vimeo.com/external/421045659.sd.mp4?s=7a1d2b8b4f5f9a7c0d5e8f2b3c4d6a9e1b3c7f8d&profile_id=164" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gray-900/40 z-10"></div>
-      </div>
-
-      <div className="max-w-md w-full space-y-8 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-black p-3 rounded-full shadow-lg">
-              <Shield className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-white font-gale">
+          <h2 className="text-4xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h2>
-          <p className="mt-2 text-sm text-gray-300 font-gale-light">
-            Access your personalized immigration consultation dashboard
+          <p className="mt-2 text-sm text-gray-600">
+            Sign in to access your immigration consultation dashboard
           </p>
         </div>
 
         {/* Login Form */}
         <CardContent>
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 p-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
             <form onSubmit={handleLogin} className="space-y-6">
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -175,7 +156,7 @@ export function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors duration-200"
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -212,17 +193,17 @@ export function LoginPage() {
                 </div>
               )}
             </form>
-            <div className="mt-4 text-center text-sm text-gray-700">
-              Don’t have an account?{' '}
-              <Link to="/register" className="text-blue-200 underline">Create one</Link>
+            <div className="mt-6 text-center text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">Create one</Link>
             </div>
           </div>
         </CardContent>
 
         {/* Footer */}
         <div className="text-center">
-          <p className="text-xs text-white/60">
-            This login is backed by advanced security protocols
+          <p className="text-xs text-gray-500">
+            Secured by advanced encryption protocols
           </p>
         </div>
       </div>

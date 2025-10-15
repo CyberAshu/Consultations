@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { passwordResetService } from '../../services/passwordResetService'
-import { Key, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 export function ResetPassword() {
   const [newPassword, setNewPassword] = useState('')
@@ -84,10 +84,10 @@ export function ResetPassword() {
   // Loading state while validating session
   if (validating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Validating reset link...</p>
           </div>
         </div>
@@ -98,9 +98,9 @@ export function ResetPassword() {
   // Invalid session state
   if (!isValidSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <AlertCircle className="h-8 w-8 text-red-600" />
@@ -117,14 +117,14 @@ export function ResetPassword() {
               <div className="space-y-3">
                 <Link
                   to="/forgot-password"
-                  className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                  className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg text-center"
                 >
                   Request New Reset Link
                 </Link>
                 
                 <Link
                   to="/login"
-                  className="block w-full text-purple-600 hover:text-purple-700 font-medium py-2 transition-colors"
+                  className="block w-full text-blue-600 hover:text-blue-700 font-semibold py-2 transition-colors text-center"
                 >
                   Back to Login
                 </Link>
@@ -139,9 +139,9 @@ export function ResetPassword() {
   // Success state
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full">
-          <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -163,7 +163,7 @@ export function ResetPassword() {
               
               <Link
                 to="/login"
-                className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg text-center"
               >
                 Go to Login
               </Link>
@@ -176,16 +176,12 @@ export function ResetPassword() {
 
   // Reset password form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50/30 to-red-50/30 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Key className="h-8 w-8 text-purple-600" />
-            </div>
-            
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Set New Password
             </h1>
             
@@ -207,7 +203,7 @@ export function ResetPassword() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-shadow"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                   required
                   disabled={loading}
                   minLength={6}
@@ -234,7 +230,7 @@ export function ResetPassword() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-shadow"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                   required
                   disabled={loading}
                   minLength={6}
@@ -274,7 +270,7 @@ export function ResetPassword() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 font-semibold shadow-md hover:shadow-lg transition-all"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -291,7 +287,7 @@ export function ResetPassword() {
           <div className="mt-6 text-center">
             <Link
               to="/login"
-              className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              className="text-blue-600 hover:text-blue-700 font-semibold transition-colors"
             >
               Back to Login
             </Link>
