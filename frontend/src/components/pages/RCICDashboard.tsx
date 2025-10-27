@@ -243,9 +243,7 @@ export function RCICDashboard() {
   const fetchBookingDocuments = async (bookingId: number) => {
     try {
       setDocumentLoading(prev => ({...prev, [bookingId]: true}))
-      console.log(`🔥 Fetching documents for booking ${bookingId}...`)
       const response = await bookingService.getBookingDocuments(bookingId)
-      console.log(`📄 Documents for booking ${bookingId}:`, response)
       
       setBookingDocuments(prev => ({
         ...prev, 
@@ -270,8 +268,7 @@ export function RCICDashboard() {
       const clientIds = filteredBookings.map(b => b.client_id).filter((id, i, arr) => arr.indexOf(id) === i)
       await fetchClientNames(clientIds)
       
-      // 🔥 FETCH DOCUMENTS FOR EACH BOOKING
-      console.log('📄 Fetching documents for all bookings...')
+      // FETCH DOCUMENTS FOR EACH BOOKING
       for (const booking of filteredBookings) {
         // Don't await - fetch in parallel to not slow down the UI
         fetchBookingDocuments(booking.id).catch(err => {
@@ -861,13 +858,9 @@ export function RCICDashboard() {
     pollingInterval: 30000 // Poll every 30 seconds as fallback
   })
 
-  // Debug connection status changes
+  // Connection status tracking
   useEffect(() => {
-    console.log('🔌 Connection status changed:', {
-      isConnected,
-      connectionType,
-      bookingsCount: bookings.length
-    })
+    // Track connection status for debugging if needed
   }, [isConnected, connectionType, bookings.length])
 
   return (

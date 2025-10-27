@@ -30,6 +30,7 @@ class CRUDAvailability:
             start_time=slot.start_time,
             end_time=slot.end_time,
             timezone=slot.timezone,
+            slot_interval_minutes=slot.slot_interval_minutes,
             is_active=slot.is_active
         )
         db.add(db_slot)
@@ -118,6 +119,7 @@ class CRUDAvailability:
                 start_time=slot.start_time,
                 end_time=slot.end_time,
                 timezone=slot.timezone,
+                slot_interval_minutes=slot.slot_interval_minutes,
                 is_active=slot.is_active
             )
             db_slots.append(db_slot)

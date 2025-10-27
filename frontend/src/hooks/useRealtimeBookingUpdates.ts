@@ -80,13 +80,11 @@ export function useRealtimeBookingUpdates(
   // Clean up connections
   const cleanup = useCallback(() => {
     if (eventSourceRef.current) {
-      console.log('🔌 Closing SSE connection')
       eventSourceRef.current.close()
       eventSourceRef.current = null
     }
     
     if (pollingIntervalRef.current) {
-      console.log('⏹️ Stopping polling')
       clearInterval(pollingIntervalRef.current)
       pollingIntervalRef.current = null
     }
@@ -98,11 +96,9 @@ export function useRealtimeBookingUpdates(
   // Polling fallback function
   const startPolling = useCallback(async () => {
     if (!enabled || !bookings.length) {
-      console.log(`❌ Polling not started: enabled=${enabled}, bookings.length=${bookings.length}`)
       return
     }
 
-    console.log(`🔄 Starting polling for ${bookings.length} booking updates...`)
     setConnectionType('polling')
     setIsConnected(true)
 
@@ -117,7 +113,6 @@ export function useRealtimeBookingUpdates(
       // Reuse normalized API base URL from api.ts to avoid mixed content
       const { API_BASE_URL } = await import('../services/api');
       const url = `${API_BASE_URL}/events/booking-status/${booking.id}`;
-          console.log(`🔍 Polling booking ${booking.id} at: ${url}`);
           
           const response = await fetch(url, {
             headers: {
@@ -132,7 +127,6 @@ export function useRealtimeBookingUpdates(
               
               // Check if status changed since last known status
               if (data.status !== booking.status) {
-                console.log(`📝 Status update detected: Booking ${booking.id} changed from ${booking.status} to ${data.status}`)
                 onBookingUpdate?.(booking.id, data.status)
               }
             } catch (parseError) {
@@ -161,26 +155,20 @@ export function useRealtimeBookingUpdates(
   const startSSE = useCallback(async () => {
     if (!enabled) return
 
-    console.log('🔄 Starting SSE connection for booking updates...')
-    console.log('📊 Bookings to monitor:', bookings.length)
-
     try {
       const token = authService.getToken()
       if (!token) {
         throw new Error('No authentication token available')
       }
 
-      console.log('🔑 Token available, attempting SSE connection...')
       // Note: EventSource doesn't support custom headers directly
       // We need to pass the token as a query parameter or use a different approach
       // Reuse normalized API base URL from api.ts to avoid mixed content
       const { API_BASE_URL } = await import('../services/api');
       const sseUrl = `${API_BASE_URL}/events/booking-updates?token=${encodeURIComponent(token)}`
-      console.log('🌐 SSE URL:', sseUrl)
       const eventSource = new EventSource(sseUrl)
       
       eventSource.onopen = () => {
-        console.log('✅ SSE connection established')
         setIsConnected(true)
         setConnectionType('sse')
         lastUpdateTimestamp.current = Date.now()
@@ -189,20 +177,17 @@ export function useRealtimeBookingUpdates(
       eventSource.onmessage = (event) => {
         try {
           const data: RealtimeEventData = JSON.parse(event.data)
-          console.log('📨 SSE message received:', data)
 
           switch (data.type) {
             case 'booking_status_update':
               if (data.data) {
                 data.data.forEach(update => {
-                  console.log(`📝 Booking ${update.id} status updated to: ${update.status}`)
                   onBookingUpdate?.(update.id, update.status)
                 })
               }
               break
             
             case 'heartbeat':
-              console.log('💓 SSE heartbeat received')
               lastUpdateTimestamp.current = Date.now()
               break
             
@@ -222,10 +207,8 @@ export function useRealtimeBookingUpdates(
         
         // If SSE fails and fallback is enabled, switch to polling
         if (fallbackToPolling) {
-          console.log('🔄 Falling back to polling...')
           cleanup()
           setTimeout(() => {
-            console.log('🗓️ Timeout completed, calling startPolling...')
             startPolling()
           }, 1000) // Wait 1 second before starting polling
         } else {
@@ -240,8 +223,6 @@ export function useRealtimeBookingUpdates(
       
       // Fallback to polling if SSE setup fails
       if (fallbackToPolling) {
-        console.log('🔄 SSE failed, falling back to polling...')
-        console.log('🗓️ Immediately calling startPolling...')
         startPolling()
       } else {
         onError?.('Failed to establish real-time connection')
