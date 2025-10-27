@@ -181,14 +181,10 @@ export function RCICDashboard() {
 
     const fetchConsultantDetails = async () => {
       try {
-        console.log('Current user:', user);
-        
         // First, get all consultants and find the one matching current user's user_id
         const allConsultants = await consultantService.getConsultants();
-        console.log('All consultants:', allConsultants);
         
         const currentConsultant = allConsultants.find(consultant => consultant.user_id === user.id);
-        console.log('Found consultant for current user:', currentConsultant);
         
         if (currentConsultant) {
           setConsultant(currentConsultant);
@@ -813,8 +809,6 @@ export function RCICDashboard() {
 
   // Handle booking status updates from real-time events
   const handleBookingUpdate = useCallback((bookingId: number, newStatus: string) => {
-    console.log(`📝 RCIC Dashboard - Booking ${bookingId} status updated to: ${newStatus}`)
-    
     // Validate status before updating
     const validStatuses: Booking['status'][] = ['pending', 'confirmed', 'completed', 'cancelled', 'delayed', 'rescheduled']
     const typedStatus = validStatuses.includes(newStatus as Booking['status']) 
@@ -840,7 +834,6 @@ export function RCICDashboard() {
 
   // Handle real-time connection errors
   const handleRealtimeError = useCallback((error: string) => {
-    console.error('RCIC Dashboard - Real-time connection error:', error)
     toasts.error('Connection Issue', error, {
       action: {
         label: 'Retry',

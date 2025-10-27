@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import { Booking } from '../services/types'
 import { authService } from '../services/authService'
 
@@ -244,6 +244,9 @@ export function useRealtimeBookingUpdates(
     return cleanup
   }, [enabled, startSSE, cleanup])
 
+  // Memoize booking IDs to prevent unnecessary restarts
+  const bookingIds = useMemo(() => bookings.map(b => b.id).join(','), [bookings])
+
   // Handle bookings change - restart connection with new booking list
   useEffect(() => {
     if (!enabled || connectionType !== 'polling') return
@@ -251,7 +254,7 @@ export function useRealtimeBookingUpdates(
     // If we're polling and bookings changed, restart polling
     cleanup()
     startPolling()
-  }, [bookings.map(b => b.id).join(','), enabled, connectionType, cleanup, startPolling])
+  }, [bookingIds, enabled, connectionType, cleanup, startPolling])
 
   return {
     isConnected,

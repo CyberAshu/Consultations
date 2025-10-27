@@ -20,7 +20,6 @@ async def get_booking_updates(user_id: str, user_role: str, db: Client) -> Async
     Works for both clients and RCICs.
     """
     last_check_dt = datetime.now(timezone.utc)
-    print(f"[SSE] Starting real-time monitoring for user {user_id} ({user_role}) at {last_check_dt}")
     
     while True:
         try:
@@ -75,10 +74,8 @@ async def get_booking_updates(user_id: str, user_role: str, db: Client) -> Async
                             # Check if booking was updated since last check
                             if booking_updated_dt > last_check_dt:
                                 should_include = True
-                                print(f"[SSE] Detected update for booking {booking['id']}: {booking['status']} at {booking_updated_dt}")
                             
                         except (ValueError, AttributeError) as e:
-                            print(f"[SSE] Warning: Could not parse timestamp for booking {booking['id']}: {e}")
                             # For safety, include recent bookings if timestamp parsing fails
                             should_include = True
                     
@@ -95,7 +92,6 @@ async def get_booking_updates(user_id: str, user_role: str, db: Client) -> Async
                         'data': updates,
                         'timestamp': time.time()
                     })
-                    print(f"[SSE] Sending {len(updates)} booking updates")
                     yield f"data: {data}\n\n"
                 
                 last_check_dt = current_check_dt
@@ -107,7 +103,6 @@ async def get_booking_updates(user_id: str, user_role: str, db: Client) -> Async
             await asyncio.sleep(10)
             
         except Exception as e:
-            print(f"[SSE] Error in booking updates: {e}")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
             await asyncio.sleep(5)
 
