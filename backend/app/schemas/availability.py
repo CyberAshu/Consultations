@@ -179,10 +179,13 @@ class BlockedTimeUpdate(BaseModel):
     reason: Optional[str] = None
 
 
-class BlockedTimeInDB(BlockedTimeBase):
+class BlockedTimeInDB(BaseModel):
     """Schema for blocked time from database"""
     id: int
     consultant_id: int
+    start_datetime: datetime
+    end_datetime: datetime
+    reason: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -190,7 +193,7 @@ class BlockedTimeInDB(BlockedTimeBase):
 
 
 class BlockedTimeResponse(BlockedTimeInDB):
-    """Schema for API response"""
+    """Schema for API response (no validation to handle legacy data)"""
     pass
 
 

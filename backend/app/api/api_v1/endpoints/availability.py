@@ -237,20 +237,32 @@ def get_my_blocked_times(
         raise HTTPException(status_code=403, detail="Only RCICs can access this endpoint")
     
     # Get consultant profile
-    consultant_response = supabase_db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
-    if not consultant_response.data:
-        raise HTTPException(status_code=404, detail="Consultant profile not found")
-    
-    consultant_id = consultant_response.data[0]["id"]
-    
-    blocked_times = crud_availability.get_consultant_blocked_times(
-        db=sql_db,
-        consultant_id=consultant_id,
-        start_date=start_date,
-        end_date=end_date
-    )
-    
-    return [BlockedTimeResponse.from_orm(bt) for bt in blocked_times]
+    try:
+        consultant_response = supabase_db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+        if not consultant_response.data:
+            raise HTTPException(status_code=404, detail="Consultant profile not found")
+        
+        consultant_id = consultant_response.data[0]["id"]
+        
+        blocked_times = crud_availability.get_consultant_blocked_times(
+            db=sql_db,
+            consultant_id=consultant_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return [BlockedTimeResponse.from_orm(bt) for bt in blocked_times]
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log the actual error for debugging
+        print(f"Database error in get_my_blocked_times: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=503,
+            detail="Database connection failed. Please try again in a moment."
+        )
 
 
 @router.post("/my-schedule/blocked", response_model=BlockedTimeResponse)
