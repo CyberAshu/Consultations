@@ -22,6 +22,53 @@ import {
   DollarSign
 } from 'lucide-react'
 
+// Simple client-side cache (localStorage) to avoid re-fetch slowness
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const TEMPLATES_CACHE_KEY = 'admin_duration_templates_v1'
+const OPTIONS_CACHE_KEY = 'admin_duration_options_v1'
+
+type TemplatesCache = { data: ServiceTemplate[]; ts: number }
+type OptionsCache = { [templateId: number]: { data: ServiceDurationOption[]; ts: number } }
+
+function readTemplatesCache(): ServiceTemplate[] | null {
+  try {
+    const raw = localStorage.getItem(TEMPLATES_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as TemplatesCache
+    if (Date.now() - parsed.ts > CACHE_TTL_MS) return null
+    return parsed.data
+  } catch {
+    return null
+  }
+}
+function writeTemplatesCache(data: ServiceTemplate[]) {
+  try {
+    const payload: TemplatesCache = { data, ts: Date.now() }
+    localStorage.setItem(TEMPLATES_CACHE_KEY, JSON.stringify(payload))
+  } catch {}
+}
+function readOptionsCache(templateId: number): ServiceDurationOption[] | null {
+  try {
+    const raw = localStorage.getItem(OPTIONS_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as OptionsCache
+    const entry = parsed[templateId]
+    if (!entry) return null
+    if (Date.now() - entry.ts > CACHE_TTL_MS) return null
+    return entry.data
+  } catch {
+    return null
+  }
+}
+function writeOptionsCache(templateId: number, data: ServiceDurationOption[]) {
+  try {
+    const raw = localStorage.getItem(OPTIONS_CACHE_KEY)
+    const parsed: OptionsCache = raw ? JSON.parse(raw) : {}
+    parsed[templateId] = { data, ts: Date.now() }
+    localStorage.setItem(OPTIONS_CACHE_KEY, JSON.stringify(parsed))
+  } catch {}
+}
+
 interface DurationOptionsManagementProps {
   onClose?: () => void
 }
@@ -32,6 +79,9 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
   const [durationOptions, setDurationOptions] = useState<ServiceDurationOption[]>([])
   const [durationOptionsCount, setDurationOptionsCount] = useState<{[key: number]: number}>({})
   const [loading, setLoading] = useState(true)
+  const [optionsLoading, setOptionsLoading] = useState(false)
+  const [countsLoading, setCountsLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -50,68 +100,91 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
   // Load duration options count for all templates
   const loadDurationOptionsCount = async (templates: ServiceTemplate[]) => {
     try {
-      console.log('🔄 Starting to load duration options count for', templates.length, 'templates')
+      setCountsLoading(true)
       const counts: {[key: number]: number} = {}
-      
-      // Load duration options count for each template
       await Promise.all(
         templates.map(async (template) => {
           try {
-            console.log(`🔄 Loading duration options for template ${template.id} (${template.name})`)
             const options = await serviceTemplateService.getDurationOptionsForTemplate(template.id)
             counts[template.id] = options.length
-            console.log(`✅ Template ${template.id} has ${options.length} duration options`)
           } catch (err) {
-            console.warn(`❌ Failed to load duration options for template ${template.id}:`, err)
             counts[template.id] = 0
           }
         })
       )
-      
-      console.log('🎯 Final duration options counts:', counts)
       setDurationOptionsCount(counts)
-      console.log('✅ Duration options count state updated')
     } catch (err: any) {
-      console.error('❌ Failed to load duration options count:', err)
+      // swallow
+    } finally {
+      setCountsLoading(false)
     }
   }
 
-  // Load service templates
+  // Load service templates with cache-first strategy for instant render
   const loadServiceTemplates = async () => {
     try {
-      setLoading(true)
       setError(null)
+      const cached = readTemplatesCache()
+      if (cached && cached.length > 0) {
+        setServiceTemplates(cached)
+        if (!selectedTemplate) {
+          setSelectedTemplate(cached[0])
+        }
+        setLoading(false)
+        // refresh in background
+        serviceTemplateService.getServiceTemplates()
+          .then((fresh) => {
+            setServiceTemplates(fresh)
+            writeTemplatesCache(fresh)
+            if (!selectedTemplate && fresh.length > 0) setSelectedTemplate(fresh[0])
+            if (fresh.length > 0) loadDurationOptionsCount(fresh)
+          })
+          .catch(() => {})
+        return
+      }
+      // no cache -> do normal fetch
+      setLoading(true)
       const templates = await serviceTemplateService.getServiceTemplates()
       setServiceTemplates(templates)
-      
-      console.log('🔄 Loaded service templates for admin:', templates.length)
-      
-      // Load duration options count for all templates
-      await loadDurationOptionsCount(templates)
-      
+      writeTemplatesCache(templates)
       if (templates.length > 0 && !selectedTemplate) {
         setSelectedTemplate(templates[0])
       }
+      setLoading(false)
+      if (templates.length > 0) {
+        loadDurationOptionsCount(templates)
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to load service templates')
-      console.error('Failed to load service templates:', err)
-    } finally {
       setLoading(false)
     }
   }
 
-  // Load duration options for selected template
+  // Load duration options for selected template (cache-first)
   const loadDurationOptions = async (templateId: number) => {
     try {
       setError(null)
+      const cached = readOptionsCache(templateId)
+      if (cached) {
+        setDurationOptions(cached)
+        setOptionsLoading(false)
+        // refresh in background
+        serviceTemplateService.getDurationOptionsForTemplate(templateId)
+          .then((fresh) => {
+            setDurationOptions(fresh)
+            writeOptionsCache(templateId, fresh)
+          })
+          .catch(() => {})
+        return
+      }
+      setOptionsLoading(true)
       const options = await serviceTemplateService.getDurationOptionsForTemplate(templateId)
       setDurationOptions(options)
-      
-      console.log('🔄 Loaded duration options:', options.length, 'for template:', templateId)
-      
+      writeOptionsCache(templateId, options)
     } catch (err: any) {
       setError(err?.message || 'Failed to load duration options')
-      console.error('Failed to load duration options:', err)
+    } finally {
+      setOptionsLoading(false)
     }
   }
 
@@ -165,7 +238,11 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
       
       const created = await serviceTemplateService.createDurationOption(newOption)
       await loadDurationOptions(selectedTemplate.id)
-      
+      // refresh cache explicitly
+      try {
+        const fresh = await serviceTemplateService.getDurationOptionsForTemplate(selectedTemplate.id)
+        writeOptionsCache(selectedTemplate.id, fresh)
+      } catch {}
       // Update duration options count for this template
       setDurationOptionsCount(prev => ({
         ...prev,
@@ -193,7 +270,10 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
       
       await serviceTemplateService.updateDurationOption(optionId, updates)
       await loadDurationOptions(selectedTemplate.id)
-      
+      try {
+        const fresh = await serviceTemplateService.getDurationOptionsForTemplate(selectedTemplate.id)
+        writeOptionsCache(selectedTemplate.id, fresh)
+      } catch {}
       setEditingOption(null)
       setSuccessMessage('Duration option updated successfully!')
       setTimeout(() => setSuccessMessage(null), 5000)
@@ -219,7 +299,10 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
       
       await serviceTemplateService.deleteDurationOption(optionId)
       await loadDurationOptions(selectedTemplate.id)
-      
+      try {
+        const fresh = await serviceTemplateService.getDurationOptionsForTemplate(selectedTemplate.id)
+        writeOptionsCache(selectedTemplate.id, fresh)
+      } catch {}
       // Update duration options count for this template
       setDurationOptionsCount(prev => ({
         ...prev,
@@ -266,6 +349,22 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
               <div className="text-2xl font-bold">{serviceTemplates.length}</div>
               <div className="text-xs text-blue-100">Templates</div>
             </div>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                setRefreshing(true)
+                await loadServiceTemplates()
+                if (selectedTemplate) await loadDurationOptions(selectedTemplate.id)
+                setRefreshing(false)
+              }}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              {refreshing ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+              ) : (
+                'Refresh'
+              )}
+            </Button>
             {onClose && (
               <Button
                 onClick={onClose}
@@ -335,8 +434,11 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                         Price: ${template.min_price} - ${template.max_price}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Duration Options: {selectedTemplate?.id === template.id ? durationOptions.length : (durationOptionsCount[template.id] || 0)}
-                        {/* Debug: {JSON.stringify(durationOptionsCount)} */}
+                        Duration Options: {selectedTemplate?.id === template.id ? (
+                          optionsLoading ? '…' : durationOptions.length
+                        ) : (
+                          durationOptionsCount[template.id] === undefined ? '…' : durationOptionsCount[template.id]
+                        )}
                       </p>
                     </div>
                     <Badge className={template.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}>
@@ -362,16 +464,27 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                   </span>
                 )}
               </h3>
-              {selectedTemplate && (
-                <Button
-                  onClick={startAddingOption}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  disabled={saving}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Option
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {selectedTemplate && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => selectedTemplate && loadDurationOptions(selectedTemplate.id)}
+                      disabled={optionsLoading}
+                    >
+                      {optionsLoading ? 'Refreshing…' : 'Refresh'}
+                    </Button>
+                    <Button
+                      onClick={startAddingOption}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={saving}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Option
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {!selectedTemplate ? (
@@ -480,7 +593,12 @@ export function DurationOptionsManagement({ onClose }: DurationOptionsManagement
                 )}
 
                 {/* Duration Options List */}
-                {durationOptions.length === 0 ? (
+                {optionsLoading ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4" />
+                    <p>Loading duration options…</p>
+                  </div>
+                ) : durationOptions.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <DollarSign className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p>No duration options configured yet</p>

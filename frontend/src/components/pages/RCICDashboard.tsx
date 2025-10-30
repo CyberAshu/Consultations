@@ -13,6 +13,7 @@ import { Booking, Consultant, ConsultantServiceInDB, ServiceTemplate } from '../
 import { SessionDetailModal } from '../modals/SessionDetailModal'
 import { useRealtimeBookingUpdates } from '../../hooks/useRealtimeBookingUpdates'
 import { ServicesTableView } from '../rcic/ServicesTableView'
+import { BookingDocumentManager } from '../dashboard/BookingDocumentManager'
 
 export function RCICDashboard() {
   const navigate = useNavigate()
@@ -309,6 +310,7 @@ export function RCICDashboard() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: <User className="h-4 w-4" /> },
     { id: 'sessions', label: 'My Sessions', icon: <Calendar className="h-4 w-4" /> },
+    { id: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
     { id: 'services', label: 'Services', icon: <Wrench className="h-4 w-4" /> },
     { id: 'profile', label: 'Profile', icon: <Settings className="h-4 w-4" /> },
     { id: 'payments', label: 'Payments', icon: <DollarSign className="h-4 w-4" /> }
@@ -2115,6 +2117,229 @@ export function RCICDashboard() {
                 </Card>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Documents Tab */}
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="bg-blue-600 rounded-2xl p-6 text-white">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Client Documents</h2>
+                  <p className="text-blue-100">Review and manage documents uploaded by your clients</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-2xl font-bold">
+                      {bookings.reduce((total, booking) => {
+                        const docs = bookingDocuments[booking.id] || []
+                        return total + docs.length
+                      }, 0)}
+                    </div>
+                    <div className="text-xs text-blue-100">Total Docs</div>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-2xl font-bold">
+                      {bookings.filter(booking => (bookingDocuments[booking.id] || []).length > 0).length}
+                    </div>
+                    <div className="text-xs text-blue-100">With Docs</div>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 col-span-2 sm:col-span-1">
+                    <div className="text-2xl font-bold">
+                      {bookings.filter(booking => (bookingDocuments[booking.id] || []).length === 0).length}
+                    </div>
+                    <div className="text-xs text-blue-100">Pending</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {!initialBookingsLoaded ? (
+              <Card className="bg-white shadow-sm border-gray-200">
+                <CardContent className="p-6">
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                    <p className="text-gray-500">Loading documents...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : bookings.length === 0 ? (
+              <Card className="bg-white shadow-sm border-gray-200">
+                <CardContent className="p-8">
+                  <div className="text-center text-gray-500">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <FileText className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">No Bookings Yet</h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                      Client documents will appear here once they start uploading files for their consultations.
+                    </p>
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setActiveTab('sessions')}
+                    >
+                      View Sessions
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Bookings with Documents */}
+                {bookings
+                  .filter(booking => (bookingDocuments[booking.id] || []).length > 0)
+                  .sort((a, b) => new Date(b.booking_date || '').getTime() - new Date(a.booking_date || '').getTime())
+                  .map((booking) => {
+                    const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                    const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                    
+                    return (
+                      <BookingDocumentManager
+                        key={booking.id}
+                        booking={{
+                          id: booking.id,
+                          booking_date: booking.booking_date || booking.scheduled_date || '',
+                          client_name: clientName,
+                          service_name: booking.service_type || `Service #${booking.service_id}`,
+                          status: booking.status
+                        }}
+                        userRole="rcic"
+                        onDocumentUpdate={() => {
+                          // Refresh documents for this booking
+                          fetchBookingDocuments(booking.id)
+                        }}
+                      />
+                    )
+                  })}
+                
+                {/* Bookings without Documents */}
+                {bookings.filter(booking => (bookingDocuments[booking.id] || []).length === 0).length > 0 && (
+                  <Card className="bg-white shadow-sm border-gray-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-amber-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Bookings Without Documents
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {bookings.filter(booking => (bookingDocuments[booking.id] || []).length === 0).length} bookings pending document uploads
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {bookings
+                          .filter(booking => (bookingDocuments[booking.id] || []).length === 0)
+                          .sort((a, b) => new Date(b.booking_date || '').getTime() - new Date(a.booking_date || '').getTime())
+                          .slice(0, 10) // Show first 10
+                          .map((booking) => {
+                            const clientName = clientNames[booking.client_id] || `Client ${booking.client_id.slice(0, 8)}...${booking.client_id.slice(-4)}`
+                            const bookingDate = new Date(booking.booking_date || booking.scheduled_date || '')
+                            const isUpcoming = bookingDate.getTime() > Date.now()
+                            
+                            return (
+                              <div key={booking.id} className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                    {booking.id}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900">{clientName}</p>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                      <span>{booking.service_type || `Service #${booking.service_id}`}</span>
+                                      <span>•</span>
+                                      <span>{bookingDate.toLocaleDateString()}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={getStatusBadge(booking.status)}>
+                                    {booking.status}
+                                  </Badge>
+                                  {isUpcoming && (
+                                    <Badge className="bg-amber-100 text-amber-800 text-xs">
+                                      Upcoming
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                      </div>
+                      
+                      {bookings.filter(booking => (bookingDocuments[booking.id] || []).length === 0).length > 10 && (
+                        <div className="mt-4 text-center">
+                          <p className="text-sm text-gray-500">
+                            Showing 10 of {bookings.filter(booking => (bookingDocuments[booking.id] || []).length === 0).length} bookings without documents
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setActiveTab('sessions')}
+                          >
+                            View All Sessions
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {/* Document Statistics */}
+                {bookings.length > 0 && (
+                  <Card className="bg-white shadow-sm border-gray-200">
+                    <CardContent className="p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        Document Overview
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {bookings.reduce((total, booking) => {
+                              const docs = bookingDocuments[booking.id] || []
+                              return total + docs.length
+                            }, 0)}
+                          </div>
+                          <div className="text-sm text-blue-600">Total Documents</div>
+                        </div>
+                        <div className="bg-green-50 p-4 rounded-lg">
+                          <div className="text-2xl font-bold text-green-600">
+                            {bookings.filter(booking => (bookingDocuments[booking.id] || []).length > 0).length}
+                          </div>
+                          <div className="text-sm text-green-600">Bookings with Docs</div>
+                        </div>
+                        <div className="bg-amber-50 p-4 rounded-lg">
+                          <div className="text-2xl font-bold text-amber-600">
+                            {bookings.filter(booking => (bookingDocuments[booking.id] || []).length === 0).length}
+                          </div>
+                          <div className="text-sm text-amber-600">Pending Uploads</div>
+                        </div>
+                        <div className="bg-purple-50 p-4 rounded-lg">
+                          <div className="text-2xl font-bold text-purple-600">
+                            {Math.round((bookings.filter(booking => (bookingDocuments[booking.id] || []).length > 0).length / Math.max(bookings.length, 1)) * 100)}%
+                          </div>
+                          <div className="text-sm text-purple-600">Upload Rate</div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6 text-center">
+                        <div className="text-xs text-gray-500">
+                          Documents are automatically organized by booking. Click on individual bookings above to view and download specific files.
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </div>
         )}
 

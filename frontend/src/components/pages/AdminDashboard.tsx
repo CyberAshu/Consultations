@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '../shared/Button'
 import { Card, CardContent } from '../ui/Card'
 import { Badge } from '../ui/Badge'
@@ -33,6 +33,7 @@ import {
 
 export function AdminDashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedApplication, setSelectedApplication] = useState<any>(null)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
@@ -68,6 +69,7 @@ export function AdminDashboard() {
       setLoading(false)
     }
   }
+
 
   // Load consultant applications on component mount
   useEffect(() => {
@@ -142,6 +144,29 @@ export function AdminDashboard() {
     { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-4 w-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> }
   ]
+
+  // Sync active tab with URL ?tab=
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    if (tab && tabs.some(t => t.id === tab)) {
+      setActiveTab(tab)
+    }
+    // If no tab in URL, push current default state to URL once
+    if (!tab) {
+      const p = new URLSearchParams(location.search)
+      p.set('tab', activeTab)
+      navigate({ pathname: location.pathname, search: p.toString() }, { replace: true })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search])
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId)
+    const params = new URLSearchParams(location.search)
+    params.set('tab', tabId)
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true })
+  }
 
   const stats = [
     { label: 'Total Users', value: '2,847', change: '+12%', color: 'blue' },
@@ -414,13 +439,13 @@ export function AdminDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 md:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-0 sm:space-x-2 overflow-x-auto scrollbar-hide pb-px">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`py-3 sm:py-4 px-2 sm:px-4 inline-flex items-center gap-1 sm:gap-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 min-w-0 flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
@@ -436,7 +461,27 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:grid md:grid-cols-[240px_1fr] md:gap-6">
+        {/* Sidebar (desktop) */}
+        <aside className="hidden md:block md:sticky md:top-4 md:self-start">
+          <nav className="space-y-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeTab === tab.id ? 'bg-blue-600 text-white shadow' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span className="shrink-0">{tab.icon}</span>
+                <span className="truncate">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <div className="md:col-start-2">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
@@ -1033,6 +1078,7 @@ export function AdminDashboard() {
             </Card>
           </div>
         )}
+      </div>
       </div>
       
       {/* Application Details Modal */}

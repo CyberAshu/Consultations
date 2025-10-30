@@ -19,6 +19,7 @@ import { EmailConfirm } from './components/pages/EmailConfirm';
 import { AdminDashboard } from './components/pages/AdminDashboard';
 import { ClientDashboard } from './components/pages/ClientDashboard';
 import { RCICDashboard } from './components/pages/RCICDashboard';
+import { MeetingPage } from './components/pages/MeetingPage';
 import { BookingFlow } from './components/pages/BookingFlow';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { GlobalDisclaimerModal, useGlobalDisclaimerModal } from './components/shared/GlobalDisclaimerModal';
@@ -125,6 +126,13 @@ function App() {
           <Route path="/rcic-dashboard" element={
             <ProtectedRoute allowedRoles={['rcic']}>
               <RCICDashboard />
+            </ProtectedRoute>
+          } />
+          
+          {/* Meeting page without header/footer */}
+          <Route path="/meeting/:bookingId" element={
+            <ProtectedRoute>
+              <MeetingPage />
             </ProtectedRoute>
           } />
           

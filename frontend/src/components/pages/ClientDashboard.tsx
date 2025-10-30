@@ -45,18 +45,34 @@ export function ClientDashboard() {
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [selectedSession, setSelectedSession] = useState<Booking | null>(null)
   
-  // Profile form state
+  // Profile form state - comprehensive client profile
   const [profileForm, setProfileForm] = useState({
     full_name: '',
     email: '',
     phone: '',
+    date_of_birth: '',
+    nationality: '',
+    address: '',
+    city: '',
+    province: '',
+    postal_code: '',
+    country: 'Canada',
     language_preference: 'English',
-    location: '',
     timezone: 'America/Toronto',
+    immigration_status: '',
+    immigration_goals: '',
+    immigration_timeline: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    emergency_contact_relationship: '',
+    special_needs: '',
+    communication_preference: 'email',
+    profile_image_url: '',
     immigration_notes: ''
   })
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
 
   const tabs = [
     { id: 'dashboard', label: 'Home / Dashboard', icon: <Home className="h-4 w-4" /> },
@@ -75,15 +91,11 @@ export function ClientDashboard() {
         if (storedUser) {
           setCurrentUser(storedUser)
           // Initialize profile form with user data
-          setProfileForm({
+          setProfileForm(prev => ({
+            ...prev,
             full_name: storedUser.full_name || '',
-            email: storedUser.email || '',
-            phone: '',
-            language_preference: 'English',
-            location: '',
-            timezone: 'America/Toronto',
-            immigration_notes: ''
-          })
+            email: storedUser.email || ''
+          }))
         }
         
         // Fetch user's bookings
@@ -282,9 +294,8 @@ export function ClientDashboard() {
 
   // Handle booking actions
   const handleJoinSession = (bookingId: number) => {
-    // TODO: Implement actual video call integration
-    alert(`Joining session for booking #${bookingId}`)
-    console.log('Join session clicked for booking:', bookingId)
+    // Navigate to the meeting page with consultant information
+    navigate(`/meeting/${bookingId}`)
   }
 
   const handleRescheduleBooking = async (bookingId: number) => {
@@ -817,7 +828,7 @@ export function ClientDashboard() {
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium text-gray-900">{session.service_type}</h4>
-                            <p className="text-sm text-gray-600">Consultant ID: {session.consultant_id}</p>
+                            <p className="text-sm text-gray-600">Consultant name: {session.consultant_id}</p>
                             <p className="text-sm text-gray-500">{date} at {time}</p>
                           </div>
                           <Badge className={getStatusBadgeClass(session.status)}>
@@ -910,22 +921,36 @@ export function ClientDashboard() {
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden bg-white/20">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="h-12 w-12 text-white/60 flex items-center justify-center rounded-full bg-white/10">
-                        <span className="text-2xl font-bold">
-                          {currentUser?.full_name?.charAt(0)?.toUpperCase() || 'C'}
-                        </span>
+                    {profileForm.profile_image_url ? (
+                      <img 
+                        src={profileForm.profile_image_url} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="h-12 w-12 text-white/60 flex items-center justify-center rounded-full bg-white/10">
+                          <span className="text-2xl font-bold">
+                            {currentUser?.full_name?.charAt(0)?.toUpperCase() || 'C'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="h-4 w-4 text-blue-600" />
                   </div>
                 </div>
                 <div className="text-center sm:text-left flex-1">
-                  <h2 className="text-2xl font-bold mb-1">{currentUser?.full_name || 'Client Profile'}</h2>
-                  <p className="text-blue-100 mb-2">Immigration Client</p>
+                  <h2 className="text-2xl font-bold mb-1">{profileForm.full_name || currentUser?.full_name || 'Client Profile'}</h2>
+                  <p className="text-blue-100 mb-2">Immigration Client • {profileForm.nationality || 'Nationality not set'}</p>
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                    {profileForm.immigration_status && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
+                        <span>🏛️</span>
+                        <span>{profileForm.immigration_status}</span>
+                      </div>
+                    )}
                     {currentUser?.email && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
                         <span>📧</span>
@@ -940,66 +965,564 @@ export function ClientDashboard() {
                     )}
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  {isEditingProfile ? (
+                    <>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="bg-white text-blue-600 border-white hover:bg-blue-50"
+                        onClick={() => setIsEditingProfile(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        size="sm"
+                        className="bg-white text-blue-600 hover:bg-blue-50"
+                        onClick={() => {
+                          handleProfileSave()
+                          setIsEditingProfile(false)
+                        }}
+                        disabled={savingProfile}
+                      >
+                        {savingProfile ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      size="sm"
+                      className="bg-white text-blue-600 hover:bg-blue-50"
+                      onClick={() => setIsEditingProfile(true)}
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Edit Profile
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
-            <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Settings className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Profile Information</h3>
-                </div>
-                
-                <div className="space-y-6">
-                  {/* Basic Information */}
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <UserIcon className="h-4 w-4 text-blue-600" />
-                        Full Name
-                      </label>
-                      <input 
-                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        type="text"
-                        value={profileForm.full_name || ''}
-                        onChange={(e) => handleProfileInputChange('full_name', e.target.value)}
-                        placeholder="Enter your full name"
-                        onBlur={handleProfileSave}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Changes are saved automatically</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Profile Form */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Personal Information */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <UserIcon className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">Personal Information</h3>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <span className="text-blue-600">📧</span>
-                        Email Address
-                      </label>
-                      <input 
-                        className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50"
-                        type="email"
-                        value={profileForm.email || ''}
-                        disabled
-                        placeholder="Email managed by authentication system"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Email changes must be done through account security settings</p>
-                    </div>
-                  </div>
+                    
+                    <div className="space-y-6">
+                      {/* Basic Information */}
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Full Name
+                          </label>
+                          <input 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            type="text"
+                            value={profileForm.full_name || ''}
+                            onChange={(e) => handleProfileInputChange('full_name', e.target.value)}
+                            placeholder="Enter your full name"
+                            disabled={!isEditingProfile}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Date of Birth
+                          </label>
+                          <input 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            type="date"
+                            value={profileForm.date_of_birth || ''}
+                            onChange={(e) => handleProfileInputChange('date_of_birth', e.target.value)}
+                            disabled={!isEditingProfile}
+                          />
+                        </div>
+                      </div>
 
-                  {/* Save Status */}
-                  {profileSaveMessage && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-                      profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') 
-                        ? 'bg-green-100 text-green-700 border border-green-200' 
-                        : 'bg-red-100 text-red-700 border border-red-200'
-                    }`}>
-                      <span>{profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') ? '✅' : '❌'}</span>
-                      <span>{profileSaveMessage}</span>
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Email Address
+                          </label>
+                          <input 
+                            className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50"
+                            type="email"
+                            value={profileForm.email || currentUser?.email || ''}
+                            disabled
+                            placeholder="Email managed by authentication system"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Email changes must be done through account security settings</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Phone Number
+                          </label>
+                          <input 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            type="tel"
+                            value={profileForm.phone || ''}
+                            onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                            placeholder="Enter your phone number"
+                            disabled={!isEditingProfile}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Nationality
+                          </label>
+                          <select 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            value={profileForm.nationality || ''}
+                            onChange={(e) => handleProfileInputChange('nationality', e.target.value)}
+                            disabled={!isEditingProfile}
+                          >
+                            <option value="">Select your nationality</option>
+                            <option value="Canadian">Canadian</option>
+                            <option value="American">American</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Filipino">Filipino</option>
+                            <option value="British">British</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Nigerian">Nigerian</option>
+                            <option value="Brazilian">Brazilian</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Language Preference
+                          </label>
+                          <select 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            value={profileForm.language_preference || ''}
+                            onChange={(e) => handleProfileInputChange('language_preference', e.target.value)}
+                            disabled={!isEditingProfile}
+                          >
+                            <option value="English">English</option>
+                            <option value="French">French</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Mandarin">Mandarin</option>
+                            <option value="Arabic">Arabic</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Address Information */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <span className="text-green-600">🏠</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">Address Information</h3>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Street Address
+                        </label>
+                        <input 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          type="text"
+                          value={profileForm.address || ''}
+                          onChange={(e) => handleProfileInputChange('address', e.target.value)}
+                          placeholder="Enter your street address"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+
+                      <div className="grid sm:grid-cols-3 gap-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            City
+                          </label>
+                          <input 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            type="text"
+                            value={profileForm.city || ''}
+                            onChange={(e) => handleProfileInputChange('city', e.target.value)}
+                            placeholder="Enter your city"
+                            disabled={!isEditingProfile}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Province/State
+                          </label>
+                          <select 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            value={profileForm.province || ''}
+                            onChange={(e) => handleProfileInputChange('province', e.target.value)}
+                            disabled={!isEditingProfile}
+                          >
+                            <option value="">Select province</option>
+                            <option value="Alberta">Alberta</option>
+                            <option value="British Columbia">British Columbia</option>
+                            <option value="Manitoba">Manitoba</option>
+                            <option value="New Brunswick">New Brunswick</option>
+                            <option value="Newfoundland and Labrador">Newfoundland and Labrador</option>
+                            <option value="Northwest Territories">Northwest Territories</option>
+                            <option value="Nova Scotia">Nova Scotia</option>
+                            <option value="Nunavut">Nunavut</option>
+                            <option value="Ontario">Ontario</option>
+                            <option value="Prince Edward Island">Prince Edward Island</option>
+                            <option value="Quebec">Quebec</option>
+                            <option value="Saskatchewan">Saskatchewan</option>
+                            <option value="Yukon">Yukon</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Postal Code
+                          </label>
+                          <input 
+                            className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                            type="text"
+                            value={profileForm.postal_code || ''}
+                            onChange={(e) => handleProfileInputChange('postal_code', e.target.value.toUpperCase())}
+                            placeholder="A1B 2C3"
+                            disabled={!isEditingProfile}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Country
+                        </label>
+                        <select 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          value={profileForm.country || ''}
+                          onChange={(e) => handleProfileInputChange('country', e.target.value)}
+                          disabled={!isEditingProfile}
+                        >
+                          <option value="Canada">Canada</option>
+                          <option value="United States">United States</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Immigration Information */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <span className="text-purple-600">🛂</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">Immigration Information</h3>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Current Immigration Status
+                        </label>
+                        <select 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          value={profileForm.immigration_status || ''}
+                          onChange={(e) => handleProfileInputChange('immigration_status', e.target.value)}
+                          disabled={!isEditingProfile}
+                        >
+                          <option value="">Select your current status</option>
+                          <option value="Visitor">Visitor</option>
+                          <option value="Student">Student (Study Permit)</option>
+                          <option value="Worker">Worker (Work Permit)</option>
+                          <option value="Permanent Resident">Permanent Resident</option>
+                          <option value="Citizen">Canadian Citizen</option>
+                          <option value="Refugee">Protected Person/Refugee</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Immigration Goals
+                        </label>
+                        <textarea 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          rows={3}
+                          value={profileForm.immigration_goals || ''}
+                          onChange={(e) => handleProfileInputChange('immigration_goals', e.target.value)}
+                          placeholder="Describe your immigration goals and objectives..."
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Timeline
+                        </label>
+                        <select 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          value={profileForm.immigration_timeline || ''}
+                          onChange={(e) => handleProfileInputChange('immigration_timeline', e.target.value)}
+                          disabled={!isEditingProfile}
+                        >
+                          <option value="">Select your timeline</option>
+                          <option value="Immediate (0-3 months)">Immediate (0-3 months)</option>
+                          <option value="Short term (3-6 months)">Short term (3-6 months)</option>
+                          <option value="Medium term (6-12 months)">Medium term (6-12 months)</option>
+                          <option value="Long term (1-2 years)">Long term (1-2 years)</option>
+                          <option value="Flexible">Flexible</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Additional Notes
+                        </label>
+                        <textarea 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          rows={3}
+                          value={profileForm.immigration_notes || ''}
+                          onChange={(e) => handleProfileInputChange('immigration_notes', e.target.value)}
+                          placeholder="Any additional information you'd like your consultant to know..."
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Profile Sidebar */}
+              <div className="space-y-6">
+                {/* Profile Image */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <UserIcon className="h-5 w-5 text-blue-600" />
+                      Profile Photo
+                    </h3>
+                    <div className="text-center">
+                      <div className="relative inline-block">
+                        <div className="w-32 h-32 rounded-full border-4 border-gray-200 overflow-hidden bg-gray-100 mx-auto">
+                          {profileForm.profile_image_url ? (
+                            <img 
+                              src={profileForm.profile_image_url} 
+                              alt="Profile" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <UserIcon className="h-16 w-16 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        {isEditingProfile && (
+                          <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors">
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden"
+                              onChange={(e) => {
+                                // TODO: Implement image upload
+                                console.log('Image upload:', e.target.files?.[0])
+                              }}
+                            />
+                            <Upload className="h-4 w-4 text-white" />
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-4">
+                        {isEditingProfile ? 'Click the upload icon to change your photo' : 'Your profile photo'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Recommended: Square image, 400x400px minimum</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Emergency Contact */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="text-red-600">🚨</span>
+                      Emergency Contact
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Contact Name
+                        </label>
+                        <input 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          type="text"
+                          value={profileForm.emergency_contact_name || ''}
+                          onChange={(e) => handleProfileInputChange('emergency_contact_name', e.target.value)}
+                          placeholder="Emergency contact name"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Contact Phone
+                        </label>
+                        <input 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          type="tel"
+                          value={profileForm.emergency_contact_phone || ''}
+                          onChange={(e) => handleProfileInputChange('emergency_contact_phone', e.target.value)}
+                          placeholder="Emergency contact phone"
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Relationship
+                        </label>
+                        <select 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          value={profileForm.emergency_contact_relationship || ''}
+                          onChange={(e) => handleProfileInputChange('emergency_contact_relationship', e.target.value)}
+                          disabled={!isEditingProfile}
+                        >
+                          <option value="">Select relationship</option>
+                          <option value="Spouse">Spouse</option>
+                          <option value="Parent">Parent</option>
+                          <option value="Sibling">Sibling</option>
+                          <option value="Child">Child</option>
+                          <option value="Friend">Friend</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Preferences */}
+                <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-blue-600" />
+                      Preferences
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Communication Preference
+                        </label>
+                        <select 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          value={profileForm.communication_preference || ''}
+                          onChange={(e) => handleProfileInputChange('communication_preference', e.target.value)}
+                          disabled={!isEditingProfile}
+                        >
+                          <option value="email">Email</option>
+                          <option value="phone">Phone</option>
+                          <option value="text">Text/SMS</option>
+                          <option value="both">Email & Phone</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Timezone
+                        </label>
+                        <select 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          value={profileForm.timezone || ''}
+                          onChange={(e) => handleProfileInputChange('timezone', e.target.value)}
+                          disabled={!isEditingProfile}
+                        >
+                          <option value="America/Toronto">Eastern Time (Toronto)</option>
+                          <option value="America/Vancouver">Pacific Time (Vancouver)</option>
+                          <option value="America/Edmonton">Mountain Time (Edmonton)</option>
+                          <option value="America/Winnipeg">Central Time (Winnipeg)</option>
+                          <option value="America/Halifax">Atlantic Time (Halifax)</option>
+                          <option value="America/St_Johns">Newfoundland Time</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Special Needs/Accommodations
+                        </label>
+                        <textarea 
+                          className={`w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                            isEditingProfile ? 'bg-white' : 'bg-gray-50'
+                          }`}
+                          rows={3}
+                          value={profileForm.special_needs || ''}
+                          onChange={(e) => handleProfileInputChange('special_needs', e.target.value)}
+                          placeholder="Any special needs or accommodations..."
+                          disabled={!isEditingProfile}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Save Status */}
+            {profileSaveMessage && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') 
+                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                  : 'bg-red-100 text-red-700 border border-red-200'
+              }`}>
+                <span>{profileSaveMessage.includes('success') || profileSaveMessage.includes('updated') ? '✅' : '❌'}</span>
+                <span>{profileSaveMessage}</span>
+              </div>
+            )}
 
             {/* Payment History */}
             <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-gray-200/50">

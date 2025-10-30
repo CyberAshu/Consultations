@@ -435,6 +435,53 @@ def get_booking_documents(
         "total_documents": len(documents_with_urls)
     }
 
+@router.get("/{booking_id}/documents/stats")
+def get_booking_documents_stats(
+    *,
+    db: Client = Depends(deps.get_db),
+    booking_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get document statistics for a booking.
+    """
+    booking = crud_booking.get_booking(db=db, booking_id=booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Check permissions
+    if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    if current_user["role"] == "rcic":
+        consultant_response = db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+        if not consultant_response.data or booking["consultant_id"] != consultant_response.data[0]["id"]:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Get document statistics
+    documents = booking.get("documents", [])
+    
+    # Calculate stats
+    total_documents = len(documents)
+    total_size = sum(doc.get("file_size", 0) for doc in documents)
+    
+    # Group by file type
+    file_types = {}
+    for doc in documents:
+        file_type = doc.get("file_type", "unknown")
+        if file_type not in file_types:
+            file_types[file_type] = {"count": 0, "total_size": 0}
+        file_types[file_type]["count"] += 1
+        file_types[file_type]["total_size"] += doc.get("file_size", 0)
+    
+    return {
+        "booking_id": booking_id,
+        "total_documents": total_documents,
+        "total_size_bytes": total_size,
+        "file_types": file_types,
+        "has_documents": total_documents > 0
+    }
+
 @router.get("/{booking_id}/documents/{document_id}/download")
 def download_booking_document(
     *,

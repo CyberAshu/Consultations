@@ -17,9 +17,26 @@ class StorageService:
     
     def _validate_file_type(self, file: UploadFile) -> bool:
         """Validate if file type is allowed"""
-        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx']
+        allowed_extensions = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'webp']
+        allowed_mime_types = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/jpg', 
+            'image/png',
+            'image/webp'
+        ]
+        
         file_extension = self._get_file_extension(file.filename or '')
-        return file_extension in allowed_types
+        
+        # Check both file extension and MIME type
+        extension_valid = file_extension in allowed_extensions
+        mime_type_valid = file.content_type in allowed_mime_types if file.content_type else False
+        
+        print(f"🔍 File validation - Extension: {file_extension} (valid: {extension_valid}), MIME: {file.content_type} (valid: {mime_type_valid})")
+        
+        return extension_valid or mime_type_valid
     
     def _generate_unique_filename(self, original_filename: str, prefix: str = "") -> str:
         """Generate unique filename with UUID"""
@@ -58,7 +75,7 @@ class StorageService:
             
             # Validate file type
             if not self._validate_file_type(file):
-                error_msg = f"File type not allowed. Allowed types: PDF, JPG, JPEG, PNG, DOC, DOCX"
+                error_msg = f"File type '{file.content_type}' not allowed. Allowed types: PDF, DOCX, DOC, JPG, JPEG, PNG, WEBP"
                 print(f"❌ StorageService: {error_msg}")
                 raise HTTPException(status_code=400, detail=error_msg)
             
@@ -198,7 +215,9 @@ class StorageService:
                     "public": False,  # Private bucket for security
                     "allowedMimeTypes": [
                         "image/jpeg", 
+                        "image/jpg",
                         "image/png", 
+                        "image/webp",
                         "application/pdf", 
                         "application/msword",
                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"

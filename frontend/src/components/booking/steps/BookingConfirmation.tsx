@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '../../ui/Card'
 import { Button } from '../../shared/Button'
+import { DocumentUpload } from '../DocumentUpload'
 import { 
   CheckCircle,
   Calendar,
@@ -16,21 +17,64 @@ import {
   Bell,
   Phone,
   Share2,
-  Printer
+  Printer,
+  Upload,
+  AlertTriangle
 } from 'lucide-react'
 
 interface BookingConfirmationProps {
   bookingData: any
 }
 
+interface UploadedDocument {
+  id: string
+  file_name: string
+  file_type: string
+  file_size: number
+  uploaded_at: string
+  download_url?: string
+}
+
 export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
   const navigate = useNavigate()
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([])
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false)
 
   // Generate confirmation number
-  const confirmationNumber = 'RCIC-' + Math.random().toString(36).substr(2, 9).toUpperCase()
+  const confirmationNumber = bookingData.bookingId ? 
+    `RCIC-${bookingData.bookingId.toString().padStart(6, '0')}` :
+    'RCIC-' + Math.random().toString(36).substr(2, 9).toUpperCase()
 
   // Mock Zoom link
   const zoomLink = 'https://zoom.us/j/123456789'
+
+  // Load existing documents for this booking
+  useEffect(() => {
+    if (bookingData.bookingId) {
+      loadExistingDocuments()
+    }
+  }, [bookingData.bookingId])
+
+  const loadExistingDocuments = async () => {
+    if (!bookingData.bookingId) return
+    
+    try {
+      const response = await fetch(`/api/v1/bookings/${bookingData.bookingId}/documents`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUploadedDocuments(data.documents || [])
+      }
+    } catch (error) {
+      console.error('Failed to load existing documents:', error)
+    }
+  }
 
   const handleAddToCalendar = () => {
     // In a real app, this would generate a calendar file or use calendar APIs
@@ -48,6 +92,19 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
       navigator.clipboard.writeText(window.location.href)
       alert('Booking link copied to clipboard!')
     }
+  }
+
+  const handleUploadComplete = (document: UploadedDocument) => {
+    setUploadedDocuments(prev => [...prev, document])
+    setUploadSuccess(`Document "${document.file_name}" uploaded successfully!`)
+    setUploadError(null)
+    // Clear success message after 5 seconds
+    setTimeout(() => setUploadSuccess(null), 5000)
+  }
+
+  const handleUploadError = (error: string) => {
+    setUploadError(error)
+    setUploadSuccess(null)
   }
 
   return (
@@ -209,6 +266,94 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Document Upload Section */}
+      <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-blue-200/50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Upload className="h-6 w-6 text-blue-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Upload Documents</h3>
+                <p className="text-sm text-gray-600">
+                  Upload any required documents for your consultation
+                </p>
+              </div>
+            </div>
+            {!showDocumentUpload && (
+              <Button
+                onClick={() => setShowDocumentUpload(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Documents
+              </Button>
+            )}
+          </div>
+
+          {/* Upload Status Messages */}
+          {uploadSuccess && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <p className="text-sm text-green-800">{uploadSuccess}</p>
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <p className="text-sm text-red-800">{uploadError}</p>
+            </div>
+          )}
+
+          {/* Document Upload Interface */}
+          {showDocumentUpload && (
+            <div className="space-y-4">
+              <DocumentUpload
+                bookingId={bookingData.bookingId}
+                onUploadComplete={handleUploadComplete}
+                onUploadError={handleUploadError}
+                existingDocuments={uploadedDocuments}
+              />
+              <Button
+                variant="outline"
+                onClick={() => setShowDocumentUpload(false)}
+                className="w-full"
+              >
+                Done Uploading
+              </Button>
+            </div>
+          )}
+
+          {/* Documents Summary */}
+          {!showDocumentUpload && uploadedDocuments.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                <span>{uploadedDocuments.length} document(s) uploaded successfully</span>
+              </div>
+              <div className="text-xs text-gray-600">
+                Your RCIC will review these documents before your consultation session.
+              </div>
+            </div>
+          )}
+
+          {/* Upload Reminder */}
+          {!showDocumentUpload && uploadedDocuments.length === 0 && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-900 mb-1">Document Upload Recommended</p>
+                  <p className="text-amber-800">
+                    While not mandatory, uploading relevant documents before your consultation will help your RCIC provide more effective guidance during your session.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
