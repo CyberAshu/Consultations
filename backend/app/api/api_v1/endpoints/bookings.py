@@ -119,6 +119,10 @@ def read_booking(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     
+    # DEBUG: Check if meeting_url is in booking
+    print(f"🔍 GET /bookings/{booking_id} - has meeting_url: {booking.get('meeting_url')}")
+    print(f"🔍 Booking keys: {list(booking.keys())}")
+    
     # Check if user has permission to view this booking
     if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
@@ -264,6 +268,78 @@ def create_booking_with_duration(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to create booking: {str(e)}"
+        )
+
+@router.post("/{booking_id}/room", response_model=BookingInDB)
+async def create_or_get_room(
+    *,
+    db: Client = Depends(deps.get_db),
+    booking_id: int,
+    current_user: dict = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Create a meeting room for the booking if not exists using Daily.co API.
+    Returns the updated booking with meeting_url.
+    """
+    from app.services.daily_service import daily_service
+    from app.core.config import settings
+    import secrets
+    
+    booking = crud_booking.get_booking(db=db, booking_id=booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    # Permission: client or rcic belonging to this booking can create/get the room
+    if current_user["role"] == "client" and booking["client_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if current_user["role"] == "rcic":
+        consultant_resp = db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+        if not consultant_resp.data or consultant_resp.data[0]["id"] != booking["consultant_id"]:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    # If room already exists, return it
+    if booking.get("meeting_url"):
+        return sanitize_booking_data([booking])[0]
+    
+    # Validate Daily.co API is configured
+    if not settings.DAILY_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="Daily.co API is not configured. Please contact support."
+        )
+    
+    # Create new room using Daily.co API
+    try:
+        room_data = await daily_service.create_room(
+            booking_id=booking_id,
+            privacy="private",
+            enable_recording=False,
+            enable_chat=True
+        )
+        meeting_url = room_data["url"]
+        print(f"✅ Created Daily.co room: {meeting_url}")
+        
+        # Update booking with meeting URL
+        updated = crud_booking.update_booking(
+            db=db, 
+            booking_id=booking_id, 
+            obj_in=BookingUpdate(meeting_url=meeting_url)
+        )
+        return sanitize_booking_data([updated])[0]
+        
+    except ValueError as e:
+        # Daily.co API error
+        print(f"❌ Failed to create Daily.co room: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create video room: {str(e)}"
+        )
+    except Exception as e:
+        # Unexpected error
+        print(f"❌ Unexpected error creating Daily.co room: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create video room. Please try again or contact support."
         )
 
 @router.put("/{booking_id}", response_model=BookingInDB)

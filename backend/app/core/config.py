@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     
+    # Daily.co Video Calling
+    DAILY_API_KEY: Optional[str] = None
+    DAILY_DOMAIN: Optional[str] = None  # e.g., "yourcompany.daily.co"
+    
     # File Upload
     MAX_FILE_SIZE_MB: Optional[int] = 10
     ALLOWED_FILE_TYPES: Optional[str] = None

@@ -10,8 +10,8 @@ import { DocumentUpload } from '../../../../../components/forms/DocumentUpload'
 // Import new components
 import { ClientInformationSection } from './ClientInformationSection'
 import { SessionInformationSection } from './SessionInformationSection'
-import { StatusManagementSection } from './StatusManagementSection'
 import { DocumentsSection } from './DocumentsSection'
+import { VideoCallModal } from '../VideoCallModal'
 
 // Import utilities
 import { parseIntakeData, formatIntakeAsQA, exportAsText, exportToPDF } from './intakeUtils'
@@ -59,16 +59,44 @@ export function SessionDetailModal({
   const [intakeLoading, setIntakeLoading] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentModal, setShowDocumentModal] = useState(false)
+  const [showVideoCall, setShowVideoCall] = useState(false)
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false)
+  const [localMeetingUrl, setLocalMeetingUrl] = useState<string | null>(null)
 
   const parsedIntakeData = parseIntakeData(booking?.intake_form_data)
 
+  // Initialize localMeetingUrl from booking data when modal opens
   useEffect(() => {
-    if (booking) {
-      loadBookingDocuments()
-      loadDetailedIntakeData()
+    const fetchFreshBookingData = async () => {
+      if (booking) {
+        try {
+          // Fetch fresh booking data from API to get latest meeting_url
+          const freshBooking = await bookingService.getBookingById(booking.id)
+          const existingUrl = freshBooking.meeting_url || (booking as any).meeting_url || (booking as any).meeting_link
+          console.log('🔍 Modal Debug:', {
+            bookingId: booking.id,
+            hasMeetingUrl: !!existingUrl,
+            meetingUrl: existingUrl,
+            freshData: !!freshBooking.meeting_url
+          })
+          if (existingUrl) {
+            setLocalMeetingUrl(existingUrl)
+          }
+        } catch (err) {
+          console.error('Failed to fetch fresh booking:', err)
+          // Fallback to props data
+          const existingUrl = (booking as any).meeting_url || (booking as any).meeting_link
+          if (existingUrl) {
+            setLocalMeetingUrl(existingUrl)
+          }
+        }
+        loadBookingDocuments()
+        loadDetailedIntakeData()
+      }
     }
+    fetchFreshBookingData()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking, parsedIntakeData])
+  }, [booking?.id])
 
   const loadBookingDocuments = useCallback(async () => {
     if (!booking) return
@@ -254,8 +282,35 @@ export function SessionDetailModal({
           </div>
         )}
 
+        {/* RCIC Tab Navigation */}
+        {!isClientView && (
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="flex space-x-8">
+              {[
+                { id: 'overview', label: 'Overview', icon: <Eye className="h-4 w-4" /> },
+                { id: 'intake', label: 'Intake', icon: <User className="h-4 w-4" /> },
+                { id: 'documents', label: 'Documents', icon: <FileText className="h-4 w-4" /> },
+                { id: 'notes', label: 'Notes', icon: <FileText className="h-4 w-4" /> },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
+
         {/* Tab Content */}
-        {(!isClientView || activeTab === 'overview') && (
+        {activeTab === 'overview' && (
           <>
             <ClientInformationSection 
               clientName={clientName}
@@ -265,11 +320,110 @@ export function SessionDetailModal({
 
             <SessionInformationSection booking={booking} />
 
-            <StatusManagementSection 
-              booking={booking}
-              onStatusChange={onStatusChange}
-              updatingStatus={updatingStatus}
-            />
+            {/* Call Actions */}
+            <div className="bg-white border rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Call Actions</h3>
+              {(() => {
+                const start = new Date(booking.booking_date || booking.scheduled_date || '')
+                // Get duration from booking, fallback to 60 minutes if not provided
+                const durationMinutes = booking.duration_minutes || 60
+                const end = new Date(start.getTime() + (durationMinutes * 60 * 1000))
+                const nowX = new Date()
+                const inWindow = nowX >= new Date(start.getTime() - 10 * 60 * 1000) && nowX <= new Date(end.getTime() + 10 * 60 * 1000)
+                // Use local state first, then booking data
+                const roomUrl = localMeetingUrl || (booking as any).meeting_url || (booking as any).meeting_link
+
+                if (isClientView) {
+                  if (booking.status === 'confirmed' && inWindow) {
+                    return (
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700" 
+                        onClick={() => {
+                          if (roomUrl) {
+                            setShowVideoCall(true)
+                          } else {
+                            alert("The RCIC hasn't started the call yet. Please wait for them to start the session.")
+                          }
+                        }}
+                        disabled={!roomUrl}
+                      >
+                        {!roomUrl && (
+                          <div className="animate-pulse rounded-full h-2 w-2 bg-white mr-2 inline-block"></div>
+                        )}
+                        {roomUrl ? 'Join Session' : 'Waiting for RCIC...'}
+                      </Button>
+                    )
+                  }
+                  return <p className="text-sm text-gray-600">You can join 10 min before start time.</p>
+                } else {
+                  if (!inWindow) {
+                    return <p className="text-sm text-gray-600">Call window hasn't started yet.</p>
+                  }
+                  return (
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        className="bg-blue-600 hover:bg-blue-700 relative" 
+                        onClick={async () => {
+                          try {
+                            if (!roomUrl) {
+                              setIsCreatingRoom(true)
+                              const updated = await bookingService.createRoom(booking.id)
+                              const url = (updated as any).meeting_url || (updated as any).meeting_link
+                              if (url) {
+                                // Update local state immediately
+                                setLocalMeetingUrl(url)
+                                // Also update parent component's booking list if callback provided
+                                // This will trigger re-render with new button text
+                                setTimeout(() => setShowVideoCall(true), 100)
+                              }
+                            } else {
+                              setShowVideoCall(true)
+                            }
+                          } catch (e: any) {
+                            console.error('Failed to create room:', e)
+                            alert(e?.message || 'Unable to start/join session. Please try again.')
+                          } finally {
+                            setIsCreatingRoom(false)
+                          }
+                        }}
+                        disabled={isCreatingRoom}
+                      >
+                        {isCreatingRoom ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+                            Creating room...
+                          </>
+                        ) : (
+                          roomUrl ? 'Join Room' : 'Start Session'
+                        )}
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => onStatusChange(booking.id, 'completed')}
+                        disabled={updatingStatus === booking.id}
+                      >
+                        Complete
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => onStatusChange(booking.id, 'delayed')}
+                        disabled={updatingStatus === booking.id}
+                      >
+                        Delay
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => onStatusChange(booking.id, 'cancelled')}
+                        disabled={updatingStatus === booking.id}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )
+                }
+              })()}
+            </div>
 
             <DocumentsSection 
               documents={documents}
@@ -358,7 +512,7 @@ export function SessionDetailModal({
           </div>
         )}
 
-        {/* Intake Information Tab Content */}
+        {/* Intake Information Tab Content (Client) */}
         {isClientView && activeTab === 'intake' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-6">
@@ -429,6 +583,77 @@ export function SessionDetailModal({
           </div>
         )}
 
+        {/* RCIC Documents Tab */}
+        {!isClientView && activeTab === 'documents' && (
+          <DocumentsSection 
+            documents={documents}
+            documentsLoading={documentsLoading}
+            onViewDocument={handleViewDocumentInternal}
+            onDownloadDocument={onDownloadDocument}
+            booking={booking}
+          />
+        )}
+
+        {/* RCIC Intake Tab */}
+        {!isClientView && activeTab === 'intake' && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Intake Summary
+              </h3>
+              {intakeLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-blue-700">Loading detailed intake information...</span>
+                </div>
+              ) : detailedIntakeData ? (
+                <div className="space-y-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="text-md font-medium text-blue-900">Intake Form Data</h4>
+                        <p className="text-sm text-blue-700">
+                          {intakeService.getStageCompletionPercentage(detailedIntakeData)}% Complete • 
+                          Status: <span className="capitalize">{detailedIntakeData.status?.replace('_', ' ')}</span>
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => exportAsText(detailedIntakeData)}>Export as Text</Button>
+                        <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={() => exportToPDF(detailedIntakeData)}>Export as PDF</Button>
+                      </div>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${intakeService.getStageCompletionPercentage(detailedIntakeData)}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-6 border border-gray-200">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono leading-relaxed overflow-auto max-h-96">
+                        {formatIntakeAsQA(detailedIntakeData)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No detailed intake information available.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* RCIC Notes Tab */}
+        {!isClientView && activeTab === 'notes' && (
+          <SessionNotesSection
+            bookingId={booking.id}
+            currentUserRole={getCurrentUserRole()}
+          />
+        )}
+
         {/* Upload Documents Tab Content */}
         {isClientView && activeTab === 'upload' && (
           <div className="space-y-6">
@@ -479,6 +704,16 @@ export function SessionDetailModal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Video Call Modal */}
+      {showVideoCall && booking && (
+        <VideoCallModal
+          isOpen={showVideoCall}
+          onClose={() => setShowVideoCall(false)}
+          meetingUrl={(booking as any).meeting_url || (booking as any).meeting_link || ''}
+          userName={clientName}
+        />
       )}
     </div>
   )

@@ -32,10 +32,9 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
   const navigate = useNavigate()
 
   // Generate confirmation number
-  const confirmationNumber = 'RCIC-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-
-  // Mock Zoom link
-  const zoomLink = 'https://zoom.us/j/123456789'
+  const confirmationNumber = bookingData.bookingId 
+    ? `RCIC-${bookingData.bookingId}` 
+    : 'RCIC-' + Math.random().toString(36).substr(2, 9).toUpperCase()
 
   const handleAddToCalendar = () => {
     // In a real app, this would generate a calendar file or use calendar APIs
@@ -135,20 +134,20 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
               <div className="p-4 bg-white rounded-lg border border-blue-200/50">
                 <div className="flex items-center gap-2 mb-3">
                   <Video className="h-5 w-5 text-blue-600" />
-                  <h4 className="font-medium text-gray-900">Meeting Details</h4>
+                  <h4 className="font-medium text-gray-900">Video Call Details</h4>
                 </div>
                 <p className="text-sm text-gray-600 mb-3">
-                  Join your consultation using the link below:
+                  Your video consultation link will be available in your dashboard. The RCIC will start the meeting at the scheduled time.
                 </p>
                 <Button
-                  onClick={() => window.open(zoomLink, '_blank')}
+                  onClick={() => navigate('/client-dashboard')}
                   className="w-full bg-blue-600 hover:bg-blue-700 mb-2"
                 >
                   <Video className="h-4 w-4 mr-2" />
-                  Join Zoom Meeting
+                  View in Dashboard
                 </Button>
-                <p className="text-xs text-gray-500 text-center">
-                  Meeting ID: 123-456-789
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  💡 Tip: The "Join Session" button will appear 10 minutes before your scheduled time
                 </p>
               </div>
 
@@ -266,7 +265,7 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
               <div>
                 <h4 className="font-medium text-gray-900">Join Your Session</h4>
                 <p className="text-sm text-gray-600">
-                  Use the Zoom link provided to join your consultation at the scheduled time. Sessions typically start 2-3 minutes before the scheduled time.
+                  Go to your dashboard and click "Join Session" to start the video call. You can join 10 minutes before your scheduled time. The RCIC will start the call at the scheduled time.
                 </p>
               </div>
             </div>
@@ -286,10 +285,11 @@ export function BookingConfirmation({ bookingData }: BookingConfirmationProps) {
             <div className="space-y-2">
               <h4 className="font-medium text-amber-900">Before Your Session:</h4>
               <ul className="text-amber-800 space-y-1">
-                <li>• Test your Zoom connection and audio/video</li>
+                <li>• Test your camera and microphone</li>
                 <li>• Prepare any additional questions you may have</li>
                 <li>• Have a pen and paper ready for notes</li>
                 <li>• Ensure you're in a quiet, private location</li>
+                <li>• Use a stable internet connection (WiFi or Ethernet)</li>
               </ul>
             </div>
             

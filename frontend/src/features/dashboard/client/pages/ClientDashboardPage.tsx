@@ -463,21 +463,50 @@ export function ClientDashboard() {
 
   // Handle booking actions
   const handleJoinSession = (bookingId: number) => {
-    // TODO: Implement actual video call integration
-    alert(`Joining session for booking #${bookingId}`)
-    console.log('Join session clicked for booking:', bookingId)
+    const session = bookings.find(b => b.id === bookingId)
+    if (!session) return
+
+    const start = new Date(session.booking_date || session.scheduled_date || '')
+    const end = new Date(start.getTime() + (session.duration_minutes * 60 * 1000))
+    const nowX = new Date()
+    const inWindow = nowX >= new Date(start.getTime() - 10 * 60 * 1000) && nowX <= new Date(end.getTime() + 10 * 60 * 1000)
+    const roomUrl = (session as any).meeting_url || (session as any).meeting_link
+
+    if (session.status !== 'confirmed') {
+      toasts.error('Cannot Join', 'Session is not confirmed yet')
+      return
+    }
+    if (!inWindow) {
+      toasts.error('Too Early/Late', 'Join is available only around the scheduled time')
+      return
+    }
+    if (!roomUrl) {
+      toasts.info('Please wait', 'Waiting for RCIC to start the call')
+      return
+    }
+    window.open(roomUrl, '_blank')
   }
 
   const handleRescheduleBooking = async (bookingId: number) => {
-    const confirmed = window.confirm('Are you sure you want to reschedule this booking?')
+    const session = bookings.find(b => b.id === bookingId)
+    if (!session) return
+    const start = new Date(session.booking_date || session.scheduled_date || '')
+    const cutoff = new Date(start.getTime() - 24 * 60 * 60 * 1000)
+    const nowX = new Date()
+    if (!(nowX < cutoff)) {
+      toasts.error('Cannot Reschedule', 'Reschedule allowed only up to 24h before start')
+      return
+    }
+
+    const confirmed = window.confirm('Do you want to reschedule? You will pick a new time in the next step.')
     if (confirmed) {
       try {
-        await bookingService.updateBooking(bookingId, { status: 'rescheduled' })
-        // Refresh bookings
+        // Placeholder: mark as rescheduled (real flow should open time selection and update booking_date)
+        await bookingService.updateBooking(bookingId, { status: 'rescheduled' } as any)
         const updatedBookings = await bookingService.getBookings()
         const enhancedBookings = await enhanceBookingsWithDetails(updatedBookings)
         setBookings(enhancedBookings)
-        toasts.success('Booking Rescheduled', 'Your booking has been rescheduled successfully.')
+        toasts.success('Marked for Reschedule', 'We will guide you to pick a new time soon.')
       } catch (error: any) {
         toasts.error('Reschedule Failed', error.message || 'Failed to reschedule booking')
       }
@@ -485,11 +514,20 @@ export function ClientDashboard() {
   }
 
   const handleCancelBooking = async (bookingId: number) => {
+    const session = bookings.find(b => b.id === bookingId)
+    if (!session) return
+    const start = new Date(session.booking_date || session.scheduled_date || '')
+    const cutoff = new Date(start.getTime() - 24 * 60 * 60 * 1000)
+    const nowX = new Date()
+    if (!(nowX < cutoff)) {
+      toasts.error('Cannot Cancel', 'Cancellation allowed only up to 24h before start')
+      return
+    }
+
     const confirmed = window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')
     if (confirmed) {
       try {
-        await bookingService.updateBooking(bookingId, { status: 'cancelled' })
-        // Refresh bookings
+        await bookingService.updateBooking(bookingId, { status: 'cancelled' } as any)
         const updatedBookings = await bookingService.getBookings()
         const enhancedBookings = await enhanceBookingsWithDetails(updatedBookings)
         setBookings(enhancedBookings)
@@ -836,34 +874,56 @@ export function ClientDashboard() {
                             {session.status}
                           </Badge>
                         </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      size="sm" 
-                      className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
-                      onClick={() => handleJoinSession(session.id)}
-                    >
-                      <Video className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Join Session</span>
-                      <span className="sm:hidden">Join</span>
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-shrink-0"
-                      onClick={() => handleRescheduleBooking(session.id)}
-                    >
-                      <span className="hidden sm:inline">Reschedule</span>
-                      <span className="sm:hidden">Reschedule</span>
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-shrink-0"
-                      onClick={() => handleCancelBooking(session.id)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                  {(() => {
+                    const start = new Date(session.booking_date || session.scheduled_date || '')
+                    const end = new Date(start.getTime() + (session.duration_minutes * 60 * 1000))
+                    const nowX = new Date()
+                    const inWindow = nowX >= new Date(start.getTime() - 10 * 60 * 1000) && nowX <= new Date(end.getTime() + 10 * 60 * 1000)
+                    const roomExists = Boolean((session as any).meeting_url || (session as any).meeting_link)
+                    const cutoff = new Date(start.getTime() - 24 * 60 * 60 * 1000)
+                    const canReschedule = nowX < cutoff
+                    const canCancel = nowX < cutoff
+                    const showJoin = session.status === 'confirmed' && inWindow
+                    const canJoin = showJoin && roomExists
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {showJoin && (
+                          <Button 
+                            size="sm" 
+                            className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
+                            onClick={() => handleJoinSession(session.id)}
+                            disabled={!canJoin}
+                            title={!canJoin ? 'Waiting for RCIC to start' : undefined}
+                          >
+                            <Video className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Join Session</span>
+                            <span className="sm:hidden">Join</span>
+                          </Button>
+                        )}
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-shrink-0"
+                          onClick={() => handleRescheduleBooking(session.id)}
+                          disabled={!canReschedule}
+                          title={!canReschedule ? 'Reschedule allowed only up to 24h before' : undefined}
+                        >
+                          <span className="hidden sm:inline">Reschedule</span>
+                          <span className="sm:hidden">Reschedule</span>
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex-shrink-0"
+                          onClick={() => handleCancelBooking(session.id)}
+                          disabled={!canCancel}
+                          title={!canCancel ? 'Cancel allowed only up to 24h before' : undefined}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )
+                  })()}
                       </div>
                     )
                   })}
@@ -947,30 +1007,52 @@ export function ClientDashboard() {
                             {session.status}
                           </Badge>
                         </div>
-                      <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Button 
-                          size="sm" 
-                          className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0"
-                          onClick={() => handleJoinSession(session.id)}
-                        >
-                          Join
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex-1 min-w-0"
-                          onClick={() => handleRescheduleBooking(session.id)}
-                        >
-                          Reschedule
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          className="bg-red-600 hover:bg-red-700 flex-1 min-w-0"
-                          onClick={() => handleCancelBooking(session.id)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                      {(() => {
+                        const start = new Date(session.booking_date || session.scheduled_date || '')
+                        const end = new Date(start.getTime() + (session.duration_minutes * 60 * 1000))
+                        const nowX = new Date()
+                        const inWindow = nowX >= new Date(start.getTime() - 10 * 60 * 1000) && nowX <= new Date(end.getTime() + 10 * 60 * 1000)
+                        const roomExists = Boolean((session as any).meeting_url || (session as any).meeting_link)
+                        const showJoin = session.status === 'confirmed' && inWindow
+                        const canJoin = showJoin && roomExists
+                        const cutoff = new Date(start.getTime() - 24 * 60 * 60 * 1000)
+                        const canReschedule = nowX < cutoff
+                        const canCancel = nowX < cutoff
+                        return (
+                          <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                            {showJoin && (
+                              <Button 
+                                size="sm" 
+                                className="bg-blue-600 hover:bg-blue-700 flex-1 min-w-0"
+                                onClick={() => handleJoinSession(session.id)}
+                                disabled={!canJoin}
+                                title={!canJoin ? 'Waiting for RCIC to start' : undefined}
+                              >
+                                Join
+                              </Button>
+                            )}
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="flex-1 min-w-0"
+                              onClick={() => handleRescheduleBooking(session.id)}
+                              disabled={!canReschedule}
+                              title={!canReschedule ? 'Reschedule allowed only up to 24h before' : undefined}
+                            >
+                              Reschedule
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              className="bg-red-600 hover:bg-red-700 flex-1 min-w-0"
+                              onClick={() => handleCancelBooking(session.id)}
+                              disabled={!canCancel}
+                              title={!canCancel ? 'Cancel allowed only up to 24h before' : undefined}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )
+                      })()}
                     </div>
                     )
                   })}
@@ -1003,29 +1085,51 @@ export function ClientDashboard() {
                               </Badge>
                             </td>
                           <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex flex-wrap gap-1">
-                              <Button 
-                                size="sm" 
-                                className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => handleJoinSession(session.id)}
-                              >
-                                Join
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => handleRescheduleBooking(session.id)}
-                              >
-                                Reschedule
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                className="bg-red-600 hover:bg-red-700"
-                                onClick={() => handleCancelBooking(session.id)}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
+                            {(() => {
+                              const start = new Date(session.booking_date || session.scheduled_date || '')
+                              const end = new Date(start.getTime() + (session.duration_minutes * 60 * 1000))
+                              const nowX = new Date()
+                              const inWindow = nowX >= new Date(start.getTime() - 10 * 60 * 1000) && nowX <= new Date(end.getTime() + 10 * 60 * 1000)
+                              const roomExists = Boolean((session as any).meeting_url || (session as any).meeting_link)
+                              const showJoin = session.status === 'confirmed' && inWindow
+                              const canJoin = showJoin && roomExists
+                              const cutoff = new Date(start.getTime() - 24 * 60 * 60 * 1000)
+                              const canReschedule = nowX < cutoff
+                              const canCancel = nowX < cutoff
+                              return (
+                                <div className="flex flex-wrap gap-1">
+                                  {showJoin && (
+                                    <Button 
+                                      size="sm" 
+                                      className="bg-blue-600 hover:bg-blue-700"
+                                      onClick={() => handleJoinSession(session.id)}
+                                      disabled={!canJoin}
+                                      title={!canJoin ? 'Waiting for RCIC to start' : undefined}
+                                    >
+                                      Join
+                                    </Button>
+                                  )}
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleRescheduleBooking(session.id)}
+                                    disabled={!canReschedule}
+                                    title={!canReschedule ? 'Reschedule allowed only up to 24h before' : undefined}
+                                  >
+                                    Reschedule
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    className="bg-red-600 hover:bg-red-700"
+                                    onClick={() => handleCancelBooking(session.id)}
+                                    disabled={!canCancel}
+                                    title={!canCancel ? 'Cancel allowed only up to 24h before' : undefined}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              )
+                            })()}
                           </td>
                         </tr>
                         )

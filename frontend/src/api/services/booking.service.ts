@@ -116,6 +116,11 @@ class BookingService {
   async createBookingWithDuration(bookingData: CreateBookingWithDurationRequest): Promise<Booking> {
     return apiPost<Booking>('/bookings/create-with-duration', bookingData);
   }
+
+  // Create or fetch a meeting room (e.g., Daily) and persist meeting_url on the booking
+  async createRoom(bookingId: number): Promise<Booking> {
+    return apiPost<Booking>(`/bookings/${bookingId}/room`, {});
+  }
 }
 
 export const bookingService = new BookingService();

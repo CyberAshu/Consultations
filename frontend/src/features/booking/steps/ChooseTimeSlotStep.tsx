@@ -88,12 +88,47 @@ export function ChooseTimeSlotStep({
   }, [selectedTimezone, service])
 
   const timezones = [
-    { value: 'America/Toronto', label: 'Eastern Time (ET)', offset: 'UTC-5' },
-    { value: 'America/Vancouver', label: 'Pacific Time (PT)', offset: 'UTC-8' },
-    { value: 'America/Edmonton', label: 'Mountain Time (MT)', offset: 'UTC-7' },
-    { value: 'America/Winnipeg', label: 'Central Time (CT)', offset: 'UTC-6' },
-    { value: 'America/Halifax', label: 'Atlantic Time (AT)', offset: 'UTC-4' },
-    { value: 'America/St_Johns', label: 'Newfoundland Time (NT)', offset: 'UTC-3:30' }
+    // North America
+    { value: 'America/Toronto', label: 'Eastern Time (ET)', offset: 'UTC-5', region: 'North America' },
+    { value: 'America/Vancouver', label: 'Pacific Time (PT)', offset: 'UTC-8', region: 'North America' },
+    { value: 'America/Edmonton', label: 'Mountain Time (MT)', offset: 'UTC-7', region: 'North America' },
+    { value: 'America/Winnipeg', label: 'Central Time (CT)', offset: 'UTC-6', region: 'North America' },
+    { value: 'America/Halifax', label: 'Atlantic Time (AT)', offset: 'UTC-4', region: 'North America' },
+    { value: 'America/St_Johns', label: 'Newfoundland Time (NT)', offset: 'UTC-3:30', region: 'North America' },
+    
+    // Europe
+    { value: 'Europe/London', label: 'London (GMT/BST)', offset: 'UTC+0/+1', region: 'Europe' },
+    { value: 'Europe/Paris', label: 'Paris (CET)', offset: 'UTC+1', region: 'Europe' },
+    { value: 'Europe/Berlin', label: 'Berlin (CET)', offset: 'UTC+1', region: 'Europe' },
+    { value: 'Europe/Rome', label: 'Rome (CET)', offset: 'UTC+1', region: 'Europe' },
+    { value: 'Europe/Madrid', label: 'Madrid (CET)', offset: 'UTC+1', region: 'Europe' },
+    { value: 'Europe/Athens', label: 'Athens (EET)', offset: 'UTC+2', region: 'Europe' },
+    { value: 'Europe/Moscow', label: 'Moscow (MSK)', offset: 'UTC+3', region: 'Europe' },
+    
+    // Asia
+    { value: 'Asia/Dubai', label: 'Dubai (GST)', offset: 'UTC+4', region: 'Asia' },
+    { value: 'Asia/Kolkata', label: 'India (IST)', offset: 'UTC+5:30', region: 'Asia' },
+    { value: 'Asia/Shanghai', label: 'China (CST)', offset: 'UTC+8', region: 'Asia' },
+    { value: 'Asia/Singapore', label: 'Singapore (SGT)', offset: 'UTC+8', region: 'Asia' },
+    { value: 'Asia/Hong_Kong', label: 'Hong Kong (HKT)', offset: 'UTC+8', region: 'Asia' },
+    { value: 'Asia/Tokyo', label: 'Tokyo (JST)', offset: 'UTC+9', region: 'Asia' },
+    { value: 'Asia/Seoul', label: 'Seoul (KST)', offset: 'UTC+9', region: 'Asia' },
+    
+    // Oceania
+    { value: 'Australia/Sydney', label: 'Sydney (AEDT)', offset: 'UTC+11', region: 'Oceania' },
+    { value: 'Australia/Melbourne', label: 'Melbourne (AEDT)', offset: 'UTC+11', region: 'Oceania' },
+    { value: 'Australia/Perth', label: 'Perth (AWST)', offset: 'UTC+8', region: 'Oceania' },
+    { value: 'Pacific/Auckland', label: 'Auckland (NZDT)', offset: 'UTC+13', region: 'Oceania' },
+    
+    // Middle East & Africa
+    { value: 'Africa/Cairo', label: 'Cairo (EET)', offset: 'UTC+2', region: 'Africa' },
+    { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST)', offset: 'UTC+2', region: 'Africa' },
+    { value: 'Africa/Lagos', label: 'Lagos (WAT)', offset: 'UTC+1', region: 'Africa' },
+    
+    // South America
+    { value: 'America/Sao_Paulo', label: 'São Paulo (BRT)', offset: 'UTC-3', region: 'South America' },
+    { value: 'America/Buenos_Aires', label: 'Buenos Aires (ART)', offset: 'UTC-3', region: 'South America' },
+    { value: 'America/Mexico_City', label: 'Mexico City (CST)', offset: 'UTC-6', region: 'South America' }
   ]
 
   // Fetch slots when RCIC or date changes
@@ -190,10 +225,17 @@ export function ChooseTimeSlotStep({
           onChange={(e) => setSelectedTimezone(e.target.value)}
           className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {timezones.map((tz) => (
-            <option key={tz.value} value={tz.value}>
-              {tz.label} ({tz.offset})
-            </option>
+          {/* Group timezones by region */}
+          {['North America', 'Europe', 'Asia', 'Oceania', 'Africa', 'South America'].map(region => (
+            <optgroup key={region} label={region}>
+              {timezones
+                .filter(tz => tz.region === region)
+                .map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label} ({tz.offset})
+                  </option>
+                ))}
+            </optgroup>
           ))}
         </select>
       </div>

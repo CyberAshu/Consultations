@@ -352,7 +352,9 @@ export function RCICDashboard() {
 
     bookings.forEach(booking => {
       const bookingTime = new Date(booking.booking_date || booking.scheduled_date || '')
-      const sessionEndTime = new Date(bookingTime.getTime() + (booking.duration_minutes * 60 * 1000))
+      // Fallback to 60 minutes if duration_minutes is missing
+      const durationMinutes = booking.duration_minutes || 60
+      const sessionEndTime = new Date(bookingTime.getTime() + (durationMinutes * 60 * 1000))
       
       // Categorize based on time and status
       if (booking.status === 'completed') {
@@ -749,20 +751,37 @@ export function RCICDashboard() {
   }
 
   const handleStatusChange = async (bookingId: number, newStatus: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'delayed' | 'rescheduled') => {
-    // Prevent duplicate submissions
     if (updatingStatus === bookingId) return
-    
     try {
       setUpdatingStatus(bookingId)
       setStatusUpdateError(null)
       const updated = await bookingService.updateBooking(bookingId, { status: newStatus } as any)
       setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: updated.status } : b)))
-      // Silent background refresh to sync any other fields without UI loader
       fetchBookings(false)
     } catch (err: any) {
       setStatusUpdateError(err?.message || 'Failed to update status')
     } finally {
       setUpdatingStatus(null)
+    }
+  }
+
+  const handleStartOrJoin = async (booking: Booking) => {
+    try {
+      const hasRoom = Boolean((booking as any).meeting_url || (booking as any).meeting_link)
+      if (!hasRoom) {
+        const updated = await bookingService.createRoom(booking.id)
+        const url = (updated as any).meeting_url || (updated as any).meeting_link
+        if (url) {
+          // Update local state with meeting_url
+          setBookings(prev => prev.map(b => (b.id === booking.id ? { ...b, meeting_url: (updated as any).meeting_url } as any : b)))
+          window.open(url, '_blank')
+        }
+      } else {
+        const url = (booking as any).meeting_url || (booking as any).meeting_link
+        window.open(url, '_blank')
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Failed to start/join session')
     }
   }
 
@@ -1336,82 +1355,70 @@ export function RCICDashboard() {
                                 </div>
                               </div>
                               
-                              <div className="border-t pt-4 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-                                {booking.status === 'pending' && (
-                                  <>
+                                <div className="border-t pt-4 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                                  {booking.status === 'confirmed' && (
+                                    <>
+                                      {(() => {
+                                        const start = new Date(booking.booking_date || booking.scheduled_date || '')
+                                        const end = new Date(start.getTime() + (booking.duration_minutes * 60 * 1000))
+                                        const nowX = new Date()
+                                        const inWindow = nowX >= new Date(start.getTime() - 10 * 60 * 1000) && nowX <= new Date(end.getTime() + 10 * 60 * 1000)
+                                        const hasRoom = Boolean((booking as any).meeting_url || (booking as any).meeting_link)
+                                        if (!inWindow) return null
+                                        return (
+                                          <Button 
+                                            size="sm" 
+                                            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1" 
+                                            onClick={() => handleStartOrJoin(booking)}
+                                          >
+                                            {hasRoom ? 'Join Room' : 'Start Session'}
+                                          </Button>
+                                        )
+                                      })()}
+                                      <Button 
+                                        size="sm" 
+                                        className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1" 
+                                        onClick={() => handleStatusChange(booking.id, 'completed')} 
+                                        disabled={updatingStatus === booking.id}
+                                      >
+                                        {updatingStatus === booking.id ? (
+                                          <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                                        ) : (
+                                          <>✓</>
+                                        )}
+                                        Complete
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="border-orange-200 text-orange-600 hover:bg-orange-50 flex items-center gap-1" 
+                                        onClick={() => handleStatusChange(booking.id, 'delayed')} 
+                                        disabled={updatingStatus === booking.id}
+                                      >
+                                        {updatingStatus === booking.id ? (
+                                          <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-600"></div>
+                                        ) : (
+                                          <>⏸️</>
+                                        )}
+                                        Delay
+                                      </Button>
+                                    </>
+                                  )}
+                                  {booking.status !== 'pending' && booking.status !== 'confirmed' && (
                                     <Button 
                                       size="sm" 
-                                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1" 
+                                      className="bg-blue-600 hover:bg-blue-700" 
                                       onClick={() => handleStatusChange(booking.id, 'confirmed')} 
                                       disabled={updatingStatus === booking.id}
                                     >
-                                      {updatingStatus === booking.id ? (
-                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                                      ) : (
-                                        <>✓</>
-                                      )}
-                                      Confirm
+                                      {updatingStatus === booking.id ? 'Updating...' : 'Reopen'}
                                     </Button>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1" 
-                                      onClick={() => handleStatusChange(booking.id, 'cancelled')} 
-                                      disabled={updatingStatus === booking.id}
-                                    >
-                                      {updatingStatus === booking.id ? (
-                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-red-600"></div>
-                                      ) : (
-                                        <>✕</>
-                                      )}
-                                      Cancel
-                                    </Button>
-                                  </>
-                                )}
-                                {booking.status === 'confirmed' && (
-                                  <>
-                                    <Button 
-                                      size="sm" 
-                                      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1" 
-                                      onClick={() => handleStatusChange(booking.id, 'completed')} 
-                                      disabled={updatingStatus === booking.id}
-                                    >
-                                      {updatingStatus === booking.id ? (
-                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
-                                      ) : (
-                                        <>✓</>
-                                      )}
-                                      Complete
-                                    </Button>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="border-orange-200 text-orange-600 hover:bg-orange-50 flex items-center gap-1" 
-                                      onClick={() => handleStatusChange(booking.id, 'delayed')} 
-                                      disabled={updatingStatus === booking.id}
-                                    >
-                                      {updatingStatus === booking.id ? (
-                                        <div className="animate-spin rounded-full h-3 w-3 border-b border-orange-600"></div>
-                                      ) : (
-                                        <>⏸️</>
-                                      )}
-                                      Delay
-                                    </Button>
-                                  </>
-                                )}
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => handleViewSessionDetail(booking)}
-                                >
-                                  View Details
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )
-                      })}
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
                     </div>
                   </div>
                 )}
