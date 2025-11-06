@@ -21,6 +21,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initializingRef = useRef(false); // Prevent duplicate initialization
+  const joinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isOpen || !containerRef.current || !meetingUrl) return;
@@ -54,17 +55,38 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
 
         callFrameRef.current = callFrame;
 
-        // Listen for call events
+        // Listen for all call events for debugging
+        callFrame.on('loading', () => console.log('Daily: Loading...'));
+        callFrame.on('loaded', () => console.log('Daily: Loaded'));
+        callFrame.on('started-camera', () => console.log('Daily: Camera started'));
+        callFrame.on('joined-meeting', () => {
+          console.log('Daily: Joined meeting successfully');
+          if (joinTimeoutRef.current) {
+            clearTimeout(joinTimeoutRef.current);
+            joinTimeoutRef.current = null;
+          }
+          setIsJoining(false);
+        });
         callFrame.on('left-meeting', handleLeftMeeting);
         callFrame.on('error', handleError);
 
+        // Set a timeout for joining (30 seconds)
+        joinTimeoutRef.current = setTimeout(() => {
+          console.error('Daily: Join timeout - taking too long to connect');
+          setError('Connection timeout. Please check your internet connection and try again.');
+          setIsJoining(false);
+          initializingRef.current = false;
+        }, 30000);
+
+        console.log('Daily: Attempting to join:', meetingUrl);
+        
         // Join the call
         await callFrame.join({
           url: meetingUrl,
           userName: userName,
         });
 
-        setIsJoining(false);
+        console.log('Daily: Join request completed');
       } catch (err: any) {
         setError(err?.message || 'Failed to join the call. Please try again.');
         setIsJoining(false);
@@ -75,6 +97,10 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
     initializeCall();
 
     return () => {
+      if (joinTimeoutRef.current) {
+        clearTimeout(joinTimeoutRef.current);
+        joinTimeoutRef.current = null;
+      }
       if (callFrameRef.current) {
         callFrameRef.current.destroy();
         callFrameRef.current = null;
