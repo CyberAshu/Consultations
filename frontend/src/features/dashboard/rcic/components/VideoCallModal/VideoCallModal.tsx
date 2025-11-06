@@ -115,7 +115,20 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
 
   const handleError = (error: any) => {
     console.error('Daily call error:', error);
-    setError('An error occurred during the call.');
+    
+    // Provide specific error messages
+    let errorMessage = 'An error occurred during the call.';
+    
+    if (error?.errorMsg?.includes('webrtc') || error?.errorMsg?.includes('WebRTC')) {
+      errorMessage = 'WebRTC is not supported or has been disabled in your browser. Please use Chrome, Firefox, or Edge and ensure camera/microphone permissions are granted.';
+    } else if (error?.errorMsg?.includes('permissions') || error?.errorMsg?.includes('camera') || error?.errorMsg?.includes('microphone')) {
+      errorMessage = 'Camera or microphone access denied. Please grant permissions and try again.';
+    } else if (error?.errorMsg) {
+      errorMessage = `Error: ${error.errorMsg}`;
+    }
+    
+    setError(errorMessage);
+    setIsJoining(false);
   };
 
   const handleLeaveCall = async () => {
