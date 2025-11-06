@@ -112,36 +112,12 @@ async def stream_booking_updates(
     db: Client = Depends(deps.get_db),
 ):
     """
-    Server-Sent Events endpoint for real-time booking status updates.
-    Supports token via query parameter for EventSource compatibility.
-    Works for both clients and RCICs.
+    DEPRECATED: Replaced by Supabase Realtime.
+    Frontend now uses direct Supabase subscriptions for instant updates.
     """
-    # Handle authentication via query parameter for EventSource
-    if not token:
-        raise HTTPException(status_code=401, detail="Token is required for SSE connection")
-    
-    try:
-        from app.api.deps import verify_token
-        current_user = verify_token(token)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    # Support both clients and RCICs
-    if current_user["role"] not in ["client", "rcic"]:
-        raise HTTPException(status_code=403, detail="This endpoint is only for clients and RCICs")
-    
-    user_id = current_user["id"]
-    user_role = current_user["role"]
-    
-    return StreamingResponse(
-        get_booking_updates(user_id, user_role, db),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Cache-Control",
-        },
+    raise HTTPException(
+        status_code=410,
+        detail="This endpoint is deprecated. Use Supabase Realtime instead."
     )
 
 # Alternative: Simple polling endpoint

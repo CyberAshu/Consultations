@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import { Booking } from '../../../types/service.types'
 import { authService } from '../../../api/services/auth.service'
+import { supabase, setSupabaseAuth } from '../../../lib/supabase'
+import { RealtimeChannel } from '@supabase/supabase-js'
 
 interface BookingUpdate {
   id: number
@@ -36,8 +38,8 @@ export function useRealtimeBookingUpdates(
   } = options
 
   const [isConnected, setIsConnected] = useState(false)
-  const [connectionType, setConnectionType] = useState<'sse' | 'polling' | null>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
+  const [connectionType, setConnectionType] = useState<'realtime' | 'polling' | null>(null)
+  const realtimeChannelRef = useRef<RealtimeChannel | null>(null)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastUpdateTimestamp = useRef<number>(Date.now())
   
@@ -79,9 +81,9 @@ export function useRealtimeBookingUpdates(
 
   // Clean up connections
   const cleanup = useCallback(() => {
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
+    if (realtimeChannelRef.current) {
+      realtimeChannelRef.current.unsubscribe()
+      realtimeChannelRef.current = null
     }
     
     if (pollingIntervalRef.current) {
@@ -107,12 +109,9 @@ export function useRealtimeBookingUpdates(
         const token = authService.getToken()
         if (!token) return
 
-        // Poll each booking individually
         for (const booking of bookings) {
-          // Use the same URL pattern as the API service
-      // Reuse normalized API base URL from api.ts to avoid mixed content
-      const { API_BASE_URL } = await import('../../../api/client');
-      const url = `${API_BASE_URL}/events/booking-status/${booking.id}`;
+          const { API_BASE_URL } = await import('../../../api/client')
+          const url = `${API_BASE_URL}/events/booking-status/${booking.id}`
           
           const response = await fetch(url, {
             headers: {
@@ -151,8 +150,8 @@ export function useRealtimeBookingUpdates(
     pollingIntervalRef.current = setInterval(pollForUpdates, pollingInterval)
   }, [bookings, enabled, pollingInterval, onBookingUpdate])
 
-  // Server-Sent Events function
-  const startSSE = useCallback(async () => {
+  // Supabase Realtime function
+  const startRealtime = useCallback(async () => {
     if (!enabled) return
 
     try {
@@ -161,88 +160,135 @@ export function useRealtimeBookingUpdates(
         throw new Error('No authentication token available')
       }
 
-      // Note: EventSource doesn't support custom headers directly
-      // We need to pass the token as a query parameter or use a different approach
-      // Reuse normalized API base URL from api.ts to avoid mixed content
-      const { API_BASE_URL } = await import('../../../api/client');
-      const sseUrl = `${API_BASE_URL}/events/booking-updates?token=${encodeURIComponent(token)}`
-      const eventSource = new EventSource(sseUrl)
-      
-      eventSource.onopen = () => {
-        setIsConnected(true)
-        setConnectionType('sse')
-        lastUpdateTimestamp.current = Date.now()
+      // Set Supabase auth with our backend JWT token
+      setSupabaseAuth(token)
+
+      // Get user info to determine filter
+      const user = authService.getStoredUser()
+      if (!user) {
+        throw new Error('User information not available')
       }
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data: RealtimeEventData = JSON.parse(event.data)
-
-          switch (data.type) {
-            case 'booking_status_update':
-              if (data.data) {
-                data.data.forEach(update => {
-                  onBookingUpdate?.(update.id, update.status)
-                })
-              }
-              break
-            
-            case 'heartbeat':
-              lastUpdateTimestamp.current = Date.now()
-              break
-            
-            case 'error':
-              console.error('❌ SSE error:', data.message)
-              onError?.(data.message || 'Server-sent event error')
-              break
-          }
-        } catch (parseError) {
-          console.error('❌ Failed to parse SSE message:', parseError)
-        }
-      }
-
-      eventSource.onerror = (event) => {
-        console.error('❌ SSE connection error:', event)
-        setIsConnected(false)
+      // Determine filter based on user role
+      let filter: string
+      if (user.role === 'client') {
+        filter = `client_id=eq.${user.id}`
+      } else if (user.role === 'rcic') {
+        let consultantId = bookings[0]?.consultant_id || 
+                          (user as any).consultant_id || 
+                          localStorage.getItem('consultant_id')
         
-        // If SSE fails and fallback is enabled, switch to polling
-        if (fallbackToPolling) {
-          cleanup()
-          setTimeout(() => {
-            startPolling()
-          }, 1000) // Wait 1 second before starting polling
-        } else {
-          onError?.('Real-time connection lost')
+        if (!consultantId) {
+          try {
+            const { API_BASE_URL } = await import('../../../api/client')
+            const response = await fetch(`${API_BASE_URL}/consultants/`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            })
+            
+            if (response.ok) {
+              const consultants = await response.json()
+              const myConsultant = consultants.find((c: any) => c.user_id === user.id)
+              if (myConsultant) {
+                consultantId = myConsultant.id
+                localStorage.setItem('consultant_id', String(consultantId))
+              }
+            }
+          } catch (apiError) {
+            console.error('Failed to fetch consultant_id:', apiError)
+          }
         }
+        
+        if (!consultantId) {
+          throw new Error('Consultant ID not available')
+        }
+        
+        filter = `consultant_id=eq.${consultantId}`
+      } else {
+        throw new Error('Unsupported user role')
       }
 
-      eventSourceRef.current = eventSource
+      const channel = supabase
+        .channel(`booking-updates-${user.role}-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookings',
+            filter: filter,
+          },
+          (payload) => {
+            lastUpdateTimestamp.current = Date.now()
+            resetErrorCount()
+
+            if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+              const booking = payload.new as any
+              onBookingUpdate?.(booking.id, booking.status)
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setIsConnected(true)
+            setConnectionType('realtime')
+            resetErrorCount()
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Realtime connection error')
+            setIsConnected(false)
+            handleError('Realtime connection error', 'channel_error')
+
+            // Fallback to polling
+            if (fallbackToPolling) {
+              cleanup()
+              setTimeout(startPolling, 1000)
+            }
+          } else if (status === 'TIMED_OUT') {
+            console.error('Realtime connection timed out')
+            setIsConnected(false)
+            handleError('Connection timed out', 'timeout')
+
+            // Fallback to polling
+            if (fallbackToPolling) {
+              cleanup()
+              setTimeout(startPolling, 1000)
+            }
+          }
+        })
+
+      realtimeChannelRef.current = channel
 
     } catch (error) {
-      console.error('❌ Failed to start SSE:', error)
-      
-      // Fallback to polling if SSE setup fails
+      console.error('Failed to start Realtime:', error)
+      handleError(String(error), 'startup')
+
+      // Fallback to polling if Realtime setup fails
       if (fallbackToPolling) {
         startPolling()
       } else {
         onError?.('Failed to establish real-time connection')
       }
     }
-  }, [enabled, onBookingUpdate, onError, fallbackToPolling, cleanup, startPolling])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled])
 
-  // Start real-time updates
+  // Start real-time updates (only on mount and when enabled changes)
   useEffect(() => {
     if (!enabled) {
       cleanup()
       return
     }
 
-    // Try SSE first, with polling fallback
-    startSSE()
+    // Try Supabase Realtime first, with polling fallback
+    startRealtime()
 
     // Cleanup on unmount
     return cleanup
-  }, [enabled, startSSE, cleanup])
+  // Only restart when enabled changes, not on every callback change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled])
 
   // Memoize booking IDs to prevent unnecessary restarts
   const bookingIds = useMemo(() => bookings.map(b => b.id).join(','), [bookings])
@@ -261,7 +307,7 @@ export function useRealtimeBookingUpdates(
     connectionType,
     reconnect: () => {
       cleanup()
-      startSSE()
+      startRealtime()
     }
   }
 }
