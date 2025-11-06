@@ -6,6 +6,7 @@ from app.models.availability import ConsultantAvailability, ConsultantBlockedTim
 from app.models.booking import Booking, BookingStatus
 from app.crud.crud_availability import crud_availability
 from app.schemas.availability import AvailableSlot, AvailableTimeSlots
+from app.core.logging_config import availability_logger, log_timezone_conversion
 
 
 class AvailabilityService:
@@ -90,6 +91,12 @@ class AvailabilityService:
         # Get day of week for target date
         day_name = target_date.strftime("%A").lower()
         
+        # Log fetch operation
+        availability_logger.debug(
+            f"Fetching slots - Consultant: {consultant_id} ({consultant_tz}) | "
+            f"Date: {target_date} ({day_name}) | Duration: {slot_duration_minutes}m"
+        )
+        
         # Get consultant's availability slots for this day
         availability_slots = crud_availability.get_consultant_availability(
             db=sql_db,
@@ -97,6 +104,8 @@ class AvailabilityService:
             day_of_week=day_name,
             is_active=True
         )
+        
+        availability_logger.debug(f"Found {len(availability_slots)} availability slot(s) in DB")
         
         if not availability_slots:
             return AvailableTimeSlots(
@@ -180,6 +189,14 @@ class AvailabilityService:
                     client_tz = ZoneInfo(client_timezone)
                     start_client_tz = current_time.astimezone(client_tz)
                     end_client_tz = slot_end_time.astimezone(client_tz)
+                    
+                    # Log first conversion for debugging
+                    if len(available_slots) == 0:
+                        log_timezone_conversion(
+                            consultant_tz, 
+                            client_timezone, 
+                            f"{current_time} → {start_client_tz}"
+                        )
                     
                     available_slots.append(AvailableSlot(
                         start=start_client_tz,

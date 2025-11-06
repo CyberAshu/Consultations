@@ -46,6 +46,8 @@ class BookingInDB(BookingBase):
     status: BookingStatus
     payment_status: PaymentStatus
     payment_intent_id: Optional[str] = None
+    meeting_url: Optional[str] = None  # Daily.co video room URL
+    meeting_notes: Optional[str] = None  # Notes from the consultation
     documents: List[BookingDocumentInDB] = []
 
     class Config:

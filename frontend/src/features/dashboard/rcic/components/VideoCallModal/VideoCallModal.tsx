@@ -20,14 +20,25 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initializingRef = useRef(false); // Prevent duplicate initialization
 
   useEffect(() => {
-    if (!isOpen || !containerRef.current) return;
+    if (!isOpen || !containerRef.current || !meetingUrl) return;
+
+    // Prevent duplicate initialization (React StrictMode issue)
+    if (initializingRef.current || callFrameRef.current) return;
+
+    initializingRef.current = true;
 
     const initializeCall = async () => {
       try {
         setIsJoining(true);
         setError(null);
+
+        // Validate meeting URL
+        if (!meetingUrl || typeof meetingUrl !== 'string' || !meetingUrl.startsWith('http')) {
+          throw new Error(`Invalid meeting URL: ${meetingUrl}`);
+        }
 
         // Create Daily call frame
         const callFrame = DailyIframe.createFrame(containerRef.current!, {
@@ -54,10 +65,10 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
         });
 
         setIsJoining(false);
-      } catch (err) {
-        console.error('Error joining call:', err);
-        setError('Failed to join the call. Please try again.');
+      } catch (err: any) {
+        setError(err?.message || 'Failed to join the call. Please try again.');
         setIsJoining(false);
+        initializingRef.current = false;
       }
     };
 
@@ -68,6 +79,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
         callFrameRef.current.destroy();
         callFrameRef.current = null;
       }
+      initializingRef.current = false;
     };
   }, [isOpen, meetingUrl, userName]);
 

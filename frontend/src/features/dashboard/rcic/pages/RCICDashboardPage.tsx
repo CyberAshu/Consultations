@@ -768,20 +768,24 @@ export function RCICDashboard() {
   const handleStartOrJoin = async (booking: Booking) => {
     try {
       const hasRoom = Boolean((booking as any).meeting_url || (booking as any).meeting_link)
+      
       if (!hasRoom) {
         const updated = await bookingService.createRoom(booking.id)
         const url = (updated as any).meeting_url || (updated as any).meeting_link
+        
         if (url) {
           // Update local state with meeting_url
           setBookings(prev => prev.map(b => (b.id === booking.id ? { ...b, meeting_url: (updated as any).meeting_url } as any : b)))
           window.open(url, '_blank')
+        } else {
+          alert('Meeting room was created but no URL was provided. Please try again or contact support.')
         }
       } else {
         const url = (booking as any).meeting_url || (booking as any).meeting_link
         window.open(url, '_blank')
       }
     } catch (e: any) {
-      alert(e?.message || 'Failed to start/join session')
+      alert(e?.message || 'Failed to start/join session. Please try again.')
     }
   }
 
@@ -1960,13 +1964,50 @@ export function RCICDashboard() {
                             value={profileForm.timezone || 'America/Toronto'} 
                             onChange={(e) => handleProfileInputChange('timezone', e.target.value)}
                           >
-                            <option value="America/Toronto">Eastern Time (Toronto)</option>
-                            <option value="America/Vancouver">Pacific Time (Vancouver)</option>
-                            <option value="America/Edmonton">Mountain Time (Edmonton)</option>
-                            <option value="America/Winnipeg">Central Time (Winnipeg)</option>
-                            <option value="America/Halifax">Atlantic Time (Halifax)</option>
-                            <option value="America/St_Johns">Newfoundland Time</option>
+                            <optgroup label="🇨🇦 Canada - Common Timezones">
+                              <option value="America/Toronto">Eastern Time - Toronto, Ottawa, Montreal (EST/EDT, UTC-5/-4)</option>
+                              <option value="America/Vancouver">Pacific Time - Vancouver, Victoria (PST/PDT, UTC-8/-7)</option>
+                              <option value="America/Edmonton">Mountain Time - Edmonton, Calgary (MST/MDT, UTC-7/-6)</option>
+                              <option value="America/Winnipeg">Central Time - Winnipeg (CST/CDT, UTC-6/-5)</option>
+                              <option value="America/Halifax">Atlantic Time - Halifax, Dartmouth (AST/ADT, UTC-4/-3)</option>
+                              <option value="America/St_Johns">Newfoundland Time - St. John's (NST/NDT, UTC-3:30/-2:30)</option>
+                            </optgroup>
+                            <optgroup label="🇨🇦 Canada - Other Timezones">
+                              <option value="America/Regina">Saskatchewan - Regina, Saskatoon (CST, UTC-6, no DST)</option>
+                              <option value="America/Whitehorse">Yukon - Whitehorse (MST, UTC-7)</option>
+                              <option value="America/Yellowknife">Northwest Territories - Yellowknife (MST/MDT, UTC-7/-6)</option>
+                              <option value="America/Iqaluit">Nunavut - Iqaluit (EST/EDT, UTC-5/-4)</option>
+                              <option value="America/Rankin_Inlet">Nunavut - Rankin Inlet (CST/CDT, UTC-6/-5)</option>
+                              <option value="America/Cambridge_Bay">Nunavut - Cambridge Bay (MST/MDT, UTC-7/-6)</option>
+                              <option value="America/Inuvik">Northwest Territories - Inuvik (MST/MDT, UTC-7/-6)</option>
+                            </optgroup>
+                            <optgroup label="🇮🇳 India">
+                              <option value="Asia/Kolkata">India Standard Time - All of India (IST, UTC+5:30)</option>
+                            </optgroup>
+                            <optgroup label="🌎 USA - Common (for reference)">
+                              <option value="America/New_York">Eastern Time - New York, Washington DC (EST/EDT, UTC-5/-4)</option>
+                              <option value="America/Chicago">Central Time - Chicago, Dallas (CST/CDT, UTC-6/-5)</option>
+                              <option value="America/Denver">Mountain Time - Denver, Phoenix (MST/MDT, UTC-7/-6)</option>
+                              <option value="America/Los_Angeles">Pacific Time - Los Angeles, Seattle (PST/PDT, UTC-8/-7)</option>
+                              <option value="America/Anchorage">Alaska Time - Anchorage (AKST/AKDT, UTC-9/-8)</option>
+                              <option value="Pacific/Honolulu">Hawaii Time - Honolulu (HST, UTC-10, no DST)</option>
+                            </optgroup>
+                            <optgroup label="🌍 Other Major Timezones">
+                              <option value="Europe/London">London, UK (GMT/BST, UTC+0/+1)</option>
+                              <option value="Europe/Paris">Paris, Berlin, Rome (CET/CEST, UTC+1/+2)</option>
+                              <option value="Australia/Sydney">Sydney, Melbourne (AEDT/AEST, UTC+11/+10)</option>
+                              <option value="Asia/Dubai">Dubai, UAE (GST, UTC+4)</option>
+                              <option value="Asia/Singapore">Singapore (SGT, UTC+8)</option>
+                              <option value="Asia/Hong_Kong">Hong Kong (HKT, UTC+8)</option>
+                              <option value="Asia/Tokyo">Tokyo, Japan (JST, UTC+9)</option>
+                              <option value="Asia/Shanghai">Beijing, Shanghai (CST, UTC+8)</option>
+                              <option value="Asia/Manila">Manila, Philippines (PHT, UTC+8)</option>
+                              <option value="Pacific/Auckland">Auckland, New Zealand (NZDT/NZST, UTC+13/+12)</option>
+                            </optgroup>
                           </select>
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Choose your local timezone - clients will see available times in their own timezone
+                          </p>
                         </div>
                       </div>
 

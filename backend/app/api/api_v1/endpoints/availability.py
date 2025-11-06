@@ -7,6 +7,7 @@ from datetime import date, datetime
 from app.api import deps
 from app.crud.crud_availability import crud_availability
 from app.services.availability_service import availability_service
+from app.core.logging_config import log_availability_creation, log_slot_fetch, log_error
 from app.schemas.availability import (
     AvailabilitySlotCreate,
     AvailabilitySlotUpdate,
@@ -80,11 +81,21 @@ def create_availability_slot(
         raise HTTPException(status_code=403, detail="Only RCICs can manage availability")
     
     # Get consultant profile
-    consultant_response = supabase_db.table("consultants").select("id").eq("user_id", current_user["id"]).execute()
+    consultant_response = supabase_db.table("consultants").select("id, timezone").eq("user_id", current_user["id"]).execute()
     if not consultant_response.data:
         raise HTTPException(status_code=404, detail="Consultant profile not found")
     
     consultant_id = consultant_response.data[0]["id"]
+    consultant_profile_tz = consultant_response.data[0].get("timezone", "America/Toronto")
+    
+    # Log incoming request
+    log_availability_creation(consultant_id, {
+        'day_of_week': slot_in.day_of_week,
+        'start_time': slot_in.start_time,
+        'end_time': slot_in.end_time,
+        'timezone': slot_in.timezone,
+        'profile_timezone': consultant_profile_tz
+    })
     
     # Create the slot
     try:
@@ -93,8 +104,19 @@ def create_availability_slot(
             consultant_id=consultant_id,
             slot=slot_in
         )
+        
+        # Log successful creation
+        log_availability_creation(consultant_id, {}, {
+            'id': slot.id,
+            'day_of_week': slot.day_of_week.value,
+            'start_time': str(slot.start_time),
+            'end_time': str(slot.end_time),
+            'timezone': slot.timezone
+        })
+        
         return AvailabilitySlotResponse.from_orm(slot)
     except Exception as e:
+        log_error(f"Failed to create availability slot for consultant {consultant_id}", e)
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -386,6 +408,9 @@ def get_available_slots(
             slot_duration_minutes=duration_minutes,
             service_id=service_id
         )
+        
+        # Log successful fetch
+        log_slot_fetch(consultant_id, date, client_timezone, available_slots.total_slots)
         
         return available_slots
     
